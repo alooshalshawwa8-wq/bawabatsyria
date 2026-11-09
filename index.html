@@ -627,102 +627,6 @@ function renderMysticModule(parent){
   $('mFun').onclick=()=>{const type=$('mFunType').value,q=$('mFunQuestion').value.trim(),opts=type==='yes'?['الإشارات تقول: جرّب بعد أن تفكر جيداً.','الجواب الرمزي: نعم، إذا كانت الخطوة آمنة.','ليس الآن؛ ربما تحتاج معلومات أكثر.']:type==='color'?['بنفسجي — خيال وتجدد','أزرق — هدوء وتركيز','ذهبي — تفاؤل وطموح','أخضر — توازن ونمو']:['أرسل رسالة امتنان لشخص تحبه.','تعلّم شيئاً جديداً خلال عشر دقائق.','ابتسم لشخص لا تتوقعه.','رتّب زاوية صغيرة من مساحتك.'];$('mFunOut').textContent=(q?'سؤالك: '+q+'\n':'')+choose(opts,Math.floor(Math.random()*opts.length))+'\n(للترفيه فقط!)';};
 }
 
-function showSectionIntro(sec){
-  const themes={
-    prices:['لوحة الأسواق والأسعار','الأرقام تتحرك… راقب المؤشرات وقارن الأسعار','📈','💱','🪙'],
-    chef:['مطبخ النكهات','خلّينا نختار وصفتك ونحضّر ألذّ الأطباق','🍲','🥬','🍋'],
-    mirror:['مرآتك وإطلالتك','جرّب أفكاراً جديدة واكتشف الستايل الأقرب إلك','🪞','✨','💇'],
-    travel_visa:['بوابة الرحلات','جهّز أوراقك وانطلق لاكتشاف وجهتك القادمة','✈️','🧳','🗺️'],
-    domestic_economy:['بيت أذكى وتوفير أكثر','أفكار عملية لتدبير البيت واستثمار كل مورد','🏠','💡','🌿'],
-    code_sandbox:['مختبر المطوّرين','افتح محررك… وحوّل الفكرة إلى كود يعمل','💻','⌨️','⚙️'],
-    directory_services:['دليل الأعمال والخدمات','اكتشف المحلات والخدمات من حولك','🏢','📍','🔎'],
-    cash_shield:['درع الأمان الرقمي','افحص بحذر وتعرّف إلى إشارات الاحتيال','🛡️','🔐','🧿'],
-    no_khosoosie:['قاعة التعلّم','افهم الدرس خطوة بخطوة وثبّت المعلومة','📚','✏️','🎓'],
-    engineer_vip:['ورشة الهندسة','من المخطط إلى النموذج… ابدأ ابتكارك','🏗️','📐','⚙️'],
-    marketing_vip:['استوديو التسويق','اصنع رسالة تلفت الانتباه وتحكي قيمة منتجك','🎯','📣','✨'],
-    video_factory_vip:['استوديو صناعة الفيديو','ابدأ بخطّاف قوي وابنِ قصة تشدّ المشاهد','🎬','🎥','🌟'],
-    trader_market:['سوق مواد البناء','احسب الكميات والتكاليف وخطط لمشروعك','🧱','🏗️','📏'],
-    trading_academy:['منصة التداول','حلّل الرسم البياني وتعلّم إدارة المخاطر','📊','🪙','📉'],
-    freelance_vip:['محطة العمل الحر','حوّل مهارتك إلى خدمة ومشروع قابل للنمو','🚀','💼','🌐'],
-    body_language:['مختبر لغة الجسد','لاحظ الإشارات وتعرّف إلى أنماط التواصل','👁️','🧠','🗣️'],
-    apps_games:['عالم التطبيقات والألعاب','استكشف الأدوات والألعاب واختر بأمان','🎮','🕹️','💡'],
-    nostalgia_archive:['رحلة إلى الذكريات','استعد أجمل الحكايات والأعمال الفنية','📺','🎞️','🎵'],
-    accounting_vip:['مكتبك المحاسبي','رتّب حساباتك ومخزونك وتابع حركة تجارتك','📊','🧾','📦'],
-    civil:['مركز المعاملات المدنية','جهّز مستنداتك وتعرّف إلى خطوات المعاملة','🪪','📄','🏛️'],
-    realestate:['بوابة العقارات','استكشف الملكيات والتراخيص والخدمات العقارية','🏡','🔑','📐'],
-    consular:['نافذة المغتربين والقنصليات','أنجز تحضيراتك وتابع متطلبات الوثائق','🌍','🛂','✈️'],
-    legal:['ميزان العدالة','تعرّف إلى المسارات القانونية ونظّم مستنداتك','⚖️','📜','🏛️'],
-    business:['حاضنة الأعمال','ابدأ فكرتك ونظّم خطوات مشروعك','💼','📈','🤝'],
-    jobs:['مركز الفرص المهنية','جهّز سيرتك واستعد لخطوتك الوظيفية التالية','👔','📄','🚀'],
-    energy:['مركز الطاقة','اكتشف حلول الطاقة واحسب احتياجاتك','⚡','☀️','🔋'],
-    water:['واحة المياه','خطط للاستهلاك وحافظ على كل قطرة','💧','🚰','🌊'],
-    telecom:['عالم الاتصالات','تابع باقاتك واستهلاكك وجودة اتصالك','📱','📶','🌐'],
-    health:['نافذة الصحة والعافية','معلومات إرشادية تساعدك على الوصول للخدمة المناسبة','🏥','❤️','🩺'],
-    education:['بوابة التعليم','خطط لدراستك واكتشف مساراتك التعليمية','🎓','📚','✏️'],
-    syria_curriculum:['مختبر المنهاج السوري','افتح كتابك وابدأ رحلة الفهم والمراجعة','📖','🧮','🎓'],
-    solidarity:['جسر التكافل والتطوع','الخير يبدأ بمبادرة… شارك وساهم','🤝','💚','🌱'],
-    transport:['محطة النقل والسفر','اختر وجهتك ورتّب طريقك القادم','🚌','🚆','🧭'],
-    cars_guide:['مرآب السيارات','تعرّف إلى سيارتك وتعلّم أساسيات العناية بها','🚗','🔧','🛞'],
-    tourism:['رحلة في سورية','اكتشف المدن والآثار والطبيعة السورية','🗺️','🏛️','🌄'],
-    culture:['المشهد الثقافي والفني','من المسرح إلى المعرض… اكتشف الإبداع','🎭','🎨','🎼'],
-    agriculture:['أرضنا الخضراء','ازرع واعتنِ بمحصولك وتعلّم أسرار الأرض','🌾','🌱','🚜'],
-    fertilizers:['مختبر التربة والتسميد','وازن احتياجات التربة وخطط للتغذية','🧪','🌱','🔬'],
-    birds_pets:['واحة الحيوانات الأليفة','اكتشف عالم الطيور والحيوانات وطرق رعايتها','🦜','🐾','🪺'],
-    sports_radar:['ليلة كروية كبيرة','أضواء الملعب تشتعل… تابع الفرق والبطولات والنتائج','⚽','🏆','🥅'],
-    zodiac_world:['بوابة الأسرار والنجوم','تأمل الرموز والكواكب واستمتع بتجربة ترفيهية','🔮','🌙','✨'],
-    news:['غرفة الأخبار','تابع أبرز المستجدات من المحافظات','📰','📡','🌍'],
-    expatriates_invest:['جسر الاستثمار والاغتراب','أفكار وفرص تربط الخبرة ورأس المال بالوطن','💎','🌍','📈'],
-    heritage:['ذاكرة التراث السوري','اكتشف الحكايات والحرف والعادات الأصيلة','🏺','🧿','🎶'],
-    security:['مركز الأمن السيبراني','افحص الروابط والملفات وتعلّم الحماية الرقمية','🔐','🛡️','💻'],
-    reports:['صوت المواطن','رتّب بلاغك واكتب شكواك بوضوح','📩','📝','🏛️'],
-    syria_ai:['رفيقك الذكي','اسأل واستكشف… رفيقك السوري معك','🤖','💬','✨'],
-    ecommerce_studio:['استوديو المتاجر الإلكترونية','من المنتج إلى الطلب… ابنِ متجرك بثقة','🛒','📦','💳'],
-    design_lab:['مختبر الإبداع والتصميم','الألوان والأفكار تلتقي لصناعة هوية مميزة','🎨','🖌️','💡'],
-    language_academy:['رحلة تعلّم اللغات','كلمة جديدة كل يوم تقرّبك من الطلاقة','🌍','🔤','🗣️'],
-    fitness_coach:['محطة النشاط واللياقة','حركة صغيرة اليوم… عادة أقوى غداً','🏃','💪','🏅'],
-    events_calendar:['استوديو تنظيم الفعاليات','حوّل مناسبتك إلى تجربة مرتبة وجميلة','🗓️','🎉','🎈'],
-    syria_marketplace:['سوق سورية','اعرض واطلب وتسوّق بوعي وأمان','🏷️','🛍️','🤝']
-  };
-  const theme=themes[sec.id]||['مساحة '+sec.title,'أهلاً بك… ابدأ استكشاف أدوات هذا القسم','✨','✦','◈'];
-  const old=document.getElementById('bw-section-intro');if(old)old.remove();
-  if(!document.getElementById('bw-section-intro-style')){
-    const style=document.createElement('style');style.id='bw-section-intro-style';
-    style.textContent=`
-      #bw-section-intro{position:fixed;inset:0;z-index:10040;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at 50% 42%,#29496c 0,#101c34 58%,#080e1b 100%);opacity:0;animation:bwIntroIn .35s ease forwards}
-      #bw-section-intro.bw-out{opacity:0;transition:opacity .45s ease;pointer-events:none}
-      .bw-intro-card{width:min(540px,100%);text-align:center;padding:28px 20px 24px;border:1px solid #e8bd70aa;border-radius:25px;background:linear-gradient(145deg,#172b47ed,#0c172bed);box-shadow:0 25px 90px #0009;position:relative;overflow:hidden}
-      .bw-intro-card:before{content:"";position:absolute;inset:-50%;background:conic-gradient(from 0deg,transparent,#f4cf8055,transparent 25%);animation:bwIntroOrbit 9s linear infinite;pointer-events:none}
-      .bw-intro-inner{position:relative;z-index:1}
-      .bw-intro-kicker{color:#ffdf91;font-size:12px;letter-spacing:2px}
-      .bw-intro-title{color:#fff0c9;font-size:clamp(24px,6vw,38px);margin:10px 0;text-shadow:0 4px 25px #e7b85c66}
-      .bw-intro-desc{color:#d4e1f1;font-size:14px;line-height:1.9;margin:0 auto;max-width:420px}
-      .bw-intro-stage{height:140px;display:flex;align-items:center;justify-content:center;gap:18px;margin:10px auto}
-      .bw-intro-symbol{font-size:clamp(42px,12vw,76px);filter:drop-shadow(0 8px 18px #f0c76b66);animation:bwIntroFloat 1.9s ease-in-out infinite}
-      .bw-intro-symbol:nth-child(2){font-size:clamp(58px,15vw,94px);animation-delay:-.55s}
-      .bw-intro-symbol:nth-child(3){animation-delay:-1.05s}
-      .bw-intro-spark{position:absolute;color:#ffe5a0;font-size:18px;animation:bwIntroSpark 1.8s ease-in-out infinite}
-      .bw-intro-spark.one{top:20%;right:12%}.bw-intro-spark.two{bottom:22%;left:12%;animation-delay:.8s}
-      .bw-intro-skip{border:1px solid #eac77d;border-radius:30px;background:transparent;color:#f4dda9;padding:9px 20px;font:inherit;font-size:12px;margin-top:5px}
-      @keyframes bwIntroIn{to{opacity:1}}@keyframes bwIntroOrbit{to{transform:rotate(360deg)}}@keyframes bwIntroFloat{0%,100%{transform:translateY(4px) rotate(-5deg) scale(.96)}50%{transform:translateY(-12px) rotate(5deg) scale(1.05)}}@keyframes bwIntroSpark{0%,100%{opacity:.25;transform:scale(.7)}50%{opacity:1;transform:scale(1.3)}}
-      @media(prefers-reduced-motion:reduce){#bw-section-intro,.bw-intro-card:before,.bw-intro-symbol,.bw-intro-spark{animation:none!important;transition:none!important}#bw-section-intro{opacity:1}}
-    `;
-    document.head.appendChild(style);
-  }
-  const overlay=document.createElement('div');overlay.id='bw-section-intro';overlay.setAttribute('role','status');overlay.setAttribute('aria-live','polite');
-  const card=document.createElement('div');card.className='bw-intro-card';
-  const inner=document.createElement('div');inner.className='bw-intro-inner';
-  const kicker=document.createElement('div');kicker.className='bw-intro-kicker';kicker.textContent='بوابة سورية · ترحّب فيك';
-  const title=document.createElement('h2');title.className='bw-intro-title';title.textContent=theme[0];
-  const desc=document.createElement('p');desc.className='bw-intro-desc';desc.textContent=theme[1];
-  const stage=document.createElement('div');stage.className='bw-intro-stage';stage.setAttribute('aria-hidden','true');
-  [theme[2],theme[3],theme[4]].forEach(symbol=>{const el=document.createElement('span');el.className='bw-intro-symbol';el.textContent=symbol;stage.appendChild(el);});
-  const spark1=document.createElement('span');spark1.className='bw-intro-spark one';spark1.textContent='✦';
-  const spark2=document.createElement('span');spark2.className='bw-intro-spark two';spark2.textContent='✧';
-  const skip=document.createElement('button');skip.type='button';skip.className='bw-intro-skip';skip.textContent='الدخول إلى القسم';
-  inner.append(kicker,title,desc,stage,skip);card.append(spark1,spark2,inner);overlay.appendChild(card);document.body.appendChild(overlay);
-  let closed=false;const close=()=>{if(closed)return;closed=true;clearTimeout(timer);overlay.classList.add('bw-out');setTimeout(()=>overlay.remove(),480);};
-  skip.addEventListener('click',close);const timer=setTimeout(close,2100);
-}
 async function openSection(sec){
 const vipSections=['engineer_vip','marketing_vip','video_factory_vip','freelance_vip','accounting_vip'];
 if(vipSections.includes(sec.id)){
@@ -731,7 +635,6 @@ if(!membershipApi){
 document.getElementById('detailNotice').textContent='تعذر الاتصال بخدمة التحقق من العضوية؛ أوقفنا فتح قسم VIP حمايةً لصلاحياتك.';
 tool.replaceChildren();panel.classList.add('open');panel.scrollIntoView({behavior:'smooth',block:'start'});return;
 }
-showSectionIntro(sec);
 document.getElementById('detailTitle').textContent=sec.title;
 document.getElementById('detailDesc').textContent=sec.desc;
 if(!token){
