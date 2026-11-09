@@ -173,8 +173,12 @@ return true;
 
 async function openSection(sec){
 const vipSections=['engineer_vip','marketing_vip','video_factory_vip','freelance_vip','accounting_vip'];
-if(vipSections.includes(sec.id)&&membershipApi){
+if(vipSections.includes(sec.id)){
 const token=membershipToken(),tool=document.getElementById('specialTool');
+if(!membershipApi){
+document.getElementById('detailNotice').textContent='تعذر الاتصال بخدمة التحقق من العضوية؛ أوقفنا فتح قسم VIP حمايةً لصلاحياتك.';
+tool.replaceChildren();panel.classList.add('open');panel.scrollIntoView({behavior:'smooth',block:'start'});return;
+}
 document.getElementById('detailTitle').textContent=sec.title;
 document.getElementById('detailDesc').textContent=sec.desc;
 if(!token){
@@ -186,7 +190,7 @@ panel.classList.add('open');panel.scrollIntoView({behavior:'smooth',block:'start
 try{
 const response=await fetch(membershipApi+'/api/me',{headers:{authorization:'Bearer '+token,accept:'application/json'}});
 if(!response.ok)throw new Error('تعذر التحقق من العضوية');
-const me=await response.json(),allowed=(me.entitlements||[]).some(x=>x.entitlement_key==='vip_access'&&x.active)||(me.entitlements||[]).some(x=>x.entitlement_key==='business_access'&&x.active);
+const me=await response.json(),now=Date.now(),validEntitlement=(key)=>(me.entitlements||[]).some(x=>x.entitlement_key===key&&x.active===true&&(!x.expires_at||Date.parse(x.expires_at)>now)),allowed=me.owner===true||me.role==='OWNER'||validEntitlement('owner_access')||validEntitlement('vip_access')||validEntitlement('business_access');
 if(!allowed){
 document.getElementById('detailNotice').textContent='هذه الميزة متاحة للمشتركين في VIP أو باقة الأعمال. يمكنك مراجعة الباقات لمعرفة التفاصيل.';
 tool.replaceChildren();
