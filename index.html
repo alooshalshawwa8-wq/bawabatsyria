@@ -198,26 +198,26 @@ function aiLink(name,url){
 }
 function appendFreeAIHelper(sec,tool){
   const box=document.createElement('section');box.className='ai-helper';
-  const h=document.createElement('h3');h.textContent='مساعد الذكاء الاصطناعي لهذا القسم';box.appendChild(h);
+  const h=document.createElement('h3');h.textContent='رفيقك الذكي بهالقسم';box.appendChild(h);
   const p=document.createElement('p');
-  p.textContent='اكتب ما تريد إنجازه في هذا القسم، وسنجهّز لك طلباً واضحاً يمكنك نسخه وفتحه في أحد المساعدات المجانية. هذه روابط لخدمات خارجية؛ لا ندّعي أن ردودها تعمل داخل الموقع أو أنها غير محدودة.';
+  p.textContent='أهلاً وسهلاً فيك! 😊 خبرني شو حابب تعمل بهالقسم، وأنا بجهّزلك طلب مرتب وواضح تاخده معك على واحد من المساعدات الذكية. هالخدمات خارجية، وممكن يكون إلها حدود استخدام.';
   box.appendChild(p);
-  const label=document.createElement('label');label.textContent='مهمتك أو سؤالك';
-  const input=document.createElement('textarea');input.placeholder='مثال: اشرح لي الخطوات، قارن الخيارات، أو أنشئ خطة عملية…';input.setAttribute('aria-label','مهمتك لمساعد الذكاء الاصطناعي');
+  const label=document.createElement('label');label.textContent='شو حابب تسأل أو تعمل؟';
+  const input=document.createElement('textarea');input.placeholder='مثلاً: فهمني الموضوع ببساطة، قارنلي الخيارات، أو ساعدني حط خطة خطوة بخطوة…';input.setAttribute('aria-label','سؤالك للمساعد الذكي');
   label.appendChild(input);box.appendChild(label);
   const prompt=document.createElement('textarea');prompt.readOnly=true;prompt.setAttribute('aria-label','الطلب الجاهز للنسخ');
-  prompt.value='أنت مساعد متخصص في '+sec.title+' ضمن بوابة سورية.\nقدّم إجابة عربية واضحة وعملية. لا تخترع أسعاراً أو قوانين أو معلومات آنية. ميّز بين الحقائق والافتراضات، واطلب توضيحاً عند نقص البيانات، وأرفق مصادر رسمية وروابط وتاريخ التحقق عندما تكون المعلومات متغيرة.\n\nوصف القسم: '+sec.desc+'\n\nالمهمة: ';
+  prompt.value='أنت رفيق ذكي ولطيف من بوابة سورية، ومتخصص بـ '+sec.title+'. احكي معي باللهجة السورية الشامية الودودة والطبيعية، وخليك واضح وبسيط ومن دون تكلف. إذا احتاج الموضوع، استخدم العربية الفصحى للمصطلحات الرسمية. عطيني خطوات عملية وأمثلة مفهومة، ولا تخترع أسعار أو قوانين أو معلومات حديثة. إذا المعلومة مو مؤكدة، قلّي بصراحة واطلب توضيح إذا لزم، وحط مصادر رسمية وتاريخ التحقق للمعلومات المتغيرة.\n\nوصف القسم: '+sec.desc+'\n\nشو المطلوب: ';
   const actions=document.createElement('div');actions.className='panel-actions';
-  const make=document.createElement('button');make.className='btn';make.type='button';make.textContent='جهّز الطلب';
+  const make=document.createElement('button');make.className='btn';make.type='button';make.textContent='حضّرلي الطلب';
   make.onclick=()=>{const q=input.value.trim();if(!q){input.focus();return;}prompt.value=prompt.value.split('\n\nالمهمة: ')[0]+'\n\nالمهمة: '+q;};
-  const copy=document.createElement('button');copy.className='btn secondary';copy.type='button';copy.textContent='نسخ الطلب';
-  copy.onclick=async()=>{if(!input.value.trim()){input.focus();return;}make.onclick();try{await navigator.clipboard.writeText(prompt.value);copy.textContent='تم النسخ ✓';}catch(e){prompt.focus();prompt.select();copy.textContent='حدّد النص وانسخه';}};
+  const copy=document.createElement('button');copy.className='btn secondary';copy.type='button';copy.textContent='انسخ الطلب';
+  copy.onclick=async()=>{if(!input.value.trim()){input.focus();return;}make.onclick();try{await navigator.clipboard.writeText(prompt.value);copy.textContent='نسخناه ✓';}catch(e){prompt.focus();prompt.select();copy.textContent='حدّد النص وانسخه بإيدك';}};
   actions.append(make,copy);box.append(actions);box.appendChild(prompt);
   const links=document.createElement('div');links.className='ai-links';
   FREE_AI_WEB_TOOLS.forEach(item=>links.appendChild(aiLink(item.name,item.url)));
   box.appendChild(links);
   const note=document.createElement('p');note.className='ai-tag';
-  note.textContent='تنبيه: الخطط المجانية قد تفرض حدوداً أو تتغير. لا تُدخل كلمات مرور أو بيانات مالية أو معلومات شخصية حساسة في خدمات خارجية.';
+  note.textContent='دير بالك: المجاني ممكن يكون إله حدود ويتغيّر. لا تبعت كلمات مرور أو معلومات مالية أو بيانات شخصية حساسة لأي خدمة خارجية.';
   box.appendChild(note);
   if(sec.id==='syria_ai') appendFreeAICatalog(box);
   tool.appendChild(box);
