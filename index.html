@@ -114,6 +114,7 @@ const sections = [
     { id: 'reports', title: 'بلاغات المواطن والشكاوى الإدارية', icon: '📩', desc: 'إعادة صياغة الشكاوى الموجهة للمديريات والمجالس المحلية بأسلوب رسمي وقانوني محكم' },
     { id: 'syria_ai', title: 'المساعد الذكي سوريا AI الشامل', icon: '🤖', desc: 'محرك الدردشة المركزي والمجاني للإجابة الفورية عن أي معاملة أو تفصيل داخل القطر' }
 ]
+window.BAWABA_SECTIONS=sections;
 const grid=document.getElementById('sectionsGrid'), panel=document.getElementById('detailPanel');
 function render(list){grid.innerHTML='';document.getElementById('countLabel').textContent=list.length+' قسم متاح';if(!list.length){grid.innerHTML='<div class="empty">لا توجد نتائج مطابقة. جرّب كلمة بحث أخرى.</div>';return;}list.forEach(sec=>{const b=document.createElement('button');b.className='tile';b.type='button';const icon=document.createElement('div');icon.className='ico';icon.textContent=sec.icon;const h=document.createElement('h3');h.textContent=sec.title;const p=document.createElement('p');p.textContent=sec.desc;b.append(icon,h,p);b.addEventListener('click',()=>openSection(sec));grid.appendChild(b);});}
 
