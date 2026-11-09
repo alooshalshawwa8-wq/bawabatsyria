@@ -1,0 +1,50 @@
+name: Validate membership and portal code
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check membership Worker syntax
+        run: node --input-type=module --check < backend/worker.js
+      - name: Check portal inline JavaScript
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script\b[^>]*>([\s\S]*?)</script>", html, re.I)
+          if not scripts:
+              raise SystemExit("No inline script found")
+          Path("/tmp/portal.js").write_text("\n".join(scripts), encoding="utf-8")
+          PY
+          node --check /tmp/portal.js
+      - name: Validate D1 schema with SQLite
+        run: |
+          python3 - <<'PY'
+          import sqlite3
+          from pathlib import Path
+          db = sqlite3.connect(":memory:")
+          db.executescript(Path("backend/schema.sql").read_text(encoding="utf-8"))
+          expected = {"subscriptions", "entitlements", "points_ledger", "checkout_sessions"}
+          actual = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+          missing = expected - actual
+          if missing:
+              raise SystemExit("Missing tables: " + ", ".join(sorted(missing)))
+          print("D1 schema tables validated.")
+          PY
