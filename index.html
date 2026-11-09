@@ -360,10 +360,12 @@ const descriptions={pro_monthly:['أدوات احترافية موسعة','صل�
 for(const plan of data.plans||[]){
 const card=membershipNode('article',undefined,'membership-card');
 card.append(membershipNode('h3',plan.name));
-card.append(membershipNode('p',plan.checkoutEnabled?'الاشتراك الشهري — السعر النهائي يظهر في صفحة الدفع الآمنة.':'بانتظار إعداد سعر الخطة في مزود الدفع.'));
+const isFree=plan.id==='free';
+card.append(membershipNode('p',isFree?'مجانية — لا تحتاج إلى دفع.':(plan.checkoutEnabled?'الاشتراك الشهري — السعر النهائي يظهر في صفحة الدفع الآمنة.':'سيُعلن السعر بعد اعتماد التسعير وتفعيل الدفع الإلكتروني.')));
 const list=membershipNode('ul');(descriptions[plan.id]||[]).forEach(item=>list.append(membershipNode('li',item)));card.append(list);
-const button=membershipNode('button','اشترك الآن','btn');button.type='button';button.disabled=!plan.checkoutEnabled||!membershipToken();
-if(!plan.checkoutEnabled)button.textContent='الدفع غير مفعّل بعد';
+const button=membershipNode('button',isFree?'الخطة المجانية':'اشترك الآن','btn');button.type='button';button.disabled=isFree||!plan.checkoutEnabled||!membershipToken();
+if(isFree)button.textContent='متاحة مجاناً';
+else if(!plan.checkoutEnabled)button.textContent='الدفع غير متاح حالياً';
 else if(!membershipToken())button.textContent='سجّل الدخول أولاً';
 button.addEventListener('click',()=>startMembershipCheckout(plan.id));card.append(button);membershipPlans.append(card);
 }
