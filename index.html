@@ -731,7 +731,7 @@ function renderPremiumCatalogModule(sec,tool){
   }
 }
 
-function openSection(sec){
+async function openSection(sec){
 const vipSections=['engineer_vip','marketing_vip','video_factory_vip','freelance_vip','accounting_vip'];
 if(vipSections.includes(sec.id)){
 const token=await refreshMembershipSession(),tool=document.getElementById('specialTool');
@@ -785,7 +785,9 @@ copy.disabled=false;
 copy.onclick=async()=>{try{await navigator.clipboard.writeText(output.value);message.textContent='تم نسخ الإعلان.';}catch(e){output.focus();output.select();message.textContent='تعذّر النسخ التلقائي؛ حدّد النص وانسخه يدوياً.';}};
 }
 
-else if(['auto_moto_gallery','tech_devices','luxury_villas'].includes(sec.id)){renderPremiumCatalogModule(sec,tool);}
+else if(sec.id==='auto_moto_gallery'){renderPremiumCatalogModule(sec,tool);}
+else if(sec.id==='tech_devices'){renderPremiumCatalogModule(sec,tool);}
+else if(sec.id==='luxury_villas'){renderPremiumCatalogModule(sec,tool);}
 else if(renderUtilityModule(sec,tool)){}
 
 else if(sec.id==='accounting_vip'){
