@@ -1,41 +1,41 @@
 # نظام العضوية والنقاط والدفع — بوابة سورية الوطنية
 
-## ما يتضمنه هذا الأساس
-- API مستقل على Cloudflare Workers مع قاعدة Cloudflare D1.
-- تحقق من JWT عبر مفاتيح JWKS (RS256/ES256) قبل قراءة الحساب أو بدء الدفع.
-- خطط احترافية وVIP وأعمال، وأسعار Stripe Price IDs قابلة للتهيئة دون وضع مفاتيح سرية في الواجهة.
-- إنشاء Stripe Checkout للاشتراكات فقط، وتفعيل الصلاحيات عبر Webhook موثّق بتوقيع Stripe.
-- سجل نقاط (ledger) وقراءة الرصيد وسجل آخر 100 حركة.
-- لا يمنح المتصفح نفسه نقاطاً أو اشتراكاً. لا تُقبل أحداث الدفع إلا من Stripe webhook.
+## البنية الحالية
+- Supabase Auth لتسجيل الحسابات وتسجيل الدخول.
+- Supabase Postgres لتخزين الملفات الشخصية والاشتراكات والصلاحيات والنقاط والمخزون والقيود المحاسبية.
+- سياسات Row Level Security على جميع جداول public؛ كل مستخدم يرى بياناته فقط.
+- Supabase Edge Function باسم `membership-api` لخدمة الخطط والملف والرصيد وسجل النقاط.
+- واجهة الموقع تستخدم مفتاح Supabase Publishable فقط؛ لا توجد مفاتيح سرية داخل HTML.
+- إصدار النقاط وتفعيل الاشتراكات غير متاحين للمتصفح. يجب أن يتمّا عبر خدمات خادمية موثوقة.
 
-## ما يتطلب إعداداً خارج المستودع
-1. مشروع Supabase Auth (أو موفر OIDC متوافق) لإصدار رموز دخول المستخدمين.
-2. مشروع Cloudflare Worker وD1، ثم وضع معرف قاعدة البيانات في wrangler.toml وتشغيل schema.sql.
-3. حساب Stripe مع إنشاء أسعار اشتراكات شهرية، ثم إضافة Price IDs ومفاتيح Stripe إلى Worker secrets.
-4. إعداد عنوان الموقع المسموح وAUTH_ISSUER وAUTH_JWKS_URL وALLOWED_ORIGIN.
-5. ربط تسجيل الدخول في الواجهة وإرسال رمز المستخدم إلى /api/me و/api/checkout.
-6. إعداد سياسات الاسترداد والضرائب والفواتير والامتثال قبل فتح الدفع للجمهور.
-
-## متغيرات Worker
-- AUTH_ISSUER: جهة إصدار JWT الدقيقة.
-- AUTH_JWKS_URL: رابط مفاتيح JWKS للموفر.
-- AUTH_AUDIENCE: الافتراضي authenticated.
-- ALLOWED_ORIGIN: أصل الواجهة فقط، مثل https://OWNER.github.io.
-- PUBLIC_SITE_URL: رابط العودة بعد الدفع.
-- STRIPE_SECRET_KEY وSTRIPE_WEBHOOK_SECRET: أسرار Worker فقط.
-- STRIPE_PRICE_PRO_MONTHLY وSTRIPE_PRICE_VIP_MONTHLY وSTRIPE_PRICE_BUSINESS_MONTHLY: معرفات أسعار Stripe.
+## إعداد Supabase المنشأ
+- Project ref: `elzquyehghuxhswogsch`
+- Region: `eu-central-1`
+- API URL: `https://elzquyehghuxhswogsch.supabase.co`
+- Membership API: `https://elzquyehghuxhswogsch.supabase.co/functions/v1/membership-api`
+- الجداول: profiles, membership_plans, subscriptions, entitlements, points_ledger, inventory_items, inventory_movements, accounting_accounts, journal_entries, journal_lines.
+- العرض الآمن: points_balances.
+- Edge Function: `membership-api` (نسخة 2، نشطة).
 
 ## واجهات API
 - GET /api/health — فحص الخدمة.
-- GET /api/plans — الخطط وحالة تهيئة الدفع.
-- GET /api/me — الملف والصلاحيات والرصيد والاشتراكات (Bearer JWT).
-- GET /api/points — سجل النقاط (Bearer JWT).
-- POST /api/checkout — إنشاء جلسة اشتراك (Bearer JWT).
-- POST /api/stripe/webhook — استقبال أحداث Stripe والتحقق من التوقيع.
+- GET /api/plans — الخطط المتاحة.
+- GET /api/me — الملف والصلاحيات والرصيد والاشتراكات (Bearer user JWT).
+- GET /api/points — الرصيد وآخر 100 حركة (Bearer user JWT).
+- POST /api/checkout — متوقف بأمان حتى إعداد Stripe.
+- POST /api/stripe/webhook — لا يقبل أحداثاً قبل تهيئة التوقيع السري.
 
-## ملاحظات أمان قبل الإنتاج
-- لا تضع أي سر في ملفات HTML أو المستودع.
-- لا تعتمد على success_url لتفعيل الاشتراك؛ الـWebhook وحده مصدر الحقيقة.
-- لا تنشئ واجهة لإضافة النقاط من المتصفح. إصدار النقاط يحتاج وظيفة خادمية موثقة وحدوداً ومراجعة احتيال.
-- راجع معالجة الإلغاء والفشل والاسترداد والنزاعات قبل الإطلاق التجاري.
-- اختبر كل خطة وصلاحية وWebhook في وضع Stripe التجريبي قبل الإطلاق.
+## ما تبقى قبل تفعيل الإيرادات
+1. إنشاء حساب Stripe وتحديد الأسعار الشهرية النهائية لكل باقة.
+2. إضافة Stripe secret وwebhook signing secret إلى أسرار Edge Functions (لا توضع في GitHub أو الواجهة).
+3. تنفيذ معالجة موثقة لأحداث checkout.session.completed وsubscription.updated وsubscription.deleted، مع idempotency والاستردادات والنزاعات.
+4. اختبار الدفع في Stripe Test Mode، ثم التحقق من منح وسحب الصلاحيات آلياً.
+5. تحديد سياسة النقاط ومصادر منحها ومعدلاتها وحدود إساءة الاستخدام قبل تشغيلها.
+6. ضبط إعدادات تأكيد البريد الإلكتروني وروابط إعادة التوجيه لنطاق الموقع المنشور.
+
+## ملاحظات أمان
+- لا تستخدم service_role أو secret key في المتصفح أو المستودع.
+- مفتاح Publishable الموجود في HTML عام بطبيعته، وتعتمد حماية البيانات على RLS.
+- لا تعتمد على success_url لتفعيل الاشتراك؛ Webhook موثّق هو مصدر الحقيقة.
+- لا تُمنح نقاط من المتصفح، ولا تُفعّل VIP بمجرد العودة من صفحة الدفع.
+- بيانات المخزون والحسابات معزولة لكل مستخدم؛ حركات المخزون تحفظ كسجل، وترحيل القيد المحاسبي يشترط توازن المدين والدائن.
