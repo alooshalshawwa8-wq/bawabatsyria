@@ -370,6 +370,64 @@ finally{importFile.value='';}
 renderStock();
 }
 
+function syrianizeSectionInterface(root){
+  const replacements=[
+    ['يرجى إدخال','لو سمحت، أدخل'],
+    ['يرجى تحديد','لو سمحت، حدّد'],
+    ['أدخل قيمة صحيحة','تأكد إنك دخلت قيمة صحيحة'],
+    ['تحقق من إدخال','تأكد من إدخال'],
+    ['تعذر الاتصال','ما قدرنا نتصل'],
+    ['تعذّر الاتصال','ما قدرنا نتصل'],
+    ['تعذر تحميل','ما قدرنا نحمّل'],
+    ['تعذّر تحميل','ما قدرنا نحمّل'],
+    ['تم إنشاء','عملنا'],
+    ['تم حفظ','انحفظ'],
+    ['تم إضافة','ضفنا'],
+    ['تم استيراد','استوردنا'],
+    ['تم تصدير','صدّرنا'],
+    ['نسخ النتيجة','انسخ النتيجة'],
+    ['نسخ الإعلان','انسخ الإعلان'],
+    ['إضافة إلى المخزون','ضيف عالمخزون'],
+    ['تنزيل نسخة احتياطية','نزّل نسخة احتياطية'],
+    ['استيراد نسخة احتياطية','استورد نسخة احتياطية'],
+    ['لا توجد أصناف محفوظة بعد.','لسه ما حفظت أي صنف.'],
+    ['لم يتم التحقق','لسه ما تحققنا من هالمعلومة'],
+    ['غير محدد','مو محدد'],
+    ['غير متاح حالياً','مو متاح حالياً'],
+    ['حاول مجدداً بعد قليل','جرّب مرة تانية بعد شوي'],
+    ['أدخل','حطّ'],
+    ['اختر','اختار']
+  ];
+  const translate=value=>{
+    let out=value;
+    for(const pair of replacements) out=out.split(pair[0]).join(pair[1]);
+    return out;
+  };
+  const walk=node=>{
+    if(node.nodeType===Node.TEXT_NODE){
+      const next=translate(node.nodeValue);
+      if(next!==node.nodeValue)node.nodeValue=next;
+      return;
+    }
+    if(node.nodeType!==Node.ELEMENT_NODE)return;
+    if(['SCRIPT','STYLE','TEXTAREA','INPUT','CODE','PRE'].includes(node.tagName))return;
+    for(const child of Array.from(node.childNodes))walk(child);
+    for(const attr of ['placeholder','aria-label','title']){
+      if(node.hasAttribute(attr))node.setAttribute(attr,translate(node.getAttribute(attr)));
+    }
+  };
+  walk(root);
+  if(root._syrianObserver)root._syrianObserver.disconnect();
+  root._syrianObserver=new MutationObserver(records=>{
+    for(const record of records){
+      if(record.type==='characterData')walk(record.target);
+      else record.addedNodes.forEach(walk);
+    }
+  });
+  root._syrianObserver.observe(root,{subtree:true,childList:true,characterData:true});
+}
+
+syrianizeSectionInterface(tool);
 appendFreeAIHelper(sec,tool);
 panel.classList.add('open');panel.scrollIntoView({behavior:'smooth',block:'start'});}
 function showHome(){panel.classList.remove('open');document.getElementById('searchInput').focus({preventScroll:true});}
