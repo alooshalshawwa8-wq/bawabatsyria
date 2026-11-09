@@ -89,6 +89,47 @@ function render(list){grid.innerHTML='';document.getElementById('countLabel').te
 function openSection(sec){document.getElementById('detailTitle').textContent=sec.title;document.getElementById('detailDesc').textContent=sec.desc;const tool=document.getElementById('specialTool');tool.innerHTML='';document.getElementById('detailNotice').style.display='block';
 if(sec.id==='prices'){document.getElementById('detailNotice').textContent='أدخل سعر الصرف الذي تريد استخدامه بنفسك. لا تعرض البوابة حالياً أسعاراً سوقية مباشرة، لذلك لن تُقدّم أرقاماً قديمة على أنها لحظية.';tool.innerHTML='<div class="calc"><label>المبلغ<input id="amount" type="number" min="0" step="any" value="1"></label><label>سعر الوحدة<input id="rate" type="number" min="0" step="any" placeholder="أدخل السعر"></label><label>العملية<select id="operation"><option value="multiply">ضرب (تحويل إلى العملة المقابلة)</option><option value="divide">قسمة</option></select></label></div><button class="btn" id="calcBtn" style="margin-top:12px">احسب</button><div class="result" id="calcResult"></div>';document.getElementById('calcBtn').onclick=()=>{const a=Number(document.getElementById('amount').value),r=Number(document.getElementById('rate').value),op=document.getElementById('operation').value;document.getElementById('calcResult').textContent=Number.isFinite(a)&&Number.isFinite(r)&&r>0?(op==='multiply'?a*r:a/r).toLocaleString('en-US',{maximumFractionDigits:4}):'أدخل مبلغاً وسعراً صحيحين أكبر من صفر.';};}
 else if(sec.id==='chef'){document.getElementById('detailNotice').textContent='أداة اختيار عشوائي بسيطة تعمل داخل المتصفح، ولا تحتاج إلى اتصال بخدمة خارجية.';tool.innerHTML='<button class="btn" id="mealBtn">اقترح طبخة عشوائية</button><div class="result" id="mealResult"></div>';document.getElementById('mealBtn').onclick=()=>{const meals=['مجدّرة','يبرق','فتّة حمص','مقلوبة','شوربة عدس','بطاطا بالفرن','فاصولياء بالزيت','كبة بالصينية'];document.getElementById('mealResult').textContent=meals[Math.floor(Math.random()*meals.length)];};}
+
+else if(sec.id==='accounting_vip'){
+document.getElementById('detailNotice').textContent='أدوات التاجر: احسب سعر البيع والربح والهامش، واحتفظ بسجل مخزون محلي على هذا الجهاز. البيانات لا تُرسل إلى خادم.';
+tool.innerHTML='<h3 style="color:var(--gold2)">حاسبة التسعير والربح</h3><div class="calc"><label>تكلفة القطعة<input id="mCost" type="number" min="0" step="any" placeholder="مثال: 10"></label><label>المصاريف الإضافية للقطعة<input id="mExpense" type="number" min="0" step="any" value="0"></label><label>سعر البيع<input id="mSale" type="number" min="0" step="any" placeholder="مثال: 16"></label><label>الكمية المباعة<input id="mQty" type="number" min="1" step="1" value="1"></label></div><button class="btn" id="mCalc" style="margin-top:12px">احسب الربح</button><div class="result" id="mResult" aria-live="polite"></div><div class="notice">هامش الربح = الربح ÷ إجمالي المبيعات. نسبة الزيادة على التكلفة تختلف عن هامش الربح.</div><hr style="border-color:var(--line);margin:24px 0"><h3 style="color:var(--gold2)">دفتر المخزون المحلي</h3><div class="calc"><label>اسم الصنف<input id="stockName" maxlength="60" placeholder="اسم المنتج"></label><label>الكمية<input id="stockQty" type="number" min="0" step="1" placeholder="الكمية"></label><label>تكلفة الوحدة<input id="stockCost" type="number" min="0" step="any" placeholder="التكلفة"></label><label>سعر البيع<input id="stockSale" type="number" min="0" step="any" placeholder="سعر البيع"></label></div><button class="btn" id="stockAdd" style="margin-top:12px">إضافة إلى المخزون</button><div id="stockMessage" class="notice" aria-live="polite">يُحفظ السجل على هذا المتصفح فقط. امسح بيانات المتصفح أو بدّل الجهاز وقد تفقد السجل.</div><div id="stockList" style="overflow-x:auto;margin-top:14px"></div>';
+const fmt=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits:2});
+document.getElementById('mCalc').onclick=()=>{
+const c=Number(document.getElementById('mCost').value),e=Number(document.getElementById('mExpense').value||0),s=Number(document.getElementById('mSale').value),q=Number(document.getElementById('mQty').value);
+const out=document.getElementById('mResult');
+if(![c,e,s,q].every(Number.isFinite)||c<0||e<0||s<0||q<=0||!document.getElementById('mCost').value||!document.getElementById('mSale').value){out.textContent='تحقق من إدخال التكلفة وسعر البيع والكمية بشكل صحيح.';return;}
+const unit=c+e,profit=(s-unit)*q,revenue=s*q,margin=revenue?profit/revenue*100:0,markup=unit?(s-unit)/unit*100:0;
+out.textContent='إجمالي المبيعات: '+fmt(revenue)+' · إجمالي التكلفة: '+fmt(unit*q)+' · صافي الربح التقديري: '+fmt(profit)+' · هامش الربح: '+fmt(margin)+'% · الزيادة على التكلفة: '+fmt(markup)+'%';
+};
+const storageKey='bawabatsyria_stock_v1';
+const readStock=()=>{try{return JSON.parse(localStorage.getItem(storageKey)||'[]').filter(x=>x&&typeof x.name==='string');}catch(e){return [];}};
+const saveStock=items=>{try{localStorage.setItem(storageKey,JSON.stringify(items));return true;}catch(e){return false;}};
+const list=document.getElementById('stockList');
+const renderStock=()=>{
+const items=readStock();list.innerHTML='';
+if(!items.length){list.textContent='لا توجد أصناف محفوظة بعد.';return;}
+const table=document.createElement('table');table.style.cssText='width:100%;border-collapse:collapse;font-size:13px';
+const head=document.createElement('tr');
+['الصنف','الكمية','التكلفة','البيع','الربح المتوقع للصنف',''].forEach(t=>{const th=document.createElement('th');th.textContent=t;th.style.cssText='padding:9px;border-bottom:1px solid var(--line);color:var(--gold2);text-align:right';head.appendChild(th);});
+table.appendChild(head);
+items.forEach((item,index)=>{
+const tr=document.createElement('tr');
+[item.name,String(item.qty),fmt(item.cost),fmt(item.sale),fmt((item.sale-item.cost)*item.qty)].forEach(v=>{const td=document.createElement('td');td.textContent=v;td.style.cssText='padding:9px;border-bottom:1px solid var(--line)';tr.appendChild(td);});
+const td=document.createElement('td'),del=document.createElement('button');del.className='btn secondary';del.textContent='حذف';del.onclick=()=>{const next=readStock();next.splice(index,1);saveStock(next);renderStock();};td.appendChild(del);tr.appendChild(td);table.appendChild(tr);
+});
+list.appendChild(table);
+};
+document.getElementById('stockAdd').onclick=()=>{
+const name=document.getElementById('stockName').value.trim(),qty=Number(document.getElementById('stockQty').value),cost=Number(document.getElementById('stockCost').value),sale=Number(document.getElementById('stockSale').value),msg=document.getElementById('stockMessage');
+if(!name||!Number.isInteger(qty)||qty<0||!Number.isFinite(cost)||cost<0||!Number.isFinite(sale)||sale<0){msg.textContent='أدخل اسم الصنف والكمية والتكلفة وسعر البيع بصورة صحيحة.';return;}
+const items=readStock();items.push({name,qty,cost,sale});
+if(!saveStock(items)){msg.textContent='تعذر الحفظ في هذا المتصفح. تحقق من مساحة التخزين وإعدادات الخصوصية.';return;}
+['stockName','stockQty','stockCost','stockSale'].forEach(id=>document.getElementById(id).value='');
+msg.textContent='تم حفظ الصنف محلياً على هذا الجهاز.';renderStock();
+};
+renderStock();
+}
+
 panel.classList.add('open');panel.scrollIntoView({behavior:'smooth',block:'start'});}
 function showHome(){panel.classList.remove('open');document.getElementById('searchInput').focus({preventScroll:true});}
 function doSearch(){const q=document.getElementById('searchInput').value.trim().toLocaleLowerCase('ar');render(sections.filter(s=>(s.title+' '+s.desc).toLocaleLowerCase('ar').includes(q)));}
