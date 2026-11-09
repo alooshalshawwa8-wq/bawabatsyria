@@ -25,6 +25,48 @@ jobs:
         uses: actions/checkout@v4
       - name: Configure Pages
         uses: actions/configure-pages@v5
+      - name: Validate site files and JavaScript
+        run: |
+          test -f index.html
+          test -f manifest.json
+          test -f service-worker.js
+          python3 - <<'PY'
+          import json, re
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          root = Path(".")
+          html = (root / "index.html").read_text(encoding="utf-8")
+          json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+
+          scripts = re.findall(r"<script\\b[^>]*>([\\s\\S]*?)</script>", html, re.I)
+          if not scripts:
+              raise SystemExit("No inline JavaScript found in index.html")
+          Path("/tmp/site-inline.js").write_text("\\n".join(scripts), encoding="utf-8")
+
+          class AssetChecker(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.missing = []
+              def handle_starttag(self, tag, attrs):
+                  for key, value in attrs:
+                      if key not in ("src", "href") or not value:
+                          continue
+                      value = value.strip()
+                      if value.startswith(("#", "http://", "https://", "data:", "mailto:", "tel:", "javascript:")):
+                          continue
+                      path = value.split("?", 1)[0].split("#", 1)[0]
+                      if path and not (root / path).exists():
+                          self.missing.append((tag, key, value))
+
+          checker = AssetChecker()
+          checker.feed(html)
+          if checker.missing:
+              raise SystemExit("Missing local assets: " + repr(checker.missing))
+          print("HTML assets and manifest checks passed.")
+          PY
+          node --check /tmp/site-inline.js
+          node --check service-worker.js
       - name: Upload site
         uses: actions/upload-pages-artifact@v4
         with:
