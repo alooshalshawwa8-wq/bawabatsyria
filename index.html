@@ -22,6 +22,8 @@ main{max-width:1180px;margin:auto;padding:28px 18px 60px}.hero{padding:34px 26px
 .empty{grid-column:1/-1;padding:24px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
 .membership-card{border:1px solid var(--line);background:linear-gradient(145deg,#15233b,#101a2d);border-radius:15px;padding:17px;display:flex;flex-direction:column;gap:10px}.membership-card h3{color:var(--gold2);margin:0}.membership-card p{font-size:13px;margin:0}.membership-card ul{padding-right:19px;color:#c2ccda;font-size:13px;line-height:1.9;margin:0}.membership-card button:disabled{opacity:.55;cursor:not-allowed}.panel.open{display:block}footer{border-top:1px solid var(--line);padding:20px;text-align:center;color:var(--muted);font-size:12px;line-height:1.8}
 @media(max-width:600px){header{padding:11px 14px}.brand strong{font-size:16px}.brand small{font-size:11px}.hero{padding:24px 17px}.searchrow{flex-direction:column}.searchrow .btn{width:100%}.section-head{align-items:start;flex-direction:column}}
+
+.ai-helper{margin-top:22px;padding:18px;border:1px solid #526b8e;border-radius:14px;background:linear-gradient(145deg,#142642,#0e192b)}.ai-helper h3,.ai-catalog h3{color:var(--gold2);margin:0 0 8px}.ai-helper p,.ai-catalog p{font-size:13px;color:#c2ccda;line-height:1.8}.ai-helper textarea{display:block;width:100%;min-height:120px;margin-top:8px;background:#0b1527;border:1px solid var(--line);border-radius:9px;padding:12px;color:white;line-height:1.8}.ai-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.ai-links a{display:inline-flex;align-items:center;border:1px solid #405879;border-radius:9px;padding:8px 11px;color:#e8d29b;text-decoration:none;font-size:13px}.ai-links a:hover{border-color:var(--gold);background:#1b2d49}.ai-catalog{margin-top:18px;padding:16px;border:1px solid var(--line);border-radius:12px;background:#0d192b}.ai-catalog-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.ai-catalog-card{border:1px solid var(--line);border-radius:10px;padding:12px;background:#14233a}.ai-catalog-card strong{display:block;color:var(--gold2);margin-bottom:6px}.ai-catalog-card a{display:block;color:#d7e5fa;text-decoration:none;font-size:13px;padding:4px 0}.ai-catalog-card a:hover{text-decoration:underline}.ai-tag{font-size:11px;color:#aebed2}
 </style>
 </head>
 <body>
@@ -181,6 +183,74 @@ copy.onclick=async()=>{try{await navigator.clipboard.writeText(output.value);cop
 return true;
 }
 
+
+// Free AI directory and section-aware prompt helper.
+// External providers are opened by the visitor; no private API keys are stored in this public site.
+const FREE_AI_WEB_TOOLS = [
+  {name:'ChatGPT المجاني',url:'https://chatgpt.com/'},
+  {name:'Google Gemini',url:'https://gemini.google.com/'},
+  {name:'Microsoft Copilot',url:'https://copilot.microsoft.com/'},
+  {name:'Perplexity',url:'https://www.perplexity.ai/'},
+  {name:'HuggingChat',url:'https://huggingface.co/chat/'}
+];
+function aiLink(name,url){
+  const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=name;return a;
+}
+function appendFreeAIHelper(sec,tool){
+  const box=document.createElement('section');box.className='ai-helper';
+  const h=document.createElement('h3');h.textContent='مساعد الذكاء الاصطناعي لهذا القسم';box.appendChild(h);
+  const p=document.createElement('p');
+  p.textContent='اكتب ما تريد إنجازه في هذا القسم، وسنجهّز لك طلباً واضحاً يمكنك نسخه وفتحه في أحد المساعدات المجانية. هذه روابط لخدمات خارجية؛ لا ندّعي أن ردودها تعمل داخل الموقع أو أنها غير محدودة.';
+  box.appendChild(p);
+  const label=document.createElement('label');label.textContent='مهمتك أو سؤالك';
+  const input=document.createElement('textarea');input.placeholder='مثال: اشرح لي الخطوات، قارن الخيارات، أو أنشئ خطة عملية…';input.setAttribute('aria-label','مهمتك لمساعد الذكاء الاصطناعي');
+  label.appendChild(input);box.appendChild(label);
+  const prompt=document.createElement('textarea');prompt.readOnly=true;prompt.setAttribute('aria-label','الطلب الجاهز للنسخ');
+  prompt.value='أنت مساعد متخصص في '+sec.title+' ضمن بوابة سورية.\nقدّم إجابة عربية واضحة وعملية. لا تخترع أسعاراً أو قوانين أو معلومات آنية. ميّز بين الحقائق والافتراضات، واطلب توضيحاً عند نقص البيانات، وأرفق مصادر رسمية وروابط وتاريخ التحقق عندما تكون المعلومات متغيرة.\n\nوصف القسم: '+sec.desc+'\n\nالمهمة: ';
+  const actions=document.createElement('div');actions.className='panel-actions';
+  const make=document.createElement('button');make.className='btn';make.type='button';make.textContent='جهّز الطلب';
+  make.onclick=()=>{const q=input.value.trim();if(!q){input.focus();return;}prompt.value=prompt.value.split('\n\nالمهمة: ')[0]+'\n\nالمهمة: '+q;};
+  const copy=document.createElement('button');copy.className='btn secondary';copy.type='button';copy.textContent='نسخ الطلب';
+  copy.onclick=async()=>{if(!input.value.trim()){input.focus();return;}make.onclick();try{await navigator.clipboard.writeText(prompt.value);copy.textContent='تم النسخ ✓';}catch(e){prompt.focus();prompt.select();copy.textContent='حدّد النص وانسخه';}};
+  actions.append(make,copy);box.append(actions);box.appendChild(prompt);
+  const links=document.createElement('div');links.className='ai-links';
+  FREE_AI_WEB_TOOLS.forEach(item=>links.appendChild(aiLink(item.name,item.url)));
+  box.appendChild(links);
+  const note=document.createElement('p');note.className='ai-tag';
+  note.textContent='تنبيه: الخطط المجانية قد تفرض حدوداً أو تتغير. لا تُدخل كلمات مرور أو بيانات مالية أو معلومات شخصية حساسة في خدمات خارجية.';
+  box.appendChild(note);
+  if(sec.id==='syria_ai') appendFreeAICatalog(box);
+  tool.appendChild(box);
+}
+function appendFreeAICatalog(parent){
+  const catalog=document.createElement('section');catalog.className='ai-catalog';
+  const title=document.createElement('h3');title.textContent='دليل نماذج وبرامج الذكاء الاصطناعي المجانية';catalog.appendChild(title);
+  const intro=document.createElement('p');
+  intro.textContent='الدليل يجمع خدمات مجانية أو ذات حصة مجانية، وبرامج مفتوحة المصدر. المجانية لا تعني استخداماً غير محدود؛ وقد تتطلب واجهات API حساباً ومفتاحاً خاصاً بك. البرامج المحلية مجانية لكن تشغيل النماذج الكبيرة يحتاج ذاكرة ومعالجاً أو بطاقة رسومية مناسبة.';
+  catalog.appendChild(intro);
+  const grid=document.createElement('div');grid.className='ai-catalog-grid';
+  const groups=[
+    {title:'مساعدات ويب مجانية',tag:'تعمل عبر المتصفح — حدود الاستخدام تختلف',items:[['ChatGPT','https://chatgpt.com/'],['Gemini','https://gemini.google.com/'],['Copilot','https://copilot.microsoft.com/'],['Perplexity','https://www.perplexity.ai/'],['HuggingChat','https://huggingface.co/chat/']]},
+    {title:'واجهات نماذج وAPI بحصص مجانية',tag:'تحتاج حساباً ومفتاح API؛ راجع الحدود والخصوصية',items:[['Google AI Studio / Gemini API','https://aistudio.google.com/'],['GroqCloud','https://console.groq.com/'],['OpenRouter — النماذج المجانية','https://openrouter.ai/collections/free-models'],['Mistral La Plateforme','https://console.mistral.ai/'],['Cloudflare Workers AI','https://developers.cloudflare.com/workers-ai/']]},
+    {title:'تشغيل نماذج مفتوحة محلياً',tag:'برامج مجانية؛ النماذج لها تراخيص ومتطلبات مختلفة',items:[['Ollama','https://ollama.com/'],['LM Studio','https://lmstudio.ai/'],['Jan','https://jan.ai/'],['GPT4All','https://www.nomic.ai/gpt4all']]},
+    {title:'الصور والتصميم التوليدي',tag:'برامج محلية مجانية؛ قد تتطلب GPU ومساحة تخزين',items:[['ComfyUI','https://www.comfy.org/'],['Stable Diffusion WebUI','https://github.com/AUTOMATIC1111/stable-diffusion-webui'],['InvokeAI','https://invoke.ai/']]},
+    {title:'الصوت والتفريغ النصي',tag:'أدوات مفتوحة المصدر للتشغيل المحلي',items:[['Whisper','https://github.com/openai/whisper'],['whisper.cpp','https://github.com/ggml-org/whisper.cpp'],['Piper TTS','https://github.com/rhasspy/piper']]},
+    {title:'البرمجة والوكلاء',tag:'البرنامج مجاني؛ النموذج قد يحتاج API أو نموذجاً محلياً',items:[['Continue','https://www.continue.dev/'],['Aider','https://aider.chat/'],['Cline','https://cline.bot/'],['OpenHands','https://www.openhands.dev/']]}
+  ];
+  groups.forEach(group=>{
+    const card=document.createElement('div');card.className='ai-catalog-card';
+    const h=document.createElement('strong');h.textContent=group.title;card.appendChild(h);
+    const small=document.createElement('div');small.className='ai-tag';small.textContent=group.tag;card.appendChild(small);
+    group.items.forEach(item=>card.appendChild(aiLink(item[0],item[1])));
+    grid.appendChild(card);
+  });
+  catalog.appendChild(grid);
+  const caution=document.createElement('p');
+  caution.textContent='ملاحظات مهمة: نماذج OpenRouter المجانية تتغير وتخضع لحدود يومية؛ Google AI Studio يوضح أن بيانات الطبقة المجانية قد تُستخدم لتحسين منتجات Google؛ ولا ترسل بيانات عملاء البوابة أو سجلاتها إلى أي نموذج خارجي دون موافقة وسياسة خصوصية مناسبة. لم نضع مفاتيح API داخل الموقع.';
+  catalog.appendChild(caution);
+  parent.appendChild(catalog);
+}
+
 async function openSection(sec){
 const vipSections=['engineer_vip','marketing_vip','video_factory_vip','freelance_vip','accounting_vip'];
 if(vipSections.includes(sec.id)){
@@ -299,6 +369,7 @@ finally{importFile.value='';}
 renderStock();
 }
 
+appendFreeAIHelper(sec,tool);
 panel.classList.add('open');panel.scrollIntoView({behavior:'smooth',block:'start'});}
 function showHome(){panel.classList.remove('open');document.getElementById('searchInput').focus({preventScroll:true});}
 function doSearch(){const q=document.getElementById('searchInput').value.trim().toLocaleLowerCase('ar');if(!q){render(sections);return;}const titleMatches=sections.filter(s=>s.title.toLocaleLowerCase('ar').includes(q));render(titleMatches.length?titleMatches:sections.filter(s=>s.desc.toLocaleLowerCase('ar').includes(q)));}
