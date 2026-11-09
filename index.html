@@ -43,6 +43,16 @@ main{max-width:1180px;margin:auto;padding:28px 18px 60px}.hero{padding:34px 26px
 <div class="notice" id="membershipStatus" role="status">يتم التحقق من إعداد خدمة العضوية…</div>
 <div class="grid" id="membershipPlans" style="margin-top:16px"></div>
 <div class="notice" id="membershipWallet" style="margin-top:16px">المحفظة وسجل النقاط يظهران بعد تسجيل الدخول وربط حسابك بالخدمة.</div>
+<div class="notice" id="ownerAdminTools" hidden style="margin-top:16px">
+  <strong>أدوات مالك المنصة — إدارة النقاط</strong>
+  <div class="calc">
+    <label>معرّف حساب المستفيد<input id="grantUserId" type="text" maxlength="36" placeholder="UUID الخاص بالمستخدم"></label>
+    <label>عدد النقاط (+ أو -)<input id="grantDelta" type="number" min="-10000" max="10000" step="1" placeholder="مثال: 100"></label>
+    <label>سبب العملية<input id="grantReason" type="text" maxlength="160" placeholder="مكافأة / تصحيح رصيد"></label>
+  </div>
+  <button class="btn" id="grantPointsBtn" type="button" style="margin-top:12px">اعتماد النقاط</button>
+  <div id="grantPointsStatus" role="status" style="margin-top:10px"></div>
+</div>
 </section>
 <div class="section-head"><div><h2>استكشف الأقسام</h2><p id="countLabel">جميع الخدمات والأدلة</p></div></div>
 <section class="grid" id="sectionsGrid" aria-live="polite"></section>
@@ -298,6 +308,24 @@ const membershipPanel=document.getElementById('membershipPanel');
 const membershipStatus=document.getElementById('membershipStatus');
 const membershipPlans=document.getElementById('membershipPlans');
 const membershipWallet=document.getElementById('membershipWallet');
+const ownerAdminTools=document.getElementById('ownerAdminTools');
+const grantPointsStatus=document.getElementById('grantPointsStatus');
+document.getElementById('grantPointsBtn').addEventListener('click',async()=>{
+  const userId=document.getElementById('grantUserId').value.trim();
+  const delta=Number(document.getElementById('grantDelta').value);
+  const reason=document.getElementById('grantReason').value.trim();
+  const token=await refreshMembershipSession();
+  if(!token){grantPointsStatus.textContent='انتهت الجلسة؛ سجّل الدخول مجدداً.';return;}
+  if(!userId||!Number.isSafeInteger(delta)||delta===0||Math.abs(delta)>10000||!reason){grantPointsStatus.textContent='أدخل UUID صحيحاً وعدداً صحيحاً بين -10000 و10000 وسبباً للعملية.';return;}
+  const button=document.getElementById('grantPointsBtn');button.disabled=true;grantPointsStatus.textContent='جارٍ اعتماد العملية…';
+  try{
+    const response=await fetch(membershipApi+'/api/points/grant',{method:'POST',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify({userId,delta,reason,idempotencyKey:crypto.randomUUID()})});
+    const data=await response.json();if(!response.ok)throw new Error(data.error||'تعذر اعتماد النقاط');
+    grantPointsStatus.textContent='تم تسجيل العملية بنجاح. حدّث حساب المستفيد لعرض الرصيد.';
+    document.getElementById('grantDelta').value='';document.getElementById('grantReason').value='';
+  }catch(error){grantPointsStatus.textContent=error.message||'تعذر تنفيذ العملية.';}
+  finally{button.disabled=false;}
+});
 const membershipApi=(window.BAWABA_API_BASE||'').replace(/\/$/,'');
 const authUrl=(window.BAWABA_SUPABASE_URL||'').replace(/\/$/,'');
 const authAnonKey=window.BAWABA_SUPABASE_ANON_KEY||'';
@@ -350,6 +378,7 @@ function openMembership(){panel.classList.remove('open');membershipPanel.classLi
 async function loadMembership(){
 await refreshMembershipSession();
 membershipPlans.replaceChildren();
+ownerAdminTools.hidden=true;
 if(!membershipApi){membershipStatus.textContent='واجهة العضوية جاهزة، لكن خادم العضوية لم يُنشر أو يُربط بعد. لن نعرض دفعاً وهمياً أو نفعّل VIP قبل ربط الخادم.';membershipPlans.append(membershipNode('div','الاحترافية · VIP · الأعمال — الأسعار ومعالجة الدفع تُحمّل من الخادم بعد تهيئته.','empty'));return;}
 membershipStatus.textContent='جارٍ الاتصال بخدمة العضوية…';
 try{
@@ -374,7 +403,7 @@ if(!membershipToken()){membershipWallet.textContent='لم يتم ربط جلسة
 const meResponse=await fetch(membershipApi+'/api/me',{headers:{authorization:'Bearer '+membershipToken(),accept:'application/json'}});
 if(!meResponse.ok)throw new Error('تعذر التحقق من حسابك');
 const me=await meResponse.json();
-const ownerEntitlement=(me.entitlements||[]).some(x=>x.entitlement_key==='owner_access'&&x.active===true);const vipEntitlement=(me.entitlements||[]).some(x=>x.entitlement_key==='vip_access'&&x.active===true);const isPlatformOwner=(me.owner===true||me.role==='OWNER'||ownerEntitlement);if(isPlatformOwner){membershipStatus.textContent='✦ تم تفعيل حساب مالك المنصة بنجاح — OWNER / SUPER ADMIN — عضوية مجانية مدى الحياة تشمل VIP والاحترافية والأعمال وجميع الميزات. لا تحتاج إلى شراء اشتراك.';membershipWallet.textContent='✦ مالك المنصة · OWNER / SUPER ADMIN · وصول مجاني دائم مفعّل. الصلاحيات: '+(me.entitlements||[]).filter(x=>x.active).map(x=>x.entitlement_key).join('، ')+' · رصيد النقاط: '+Number(me.points||0).toLocaleString('ar')+' نقطة.';}else{membershipWallet.textContent='رصيد النقاط: '+Number(me.points||0).toLocaleString('ar')+' نقطة · الصلاحيات: '+(me.entitlements||[]).filter(x=>x.active).map(x=>x.entitlement_key).join('، ')+' · الاشتراكات: '+(me.subscriptions||[]).map(x=>x.plan_id+' ('+x.status+')').join('، ');}
+const ownerEntitlement=(me.entitlements||[]).some(x=>x.entitlement_key==='owner_access'&&x.active===true);const vipEntitlement=(me.entitlements||[]).some(x=>x.entitlement_key==='vip_access'&&x.active===true);const isPlatformOwner=(me.owner===true||me.role==='OWNER'||ownerEntitlement);if(isPlatformOwner){ownerAdminTools.hidden=false;membershipStatus.textContent='✦ تم تفعيل حساب مالك المنصة بنجاح — OWNER / SUPER ADMIN — عضوية مجانية مدى الحياة تشمل VIP والاحترافية والأعمال وجميع الميزات. لا تحتاج إلى شراء اشتراك.';membershipWallet.textContent='✦ مالك المنصة · OWNER / SUPER ADMIN · وصول مجاني دائم مفعّل. الصلاحيات: '+(me.entitlements||[]).filter(x=>x.active).map(x=>x.entitlement_key).join('، ')+' · رصيد النقاط: '+Number(me.points||0).toLocaleString('ar')+' نقطة.';}else{membershipWallet.textContent='رصيد النقاط: '+Number(me.points||0).toLocaleString('ar')+' نقطة · الصلاحيات: '+(me.entitlements||[]).filter(x=>x.active).map(x=>x.entitlement_key).join('، ')+' · الاشتراكات: '+(me.subscriptions||[]).map(x=>x.plan_id+' ('+x.status+')').join('، ');}
 }catch(error){membershipStatus.textContent='خدمة العضوية غير متاحة حالياً. تحقق من إعداد الخادم ومفاتيح المصادقة والدفع.';}
 }
 async function startMembershipCheckout(planId){
