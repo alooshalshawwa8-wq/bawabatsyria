@@ -161,7 +161,34 @@ copy.onclick=async()=>{try{await navigator.clipboard.writeText(output.value);cop
 return true;
 }
 
-function openSection(sec){document.getElementById('detailTitle').textContent=sec.title;document.getElementById('detailDesc').textContent=sec.desc;const tool=document.getElementById('specialTool');tool.innerHTML='';document.getElementById('detailNotice').style.display='block';
+async function openSection(sec){
+const vipSections=['engineer_vip','marketing_vip','video_factory_vip','freelance_vip','accounting_vip'];
+if(vipSections.includes(sec.id)&&membershipApi){
+const token=membershipToken(),tool=document.getElementById('specialTool');
+document.getElementById('detailTitle').textContent=sec.title;
+document.getElementById('detailDesc').textContent=sec.desc;
+if(!token){
+document.getElementById('detailNotice').textContent='هذا القسم ضمن مزايا VIP. سجّل الدخول أولاً ليتحقق النظام من عضويتك.';
+tool.replaceChildren();
+const btn=document.createElement('button');btn.className='btn';btn.textContent='عرض الباقات والعضوية';btn.onclick=openMembership;tool.appendChild(btn);
+panel.classList.add('open');panel.scrollIntoView({behavior:'smooth',block:'start'});return;
+}
+try{
+const response=await fetch(membershipApi+'/api/me',{headers:{authorization:'Bearer '+token,accept:'application/json'}});
+if(!response.ok)throw new Error('تعذر التحقق من العضوية');
+const me=await response.json(),allowed=(me.entitlements||[]).some(x=>x.entitlement_key==='vip_access'&&x.active)||(me.entitlements||[]).some(x=>x.entitlement_key==='business_access'&&x.active);
+if(!allowed){
+document.getElementById('detailNotice').textContent='هذه الميزة متاحة للمشتركين في VIP أو باقة الأعمال. يمكنك مراجعة الباقات لمعرفة التفاصيل.';
+tool.replaceChildren();
+const btn=document.createElement('button');btn.className='btn';btn.textContent='عرض الباقات';btn.onclick=openMembership;tool.appendChild(btn);
+panel.classList.add('open');panel.scrollIntoView({behavior:'smooth',block:'start'});return;
+}
+}catch(error){
+document.getElementById('detailNotice').textContent='تعذر التحقق من صلاحية VIP حالياً؛ أوقفنا فتح هذه الميزة حمايةً لحسابك. حاول مجدداً بعد قليل.';
+tool.replaceChildren();panel.classList.add('open');panel.scrollIntoView({behavior:'smooth',block:'start'});return;
+}
+}
+document.getElementById('detailTitle').textContent=sec.title;document.getElementById('detailDesc').textContent=sec.desc;const tool=document.getElementById('specialTool');tool.innerHTML='';document.getElementById('detailNotice').style.display='block';
 if(sec.id==='prices'){document.getElementById('detailNotice').textContent='أدخل سعر الصرف الذي تريد استخدامه بنفسك. لا تعرض البوابة حالياً أسعاراً سوقية مباشرة، لذلك لن تُقدّم أرقاماً قديمة على أنها لحظية.';tool.innerHTML='<div class="calc"><label>المبلغ<input id="amount" type="number" min="0" step="any" value="1"></label><label>سعر الوحدة<input id="rate" type="number" min="0" step="any" placeholder="أدخل السعر"></label><label>العملية<select id="operation"><option value="multiply">ضرب (تحويل إلى العملة المقابلة)</option><option value="divide">قسمة</option></select></label></div><button class="btn" id="calcBtn" style="margin-top:12px">احسب</button><div class="result" id="calcResult"></div>';document.getElementById('calcBtn').onclick=()=>{const a=Number(document.getElementById('amount').value),r=Number(document.getElementById('rate').value),op=document.getElementById('operation').value;document.getElementById('calcResult').textContent=Number.isFinite(a)&&Number.isFinite(r)&&r>0?(op==='multiply'?a*r:a/r).toLocaleString('en-US',{maximumFractionDigits:4}):'أدخل مبلغاً وسعراً صحيحين أكبر من صفر.';};}
 else if(sec.id==='chef'){document.getElementById('detailNotice').textContent='أداة اختيار عشوائي بسيطة تعمل داخل المتصفح، ولا تحتاج إلى اتصال بخدمة خارجية.';tool.innerHTML='<button class="btn" id="mealBtn">اقترح طبخة عشوائية</button><div class="result" id="mealResult"></div>';document.getElementById('mealBtn').onclick=()=>{const meals=['مجدّرة','يبرق','فتّة حمص','مقلوبة','شوربة عدس','بطاطا بالفرن','فاصولياء بالزيت','كبة بالصينية'];document.getElementById('mealResult').textContent=meals[Math.floor(Math.random()*meals.length)];};}
 
