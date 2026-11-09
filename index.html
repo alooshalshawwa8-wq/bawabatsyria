@@ -554,4 +554,83 @@ if(new URLSearchParams(location.search).get('membership')==='success'){openMembe
 if(new URLSearchParams(location.search).get('membership')==='cancelled'){openMembership();membershipStatus.textContent='تم إلغاء عملية الدفع. لم يتم تفعيل اشتراك.';}
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));}
 </script>
+
+<style>
+#bawaba-assistant-launcher{position:fixed;left:18px;bottom:18px;z-index:9998;border:1px solid #f2d28b;border-radius:999px;padding:12px 17px;background:linear-gradient(135deg,#d89b31,#f0c96f);color:#172033;font:700 14px Tahoma,Arial,sans-serif;box-shadow:0 8px 28px #0006;cursor:pointer}
+#bawaba-assistant-window{position:fixed;left:18px;bottom:78px;z-index:9999;width:min(390px,calc(100vw - 24px));height:min(590px,calc(100dvh - 110px));display:none;flex-direction:column;overflow:hidden;border:1px solid #b38b43;border-radius:18px;background:#101b2e;color:#f7f8fb;box-shadow:0 18px 60px #0009;font-family:Tahoma,"Segoe UI",sans-serif}
+#bawaba-assistant-window.open{display:flex}
+.bawaba-chat-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px;background:linear-gradient(120deg,#1d3557,#18243a);border-bottom:1px solid #344765}
+.bawaba-chat-head strong{display:block;color:#ffda83;font-size:15px}.bawaba-chat-head small{display:block;color:#c4d0df;font-size:11px;margin-top:4px}
+#bawaba-chat-close{border:1px solid #50617b;background:transparent;color:white;border-radius:9px;padding:6px 10px;cursor:pointer}
+#bawaba-chat-messages{flex:1;overflow:auto;padding:13px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+.bawaba-chat-msg{max-width:90%;padding:10px 12px;border-radius:13px;line-height:1.8;font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.bawaba-chat-msg.bot{align-self:flex-start;background:#1a2b45;border:1px solid #344765;border-bottom-right-radius:4px}
+.bawaba-chat-msg.user{align-self:flex-end;background:#725523;color:#fff3d2;border-bottom-left-radius:4px}
+.bawaba-chat-quick{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 10px}
+.bawaba-chat-quick button{border:1px solid #526987;background:#14243a;color:#f2d28b;border-radius:20px;padding:7px 10px;font-size:11px;cursor:pointer}
+.bawaba-chat-compose{display:flex;gap:8px;padding:11px;border-top:1px solid #344765;background:#0c1627}
+#bawaba-chat-input{min-width:0;flex:1;resize:none;min-height:43px;max-height:100px;border:1px solid #40536f;border-radius:10px;background:#101e33;color:#fff;padding:10px;font:13px Tahoma,sans-serif;line-height:1.6}
+#bawaba-chat-send{border:0;border-radius:10px;background:linear-gradient(135deg,#d89b31,#f0c96f);color:#172033;font-weight:700;padding:0 14px;cursor:pointer}
+#bawaba-chat-send:disabled{opacity:.55;cursor:wait}
+.bawaba-chat-foot{padding:0 12px 9px;color:#91a2b9;font-size:10px;background:#0c1627}
+@media(max-width:480px){#bawaba-assistant-launcher{left:12px;bottom:12px;padding:11px 14px}#bawaba-assistant-window{left:8px;bottom:68px;width:calc(100vw - 16px);height:min(610px,calc(100dvh - 90px))}}
+</style>
+<button id="bawaba-assistant-launcher" type="button" aria-label="افتح مرشد بوابة سورية">💬 احكي مع مرشد البوابة</button>
+<section id="bawaba-assistant-window" dir="rtl" aria-label="محادثة مرشد بوابة سورية">
+  <div class="bawaba-chat-head"><div><strong>رفيق بوابة سورية 🤍</strong><small>مرشدك الودود باللهجة الشامية</small></div><button id="bawaba-chat-close" type="button" aria-label="إغلاق المحادثة">✕</button></div>
+  <div id="bawaba-chat-messages" role="log" aria-live="polite"></div>
+  <div class="bawaba-chat-quick" id="bawaba-chat-quick">
+    <button type="button" data-q="شو فيني استفيد من بوابة سورية؟">عرّفني على البوابة</button>
+    <button type="button" data-q="كيف بلاقي القسم اللي بدي ياه؟">دلّني على الأقسام</button>
+    <button type="button" data-q="شو الفرق بين الباقات والعضويات؟">الباقات والعضويات</button>
+  </div>
+  <div class="bawaba-chat-compose"><textarea id="bawaba-chat-input" rows="1" maxlength="1200" placeholder="اكتب سؤالك هون…"></textarea><button id="bawaba-chat-send" type="button">إرسال</button></div>
+  <div class="bawaba-chat-foot">لا ترسل كلمات مرور أو رموز تحقق أو معلومات مالية حساسة.</div>
+</section>
+<script>
+(function(){
+  const launcher=document.getElementById('bawaba-assistant-launcher'),windowBox=document.getElementById('bawaba-assistant-window'),close=document.getElementById('bawaba-chat-close'),messages=document.getElementById('bawaba-chat-messages'),input=document.getElementById('bawaba-chat-input'),send=document.getElementById('bawaba-chat-send'),quick=document.getElementById('bawaba-chat-quick');
+  if(!launcher||!windowBox)return;
+  const history=[];
+  const sections=Array.isArray(window.sections)?window.sections:[];
+  function addMessage(text,role){
+    const node=document.createElement('div');node.className='bawaba-chat-msg '+(role==='user'?'user':'bot');node.textContent=text;messages.appendChild(node);messages.scrollTop=messages.scrollHeight;
+  }
+  function openChat(){windowBox.classList.add('open');launcher.style.display='none';if(!messages.childElementCount)addMessage('أهلا وسهلا فيك ببوابة سورية! 😊 أنا رفيقك ومرشدك هون. خبرني شو عم تدور عليه، وبمشي معك خطوة خطوة لنوصل للقسم أو الخدمة المناسبة.','assistant');input.focus();}
+  function closeChat(){windowBox.classList.remove('open');launcher.style.display='block';}
+  function localGuide(q){
+    const s=q.toLowerCase();
+    if(/مرحبا|أهلا|اهلا|السلام|هاي|hello/.test(s))return 'أهلا فيك يا غالي/غالية، نورت بوابة سورية! 🌷 شو حابب تكتشف اليوم؟';
+    if(/قسم|خدم|دور|لاقي|ابحث|وين|أوصل|اوصل/.test(s)){
+      const matches=sections.filter(x=>(x.title+' '+x.desc).toLowerCase().includes(s)).slice(0,4);
+      return matches.length?'أكيد! جرّب هالأقسام:\n'+matches.map(x=>'• '+x.title).join('\n')+'\n\nاكتب اسم القسم بخانة البحث أعلى الصفحة وافتحه مباشرة.': 'من خانة البحث أعلى الصفحة اكتب اسم الخدمة أو كلمة بتوصف حاجتك، وبتظهرلك الأقسام القريبة منها. وإذا بتقلي شو بدك تعمل، بدلك على القسم الأنسب.';
+    }
+    if(/باق|عضوي|اشتراك|vip|pro|مجاني|سعر/.test(s))return 'عنا مستويات عضوية مختلفة، وفي ميزات مرتبطة بباقات معينة. افتح زر «العضوية والمحفظة» أعلى الموقع لتشوف الخطط وحالة حسابك. الدفع مو مفعّل حالياً، فما رح أطلب منك أي تحويل أو دفعة.';
+    if(/تجرب|سبع|7 أيام|اسبوع|أسبوع/.test(s))return 'فكرة التجربة المجانية لمدة 7 أيام ضمن خطة التطوير، لكن ما بدي أوعدك إنها مفعّلة قبل ما نتأكد من إعدادها بحسابك. فيك تشوف تفاصيل العضوية من زر «العضوية والمحفظة».';
+    if(/حساب|دخول|سجل|كلمة مرور|نسيت/.test(s))return 'لإدارة حسابك افتح «العضوية والمحفظة» من أعلى الصفحة. وإذا واجهتك مشكلة بالدخول، خبرني شو الرسالة اللي ظهرتلك، بس لا تبعتلي كلمة المرور أو رمز التحقق.';
+    if(/شام كاش|دفع|تحويل/.test(s))return 'الدفع عبر شام كاش قيد التجهيز والتحقق، ولسه مو مفعّل. لا تحوّل أي مبلغ لأي حساب قبل الإعلان الرسمي عن تفعيل الدفع داخل الموقع.';
+    if(/مساعدة|مساعد|ذكاء|ai|روبوت|مرشد/.test(s))return 'أنا مرشد البوابة التجريبي. فيني دلّك على الأقسام وأشرحلك طريقة استخدامها. المحادثة التوليدية الكاملة رح تتفعّل بعد إضافة مفتاح نموذج الذكاء الاصطناعي بشكل آمن على الخادم.';
+    if(/شكرا|شكراً|يسلمو|مشكور/.test(s))return 'أهلاً وسهلاً فيك، هاد واجبي! ❤️ إذا بدك شي تاني أنا هون.';
+    return 'تمام، فهمت عليك بشكل أولي 😊 احكيلي شو هدفك أو شو النتيجة اللي بدك توصللها، وبحاول دلّك على القسم المناسب. فيك كمان تستخدم البحث أعلى الصفحة لتوصل للخدمة بسرعة.';
+  }
+  async function ask(){
+    const q=input.value.trim();if(!q||send.disabled)return;
+    input.value='';quick.style.display='none';addMessage(q,'user');history.push({role:'user',content:q});send.disabled=true;send.textContent='…';
+    try{
+      const response=await fetch('https://elzquyehghuxhswogsch.supabase.co/functions/v1/site-assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history.slice(-10)})});
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(data.error||'assistant unavailable');
+      addMessage(data.answer,'assistant');history.push({role:'assistant',content:data.answer});
+    }catch(error){
+      const fallback=localGuide(q);
+      addMessage(fallback,'assistant');
+      if(!window.__bawabaAssistantNoticeShown){window.__bawabaAssistantNoticeShown=true;addMessage('ملاحظة صغيرة: عم اشتغل حالياً بوضع الإرشاد التجريبي. لتفعيل الحوار الذكي المفتوح لازم نضيف مفتاح Gemini الآمن لإعدادات الخادم.','assistant');}
+    }finally{send.disabled=false;send.textContent='إرسال';input.focus();}
+  }
+  launcher.addEventListener('click',openChat);close.addEventListener('click',closeChat);send.addEventListener('click',ask);
+  input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();ask();}});
+  quick.addEventListener('click',event=>{const button=event.target.closest('button[data-q]');if(button){input.value=button.dataset.q;ask();}});
+})();
+</script>
+
 </body></html>
