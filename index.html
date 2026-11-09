@@ -913,7 +913,19 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
 </script>
 
 <style>
-#bawaba-assistant-launcher{position:fixed;left:18px;bottom:18px;z-index:9998;border:1px solid #f2d28b;border-radius:999px;padding:12px 17px;background:linear-gradient(135deg,#d89b31,#f0c96f);color:#172033;font:700 14px Tahoma,Arial,sans-serif;box-shadow:0 8px 28px #0006;cursor:pointer}
+.bawaba-mascot{position:relative;display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;flex:0 0 48px;filter:drop-shadow(0 4px 5px #0005);animation:bawabaMascotFloat 2.4s ease-in-out infinite}
+.bawaba-mascot svg{width:100%;height:100%;overflow:visible}
+.bawaba-mascot .mascot-ear{transform-box:fill-box;transform-origin:bottom center;animation:bawabaEarWiggle 3.2s ease-in-out infinite}
+.bawaba-mascot .mascot-tail{transform-box:fill-box;transform-origin:left center;animation:bawabaTailWag 1.8s ease-in-out infinite}
+.bawaba-mascot .mascot-blink{animation:bawabaBlink 4.8s infinite}
+.bawaba-chat-mascot{width:43px;height:43px;flex-basis:43px}
+@keyframes bawabaMascotFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-6px) rotate(2deg)}}
+@keyframes bawabaEarWiggle{0%,80%,100%{transform:rotate(0)}86%{transform:rotate(-12deg)}92%{transform:rotate(8deg)}}
+@keyframes bawabaTailWag{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(13deg)}}
+@keyframes bawabaBlink{0%,46%,50%,100%{transform:scaleY(1)}48%{transform:scaleY(.08)}}
+#bawaba-assistant-launcher{position:fixed;left:18px;bottom:18px;z-index:9998;display:flex;align-items:center;gap:9px;border:1px solid #f2d28b;border-radius:999px;padding:7px 16px 7px 9px;background:linear-gradient(135deg,#d89b31,#f0c96f);color:#172033;font:700 14px Tahoma,Arial,sans-serif;box-shadow:0 8px 28px #0006;cursor:pointer}
+#bawaba-assistant-launcher .bawaba-mascot{width:43px;height:43px;flex-basis:43px}
+.bawaba-chat-brand{display:flex;align-items:center;gap:9px}
 #bawaba-assistant-window{position:fixed;left:18px;bottom:78px;z-index:9999;width:min(390px,calc(100vw - 24px));height:min(590px,calc(100dvh - 110px));display:none;flex-direction:column;overflow:hidden;border:1px solid #b38b43;border-radius:18px;background:#101b2e;color:#f7f8fb;box-shadow:0 18px 60px #0009;font-family:Tahoma,"Segoe UI",sans-serif}
 #bawaba-assistant-window.open{display:flex}
 .bawaba-chat-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px;background:linear-gradient(120deg,#1d3557,#18243a);border-bottom:1px solid #344765}
@@ -930,11 +942,12 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
 #bawaba-chat-send{border:0;border-radius:10px;background:linear-gradient(135deg,#d89b31,#f0c96f);color:#172033;font-weight:700;padding:0 14px;cursor:pointer}
 #bawaba-chat-send:disabled{opacity:.55;cursor:wait}
 .bawaba-chat-foot{padding:0 12px 9px;color:#91a2b9;font-size:10px;background:#0c1627}
-@media(max-width:480px){#bawaba-assistant-launcher{left:12px;bottom:12px;padding:11px 14px}#bawaba-assistant-window{left:8px;bottom:68px;width:calc(100vw - 16px);height:min(610px,calc(100dvh - 90px))}}
+@media(prefers-reduced-motion:reduce){.bawaba-mascot,.bawaba-mascot *{animation:none!important}}
+@media(max-width:480px){#bawaba-assistant-launcher{left:12px;bottom:12px;padding:6px 12px 6px 7px}#bawaba-assistant-launcher .bawaba-mascot{width:39px;height:39px;flex-basis:39px}#bawaba-assistant-window{left:8px;bottom:68px;width:calc(100vw - 16px);height:min(610px,calc(100dvh - 90px))}}
 </style>
-<button id="bawaba-assistant-launcher" type="button" aria-label="افتح مرشد بوابة سورية">💬 احكي مع مرشد البوابة</button>
+<button id="bawaba-assistant-launcher" type="button" aria-label="افتح رفيقك السوري"><span class="bawaba-mascot bawaba-chat-mascot" aria-hidden="true"><svg viewBox="0 0 100 100" role="img"><path class="mascot-tail" d="M69 63 Q91 62 88 42 Q86 32 77 35 Q83 43 72 48" fill="#f4b942" stroke="#8d571c" stroke-width="4" stroke-linejoin="round"/><path d="M29 34 L22 12 Q21 7 27 10 L43 24" fill="#f5c94d" stroke="#8d571c" stroke-width="4" stroke-linejoin="round"/><path class="mascot-ear" d="M61 25 L76 8 Q81 4 81 12 L77 37" fill="#f5c94d" stroke="#8d571c" stroke-width="4" stroke-linejoin="round"/><path d="M22 52 Q18 30 40 27 Q63 19 76 40 Q87 61 70 78 Q52 94 31 78 Q18 68 22 52Z" fill="#ffd968" stroke="#8d571c" stroke-width="4"/><path d="M24 56 Q10 52 14 65 Q18 75 32 69" fill="#f39a45" stroke="#8d571c" stroke-width="3"/><ellipse cx="42" cy="53" rx="5" ry="8" fill="#26364b" class="mascot-blink"/><ellipse cx="64" cy="53" rx="5" ry="8" fill="#26364b" class="mascot-blink"/><circle cx="33" cy="64" r="5" fill="#ed806b"/><circle cx="73" cy="64" r="5" fill="#ed806b"/><path d="M48 65 Q53 71 58 65" fill="none" stroke="#8d571c" stroke-width="3" stroke-linecap="round"/><path d="M39 80 Q51 87 64 79" fill="none" stroke="#fff2c2" stroke-width="3" stroke-linecap="round"/><path d="M12 31 L7 25 M88 25 L94 18" stroke="#ffe59a" stroke-width="4" stroke-linecap="round"/></svg></span><span>رفيقك السوري</span></button>
 <section id="bawaba-assistant-window" dir="rtl" aria-label="محادثة مرشد بوابة سورية">
-  <div class="bawaba-chat-head"><div><strong>رفيق بوابة سورية 🤍</strong><small>مرشدك الودود باللهجة الشامية</small></div><button id="bawaba-chat-close" type="button" aria-label="إغلاق المحادثة">✕</button></div>
+  <div class="bawaba-chat-head"><div class="bawaba-chat-brand"><span class="bawaba-mascot bawaba-chat-mascot" aria-hidden="true"><svg viewBox="0 0 100 100" role="img"><path class="mascot-tail" d="M69 63 Q91 62 88 42 Q86 32 77 35 Q83 43 72 48" fill="#f4b942" stroke="#8d571c" stroke-width="4" stroke-linejoin="round"/><path d="M29 34 L22 12 Q21 7 27 10 L43 24" fill="#f5c94d" stroke="#8d571c" stroke-width="4" stroke-linejoin="round"/><path class="mascot-ear" d="M61 25 L76 8 Q81 4 81 12 L77 37" fill="#f5c94d" stroke="#8d571c" stroke-width="4" stroke-linejoin="round"/><path d="M22 52 Q18 30 40 27 Q63 19 76 40 Q87 61 70 78 Q52 94 31 78 Q18 68 22 52Z" fill="#ffd968" stroke="#8d571c" stroke-width="4"/><path d="M24 56 Q10 52 14 65 Q18 75 32 69" fill="#f39a45" stroke="#8d571c" stroke-width="3"/><ellipse cx="42" cy="53" rx="5" ry="8" fill="#26364b" class="mascot-blink"/><ellipse cx="64" cy="53" rx="5" ry="8" fill="#26364b" class="mascot-blink"/><circle cx="33" cy="64" r="5" fill="#ed806b"/><circle cx="73" cy="64" r="5" fill="#ed806b"/><path d="M48 65 Q53 71 58 65" fill="none" stroke="#8d571c" stroke-width="3" stroke-linecap="round"/><path d="M39 80 Q51 87 64 79" fill="none" stroke="#fff2c2" stroke-width="3" stroke-linecap="round"/><path d="M12 31 L7 25 M88 25 L94 18" stroke="#ffe59a" stroke-width="4" stroke-linecap="round"/></svg></span><div><strong>رفيقك السوري 🤍</strong><small>رفيقك الودود باللهجة الشامية</small></div></div><button id="bawaba-chat-close" type="button" aria-label="إغلاق المحادثة">✕</button></div>
   <div id="bawaba-chat-messages" role="log" aria-live="polite"></div>
   <div class="bawaba-chat-quick" id="bawaba-chat-quick">
     <button type="button" data-q="شو فيني استفيد من بوابة سورية؟">عرّفني على البوابة</button>
