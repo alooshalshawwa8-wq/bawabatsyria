@@ -593,7 +593,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
   const launcher=document.getElementById('bawaba-assistant-launcher'),windowBox=document.getElementById('bawaba-assistant-window'),close=document.getElementById('bawaba-chat-close'),messages=document.getElementById('bawaba-chat-messages'),input=document.getElementById('bawaba-chat-input'),send=document.getElementById('bawaba-chat-send'),quick=document.getElementById('bawaba-chat-quick');
   if(!launcher||!windowBox)return;
   const history=[];
-  const sections=Array.isArray(window.sections)?window.sections:[];
+  const sections=Array.isArray(window.BAWABA_SECTIONS)?window.BAWABA_SECTIONS:[];
   function addMessage(text,role){
     const node=document.createElement('div');node.className='bawaba-chat-msg '+(role==='user'?'user':'bot');node.textContent=text;messages.appendChild(node);messages.scrollTop=messages.scrollHeight;
   }
