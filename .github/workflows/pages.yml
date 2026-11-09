@@ -72,9 +72,9 @@ jobs:
 
           html = Path("index.html").read_text(encoding="utf-8")
           start = html.index("const sections = [")
-          end = html.index("\\n];", start)
+          end = html.index("\n];", start)
           section_block = html[start:end]
-          ids = re.findall(r"\\{\\s*id:\\s*'([^']+)'", section_block)
+          ids = re.findall(r"\{\s*id:\s*'([^']+)'", section_block)
           if not ids:
               raise SystemExit("Section registry could not be parsed")
           if len(ids) != len(set(ids)):
@@ -90,15 +90,15 @@ jobs:
 
           ustart = html.index("const utilityModules =")
           uend = html.index("function renderUtilityModule", ustart)
-          utility_ids = set(re.findall(r"^\\s*([a-z0-9_]+):\\s*\\{", html[ustart:uend], re.M))
+          utility_ids = set(re.findall(r"^\s*([a-z0-9_]+):\s*\{", html[ustart:uend], re.M))
           astart = html.index("Object.assign(utilityModules")
           aend = html.index("function renderSectionWorkspace", astart)
-          utility_ids.update(re.findall(r"^\\s*([a-z0-9_]+):\\s*\\{", html[astart:aend], re.M))
+          utility_ids.update(re.findall(r"^\s*([a-z0-9_]+):\s*\{", html[astart:aend], re.M))
 
           ostart = html.index("async function openSection")
           oend = html.index("function showHome", ostart)
           opener = html[ostart:oend]
-          special_ids = set(re.findall(r"(?:if|else if)\\s*\\(\\s*sec\\.id\\s*===\\s*'([^']+)'", opener))
+          special_ids = set(re.findall(r"(?:if|else if)\s*\(\s*sec\.id\s*===\s*'([^']+)'", opener))
           uncovered = set(ids) - utility_ids - special_ids
           if uncovered:
               raise SystemExit("Sections without a renderer: " + repr(sorted(uncovered)))
