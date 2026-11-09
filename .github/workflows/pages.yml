@@ -66,6 +66,49 @@ jobs:
           print("HTML assets and manifest checks passed.")
           PY
           node --check /tmp/site-inline.js
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          html = Path("index.html").read_text(encoding="utf-8")
+          start = html.index("const sections = [")
+          end = html.index("\\n];", start)
+          section_block = html[start:end]
+          ids = re.findall(r"\\{\\s*id:\\s*'([^']+)'", section_block)
+          if not ids:
+              raise SystemExit("Section registry could not be parsed")
+          if len(ids) != len(set(ids)):
+              raise SystemExit("Duplicate section IDs found")
+
+          pstart = html.index("const sectionPriority = [")
+          pend = html.index("];", pstart)
+          priority = re.findall(r'"([^"]+)"', html[pstart:pend])
+          if len(priority) != len(set(priority)):
+              raise SystemExit("Duplicate section priority entries found")
+          if set(priority) != set(ids):
+              raise SystemExit("Section priority mismatch; missing=" + repr(sorted(set(ids)-set(priority))) + " unknown=" + repr(sorted(set(priority)-set(ids))))
+
+          ustart = html.index("const utilityModules =")
+          uend = html.index("function renderUtilityModule", ustart)
+          utility_ids = set(re.findall(r"^\\s*([a-z0-9_]+):\\s*\\{", html[ustart:uend], re.M))
+          astart = html.index("Object.assign(utilityModules")
+          aend = html.index("function renderSectionWorkspace", astart)
+          utility_ids.update(re.findall(r"^\\s*([a-z0-9_]+):\\s*\\{", html[astart:aend], re.M))
+
+          ostart = html.index("async function openSection")
+          oend = html.index("function showHome", ostart)
+          opener = html[ostart:oend]
+          special_ids = set(re.findall(r"(?:if|else if)\\s*\\(\\s*sec\\.id\\s*===\\s*'([^']+)'", opener))
+          uncovered = set(ids) - utility_ids - special_ids
+          if uncovered:
+              raise SystemExit("Sections without a renderer: " + repr(sorted(uncovered)))
+          if "renderSectionWorkspace(sec,tool);" not in opener or "appendFreeAIHelper(sec,tool);" not in opener:
+              raise SystemExit("Shared workspace or section AI helper is not attached to every opened section")
+          for required in ("🧰 أدوات القسم", "🗂️ خطة التنفيذ", "📝 ملاحظاتي"):
+              if required not in html:
+                  raise SystemExit("Missing workspace feature: " + required)
+          print(f"Section audit passed: {len(ids)} unique sections, {len(priority)} priority entries, all sections mapped to a renderer and shared workspace.")
+          PY
           node --check service-worker.js
       - name: Upload site
         uses: actions/upload-pages-artifact@v4
