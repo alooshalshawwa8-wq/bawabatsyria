@@ -174,63 +174,100 @@ health:{title:'منظم التحضير للموعد الطبي',notice:'هذه �
 };
 function renderFootballModule(tool){
   const storageKey='bawabatsyria_football_favorites_v1';
-  const leagues=[
-    ['UCL','دوري أبطال أوروبا'],
-    ['EPL','الدوري الإنجليزي الممتاز'],
-    ['LaLiga','الدوري الإسباني'],
-    ['SerieA','الدوري الإيطالي'],
-    ['Bundesliga','الدوري الألماني'],
-    ['Ligue1','الدوري الفرنسي'],
-    ['MLS','الدوري الأمريكي']
+  const competitions=[
+    {group:'بطولات المنتخبات',items:['كأس العالم','كأس أمم أوروبا','كوبا أمريكا','كأس أمم أفريقيا','كأس آسيا','كأس الكونكاكاف الذهبية','دوري الأمم الأوروبية']},
+    {group:'بطولات الأندية القارية والعالمية',items:['دوري أبطال أوروبا','الدوري الأوروبي','دوري المؤتمر الأوروبي','كأس العالم للأندية','دوري أبطال آسيا للنخبة','دوري أبطال أفريقيا','كأس ليبرتادوريس']},
+    {group:'أشهر الدوريات المحلية',items:['الدوري الإنجليزي الممتاز','الدوري الإسباني','الدوري الإيطالي','الدوري الألماني','الدوري الفرنسي','الدوري السعودي للمحترفين','الدوري البرازيلي','الدوري الأرجنتيني','الدوري المصري الممتاز']}
+  ];
+  const derbies=[
+    ['الكلاسيكو','ريال مدريد × برشلونة','إسبانيا'],['ديربي مانشستر','مانشستر سيتي × مانشستر يونايتد','إنجلترا'],
+    ['ديربي ميلانو','إنتر × ميلان','إيطاليا'],['ديربي شمال غرب إنجلترا','ليفربول × مانشستر يونايتد','إنجلترا'],
+    ['السوبر كلاسيكو','بوكا جونيورز × ريفر بليت','الأرجنتين'],['ديربي الرياض','الهلال × النصر','السعودية'],
+    ['ديربي القاهرة','الأهلي × الزمالك','مصر'],['الكلاسيكو الفرنسي','باريس سان جيرمان × مارسيليا','فرنسا'],
+    ['قمة أمريكا الجنوبية','البرازيل × الأرجنتين','منتخبات'],['قمة شمال أفريقيا','مصر × المغرب','منتخبات']
+  ];
+  const social=[
+    ['ريال مدريد','487.6 مليون'],['برشلونة','441.8 مليون'],['مانشستر يونايتد','238.6 مليون'],
+    ['باريس سان جيرمان','208.1 مليون'],['مانشستر سيتي','187.8 مليون'],['ليفربول','179.2 مليون'],
+    ['يوفنتوس','178.3 مليون'],['بايرن ميونخ','165.2 مليون'],['فلامنغو','71.6 مليون'],
+    ['النصر','66.0 مليون'],['الأهلي المصري','60.1 مليون']
+  ];
+  const clubGroups=[
+    {name:'أوروبا',clubs:['ريال مدريد','برشلونة','أتلتيكو مدريد','مانشستر يونايتد','مانشستر سيتي','ليفربول','أرسنال','تشيلسي','بايرن ميونخ','بوروسيا دورتموند','يوفنتوس','إنتر','ميلان','باريس سان جيرمان','بنفيكا','أياكس']},
+    {name:'آسيا والعالم العربي',clubs:['الهلال','النصر','الاتحاد','الأهلي السعودي','الأهلي المصري','الزمالك','العين','السد']},
+    {name:'أمريكا الجنوبية',clubs:['بوكا جونيورز','ريفر بليت','فلامنغو','بالميراس','سانتوس']},
+    {name:'منتخبات بارزة',clubs:['الأرجنتين','البرازيل','فرنسا','إسبانيا','إنجلترا','ألمانيا','إيطاليا','البرتغال','المغرب','مصر','اليابان','السعودية']}
   ];
   const wrap=document.createElement('div');
   wrap.innerHTML=
-    '<h3 style="color:var(--gold2)">⚽ عالم كرة القدم</h3>'+
-    '<div class="notice" role="status">مركز المتابعة قيد التجهيز: لم نربط بعد مزود بيانات المباريات الحية، لذلك لن نعرض نتائج أو مواعيد غير مؤكدة.</div>'+
-    '<h3 style="margin-top:20px">البطولات</h3>'+
-    '<div class="calc"><label>اختر البطولة<select id="footballLeague"></select></label></div>'+
-    '<div class="notice" id="footballLeagueInfo">سيظهر جدول البطولة ونتائجها هنا بعد ربط مصدر بيانات رياضي موثوق.</div>'+
-    '<hr style="border-color:var(--line);margin:20px 0">'+
-    '<h3>فرقي المفضلة</h3>'+
-    '<p style="color:var(--muted)">أضف أسماء الفرق التي تشجعها لتجهيز قائمة متابعتك. تُحفظ القائمة على هذا المتصفح فقط.</p>'+
-    '<div class="calc"><label>اسم الفريق<input id="footballTeamInput" maxlength="60" placeholder="مثال: ريال مدريد"></label></div>'+
-    '<button class="btn" id="footballAddTeam" type="button" style="margin-top:10px">إضافة للفِرق المفضلة</button>'+
-    '<div id="footballTeamsList" class="notice" aria-live="polite" style="margin-top:12px"></div>'+
-    '<hr style="border-color:var(--line);margin:20px 0">'+
-    '<h3>المباريات والنتائج</h3>'+
-    '<div class="notice">سيُضاف هنا: المباريات القادمة، النتائج النهائية، المباريات الجارية، ترتيب الفرق، وإحصائيات المواجهات. التحديث المباشر والتنبيهات الفورية يتطلبان مزود بيانات وخدمة إشعارات معتمدة.</div>'+
-    '<h3 style="margin-top:20px">التحليل الكروي الذكي</h3>'+
-    '<div class="notice">سيحلل هذا الجزء أداء الفريقين والإحصائيات والتشكيلات عندما تتوفر بيانات المباراة الموثوقة؛ ولن يختلق توقعات أو إحصائيات.</div>';
+    '<style>'+
+    '.fb-hero{padding:20px;border:1px solid #66522e;border-radius:16px;background:linear-gradient(120deg,#1b3551,#101b2e 65%,#30291d);margin:12px 0 18px}'+
+    '.fb-hero h3{font-size:23px;margin:0 0 8px;color:var(--gold2)}.fb-hero p{margin:0;color:#c5d1e1;line-height:1.9}'+
+    '.fb-tabs{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0}.fb-tab{border:1px solid var(--line);background:#0c1729;color:#dce5f2;padding:9px 13px;border-radius:20px}.fb-tab.active{background:#dca944;color:#172033;border-color:#f0cc78;font-weight:700}'+
+    '.fb-pane{display:none}.fb-pane.active{display:block}.fb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}.fb-card{background:#0d192b;border:1px solid var(--line);border-radius:12px;padding:13px}.fb-card strong{color:var(--gold2);display:block;margin-bottom:5px}.fb-card small{color:var(--muted)}'+
+    '.fb-list{display:grid;gap:7px}.fb-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#0d192b}.fb-row span{line-height:1.6}.fb-row button{flex-shrink:0}.fb-search{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#0b1527;color:white;margin:8px 0 12px}'+
+    '.fb-subhead{margin:20px 0 10px;color:var(--gold2)}.fb-muted{color:var(--muted);font-size:12px;line-height:1.8}.fb-pill{display:inline-block;border:1px solid #435a78;border-radius:20px;padding:4px 8px;color:#d9c18c;font-size:11px;margin:3px}'+
+    '</style>'+
+    '<div class="fb-hero"><div class="eyebrow">BAWABA FOOTBALL HUB · مركز المشجعين</div><h3>⚽ عالم كرة القدم بين إيديك</h3><p>البطولات الكبرى، القمم والديربيات، موسوعة الأندية والمنتخبات، سجل الألقاب، الأكثر شعبية، وقائمة متابعة خاصة فيك. كل معلومة إحصائية مؤرخة أو موضحة بمصدرها؛ لا توجد نتائج مباشرة وهمية.</p></div>'+
+    '<div class="fb-tabs" role="tablist"><button class="fb-tab active" data-tab="home">الرئيسية</button><button class="fb-tab" data-tab="competitions">البطولات</button><button class="fb-tab" data-tab="biggames">المباريات الكبرى</button><button class="fb-tab" data-tab="clubs">الأندية والمنتخبات</button><button class="fb-tab" data-tab="popular">الأكثر متابعة</button><button class="fb-tab" data-tab="favorites">قائمتي</button></div>'+
+    '<section class="fb-pane active" data-pane="home"><div class="fb-grid">'+
+    '<article class="fb-card"><strong>🏆 البطولات الكبرى</strong><span>كأس العالم، دوري الأبطال، البطولات القارية وأقوى الدوريات المحلية.</span></article>'+
+    '<article class="fb-card"><strong>🔥 ليالي القمة</strong><span>الكلاسيكو، ديربيات المدن، ومواجهات المنتخبات التاريخية.</span></article>'+
+    '<article class="fb-card"><strong>🌟 موسوعة الكرة</strong><span>الأندية والمنتخبات، ألقابها، أساطيرها ومحطاتها التاريخية.</span></article>'+
+    '<article class="fb-card"><strong>📱 نبض الجماهير</strong><span>ترتيب مرجعي للأندية الأكثر متابعة عبر منصات التواصل.</span></article></div>'+
+    '<h4 class="fb-subhead">المباراة الأهم والمباريات المباشرة</h4><div class="notice">سيظهر هنا مركز مباريات اليوم والنتائج الحية والدقيقة والأهداف والتشكيلات والإحصائيات فور ربط مزود بيانات رياضي مرخّص. لم نعرض مباريات أو نتائج تخمينية.</div>'+
+    '<h4 class="fb-subhead">أدوات قادمة ضمن المركز</h4><div class="fb-grid"><article class="fb-card"><strong>📊 جداول وترتيب</strong><span>ترتيب الفرق، الهدافون، صناعة الأهداف وسجل النتائج.</span></article><article class="fb-card"><strong>🧠 محلل المباراة</strong><span>مقارنة الفريقين وتحليل الأداء اعتماداً على أرقام موثوقة.</span></article><article class="fb-card"><strong>🗳️ صوت الجمهور</strong><span>تصويت ترفيهي لأفضل لاعب وتوقع نتيجة دون مراهنات.</span></article><article class="fb-card"><strong>📚 ذاكرة الملاعب</strong><span>مباريات تاريخية وأرقام قياسية وأساطير كرة القدم.</span></article></div></section>'+
+    '<section class="fb-pane" data-pane="competitions"><p class="fb-muted">دليل منظم لأشهر بطولات كرة القدم حول العالم. اضغط على اسم البطولة لنسخها والبحث عنها داخل البوابة.</p><div id="fbCompetitions"></div></section>'+
+    '<section class="fb-pane" data-pane="biggames"><h4 class="fb-subhead">أشهر القمم والديربيات</h4><div id="fbDerbies" class="fb-grid"></div><div class="notice">هذه قائمة بالمواجهات المعروفة تاريخياً، وليست جدول مباريات قادمة. مواعيد كل مواجهة تعتمد على جدول الموسم الرسمي.</div></section>'+
+    '<section class="fb-pane" data-pane="clubs"><h4 class="fb-subhead">موسوعة الأندية والمنتخبات</h4><input id="fbClubSearch" class="fb-search" type="search" placeholder="ابحث عن نادٍ أو منتخب…"><div id="fbClubGroups"></div><h4 class="fb-subhead">موسوعة الألقاب والإنجازات</h4><div class="fb-grid"><article class="fb-card"><strong>ألقاب الأندية</strong><span>الدوري المحلي، الكأس، السوبر، دوري الأبطال القاري، البطولات العالمية.</span></article><article class="fb-card"><strong>ألقاب المنتخبات</strong><span>كأس العالم، كأس القارة، دوري الأمم، البطولات الإقليمية.</span></article><article class="fb-card"><strong>سجل الأساطير</strong><span>الهدافون التاريخيون، صناع اللعب، الحراس، والمدربون أصحاب الإنجازات.</span></article><article class="fb-card"><strong>مقارنة تاريخية</strong><span>مقارنة ناديين أو منتخبين من حيث الألقاب والمواجهات والأرقام عند توافر مصدر موثق.</span></article></div><div class="notice">الألقاب والسنوات والأعداد التفصيلية ستُعرض مع مصدر موثوق وتاريخ تحديث. هذه النسخة تعرض تصنيفاً للموسوعة ولا تخمّن أعداد البطولات.</div></section>'+
+    '<section class="fb-pane" data-pane="popular"><h4 class="fb-subhead">الأندية الأكثر متابعة على منصات التواصل</h4><p class="fb-muted">لقطة مرجعية منشورة في مايو 2026، مجموع متابعي Facebook وInstagram وTikTok وYouTube وX؛ الأرقام بالمليون وتقريبية وليست عدّادات لحظية.</p><div id="fbSocial" class="fb-list"></div><p class="fb-muted">المصدر المرجعي: CIES Football Observatory، تقرير شعبية الأندية على الشبكات الاجتماعية، مايو 2026. تتغير الأرقام باستمرار.</p></section>'+
+    '<section class="fb-pane" data-pane="favorites"><h4 class="fb-subhead">فرقك ومنتخباتك المفضلة</h4><p class="fb-muted">أضف حتى 30 اسماً لتجهيز قائمة شخصية محفوظة على هذا الجهاز فقط.</p><div class="calc"><label>اسم النادي أو المنتخب<input id="fbFavoriteInput" maxlength="60" placeholder="مثال: ريال مدريد أو منتخب سوريا"></label></div><button class="btn" id="fbAddFavorite" type="button" style="margin-top:10px">＋ أضف إلى قائمتي</button><div id="fbFavoritesList" class="fb-list" style="margin-top:12px" aria-live="polite"></div><div class="notice">الحفظ محلي على هذا المتصفح، ولا تتم مزامنته بين الأجهزة أو الحسابات حالياً.</div></section>';
   tool.appendChild(wrap);
-  const select=wrap.querySelector('#footballLeague');
-  leagues.forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;select.appendChild(option);});
-  const info=wrap.querySelector('#footballLeagueInfo');
-  select.addEventListener('change',()=>{const label=select.options[select.selectedIndex].text;info.textContent='تم اختيار '+label+'. ستظهر المواعيد والنتائج والترتيب بعد ربط مصدر البيانات.';});
-  const list=wrap.querySelector('#footballTeamsList');
-  const input=wrap.querySelector('#footballTeamInput');
-  const read=()=>{try{const value=JSON.parse(localStorage.getItem(storageKey)||'[]');return Array.isArray(value)?value.filter(x=>typeof x==='string').slice(0,30):[];}catch(e){return [];}};
-  const save=items=>{try{localStorage.setItem(storageKey,JSON.stringify(items));return true;}catch(e){return false;}};
-  const render=()=>{
-    const teams=read();list.replaceChildren();
-    if(!teams.length){list.textContent='لم تضف فرقاً بعد.';return;}
-    teams.forEach((team,index)=>{
-      const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px;margin:7px 0';
-      const name=document.createElement('span');name.textContent='⚽ '+team;
-      const remove=document.createElement('button');remove.type='button';remove.className='btn secondary';remove.textContent='إزالة';
-      remove.addEventListener('click',()=>{const next=read();next.splice(index,1);if(save(next))render();else list.textContent='تعذر تحديث القائمة في مساحة التخزين المحلية.';});
-      row.append(name,remove);list.appendChild(row);
-    });
-  };
-  wrap.querySelector('#footballAddTeam').addEventListener('click',()=>{
-    const team=input.value.trim();if(!team){list.textContent='اكتب اسم الفريق أولاً.';return;}
-    const teams=read();if(teams.some(x=>x.toLocaleLowerCase()===team.toLocaleLowerCase())){list.textContent='هذا الفريق موجود بالفعل في قائمتك.';return;}
-    if(teams.length>=30){list.textContent='يمكنك حفظ 30 فريقاً كحد أقصى.';return;}
-    if(!save([...teams,team])){list.textContent='تعذر الحفظ على هذا المتصفح.';return;}
-    input.value='';render();
+  const $=id=>wrap.querySelector('#'+id);
+  wrap.querySelectorAll('.fb-tab').forEach(btn=>btn.addEventListener('click',()=>{
+    wrap.querySelectorAll('.fb-tab').forEach(x=>x.classList.toggle('active',x===btn));
+    wrap.querySelectorAll('.fb-pane').forEach(x=>x.classList.toggle('active',x.dataset.pane===btn.dataset.tab));
+  }));
+  function node(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
+  const comp=$('fbCompetitions');
+  competitions.forEach(group=>{
+    const h=node('h4',group.group,'fb-subhead');comp.appendChild(h);
+    const grid=node('div',undefined,'fb-grid');
+    group.items.forEach(item=>{const card=node('button',item,'fb-card');card.type='button';card.style.cssText+=';color:var(--white);text-align:right;cursor:pointer';card.addEventListener('click',()=>{navigator.clipboard?.writeText(item).catch(()=>{});card.title='تم نسخ اسم البطولة إن كان النسخ مدعوماً';});grid.appendChild(card);});
+    comp.appendChild(grid);
   });
-  render();
+  const derbyBox=$('fbDerbies');
+  derbies.forEach(([name,match,region])=>{const card=node('article',undefined,'fb-card');card.append(node('strong',name),node('div',match),node('small',region));derbyBox.appendChild(card);});
+  const socialBox=$('fbSocial');
+  social.forEach(([name,count],i)=>{const row=node('div',undefined,'fb-row');row.append(node('span',(i+1)+'. '+name),node('strong',count));socialBox.appendChild(row);});
+  function read(){try{const x=JSON.parse(localStorage.getItem(storageKey)||'[]');return Array.isArray(x)?x.filter(v=>typeof v==='string').slice(0,30):[];}catch(e){return [];}}
+  function save(x){try{localStorage.setItem(storageKey,JSON.stringify(x));return true;}catch(e){return false;}}
+  function drawFavorites(){
+    const box=$('fbFavoritesList');box.replaceChildren();const items=read();
+    if(!items.length){box.appendChild(node('div','لسه ما أضفت أي فريق.','empty'));return;}
+    items.forEach((name,index)=>{const row=node('div',undefined,'fb-row');row.appendChild(node('span','⚽ '+name));const del=node('button','إزالة','btn secondary');del.type='button';del.addEventListener('click',()=>{const next=read();next.splice(index,1);if(save(next))drawFavorites();});row.appendChild(del);box.appendChild(row);});
+  }
+  $('fbAddFavorite').addEventListener('click',()=>{
+    const input=$('fbFavoriteInput'),name=input.value.trim(),box=$('fbFavoritesList');
+    if(!name){box.textContent='اكتب اسم النادي أو المنتخب أولاً.';return;}
+    const items=read();if(items.some(x=>x.toLocaleLowerCase()===name.toLocaleLowerCase())){box.textContent='الاسم موجود مسبقاً في قائمتك.';return;}
+    if(items.length>=30){box.textContent='وصلت للحد الأقصى: 30 اسماً.';return;}
+    if(!save([...items,name])){box.textContent='تعذر الحفظ على هذا الجهاز.';return;}
+    input.value='';drawFavorites();
+  });
+  const clubBox=$('fbClubGroups');
+  function drawClubs(query=''){
+    clubBox.replaceChildren();let shown=0;
+    clubGroups.forEach(group=>{
+      const filtered=group.clubs.filter(x=>x.toLocaleLowerCase().includes(query.toLocaleLowerCase()));if(!filtered.length)return;
+      clubBox.appendChild(node('h4',group.name,'fb-subhead'));const grid=node('div',undefined,'fb-grid');
+      filtered.forEach(name=>{shown++;const card=node('button','⚽ '+name,'fb-card');card.type='button';card.style.cssText+=';color:var(--white);text-align:right;cursor:pointer';card.addEventListener('click',()=>{const input=$('fbFavoriteInput');input.value=name;wrap.querySelectorAll('.fb-tab').find(x=>x.dataset.tab==='favorites').click();input.focus();});grid.appendChild(card);});clubBox.appendChild(grid);
+    });
+    if(!shown)clubBox.appendChild(node('div','ما لقينا اسم مطابق. جرّب كتابة الاسم بشكل مختلف.','empty'));
+  }
+  $('fbClubSearch').addEventListener('input',e=>drawClubs(e.target.value));
+  drawClubs();drawFavorites();
 }
-
 function renderUtilityModule(sec,tool){
 const cfg=utilityModules[sec.id];if(!cfg)return false;
 document.getElementById('detailNotice').textContent=cfg.notice;
