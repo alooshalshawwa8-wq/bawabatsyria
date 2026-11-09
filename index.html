@@ -34,6 +34,12 @@ main{max-width:1180px;margin:auto;padding:28px 18px 60px}.hero{padding:34px 26px
 <button class="btn secondary" id="membershipBack">← العودة للأقسام</button>
 <h2 style="margin-top:16px">العضوية والنقاط والمحفظة</h2>
 <p>اختر مستوى العضوية المناسب. تُفعّل الصلاحيات بعد تأكيد الاشتراك من خادم الدفع، ولا تُحتسب النقاط من المتصفح.</p>
+<div class="calc">
+<label>البريد الإلكتروني<input id="membershipEmail" type="email" autocomplete="email" placeholder="name@example.com"></label>
+<label>كلمة المرور<input id="membershipPassword" type="password" autocomplete="current-password" minlength="8" placeholder="8 أحرف على الأقل"></label>
+</div>
+<div class="panel-actions"><button class="btn" id="membershipLogin" type="button">تسجيل الدخول</button><button class="btn secondary" id="membershipSignup" type="button">إنشاء حساب</button><button class="btn secondary" id="membershipLogout" type="button">تسجيل الخروج</button></div>
+<div class="notice" id="membershipAuthStatus" role="status">يتطلب تسجيل الدخول إعداد مشروع Supabase Auth وربطه بإعدادات البوابة.</div>
 <div class="notice" id="membershipStatus" role="status">يتم التحقق من إعداد خدمة العضوية…</div>
 <div class="grid" id="membershipPlans" style="margin-top:16px"></div>
 <div class="notice" id="membershipWallet" style="margin-top:16px">المحفظة وسجل النقاط يظهران بعد تسجيل الدخول وربط حسابك بالخدمة.</div>
@@ -285,7 +291,28 @@ const membershipStatus=document.getElementById('membershipStatus');
 const membershipPlans=document.getElementById('membershipPlans');
 const membershipWallet=document.getElementById('membershipWallet');
 const membershipApi=(window.BAWABA_API_BASE||'').replace(/\/$/,'');
-const membershipToken=()=>window.BAWABA_ACCESS_TOKEN||'';
+const authUrl=(window.BAWABA_SUPABASE_URL||'').replace(/\/$/,'');
+const authAnonKey=window.BAWABA_SUPABASE_ANON_KEY||'';
+const membershipToken=()=>sessionStorage.getItem('bawabatsyria_access_token')||window.BAWABA_ACCESS_TOKEN||'';
+async function membershipAuth(mode){
+const email=document.getElementById('membershipEmail').value.trim(),password=document.getElementById('membershipPassword').value;
+const status=document.getElementById('membershipAuthStatus');
+if(!authUrl||!authAnonKey){status.textContent='إعداد تسجيل الدخول غير مكتمل. يلزم ربط مشروع Supabase Auth ومفتاحه العام قبل إنشاء الحسابات.';return;}
+if(!email||password.length<8){status.textContent='أدخل بريداً إلكترونياً صحيحاً وكلمة مرور من 8 أحرف على الأقل.';return;}
+status.textContent='جارٍ التواصل مع خدمة الحسابات…';
+try{
+const endpoint=mode==='signup'?'/auth/v1/signup':'/auth/v1/token?grant_type=password';
+const response=await fetch(authUrl+endpoint,{method:'POST',headers:{'content-type':'application/json',apikey:authAnonKey},body:JSON.stringify({email,password})});
+const data=await response.json();
+if(!response.ok)throw new Error(data.msg||data.message||data.error_description||data.error||'تعذر إتمام الطلب');
+if(data.access_token){sessionStorage.setItem('bawabatsyria_access_token',data.access_token);window.BAWABA_ACCESS_TOKEN=data.access_token;status.textContent=mode==='signup'?'تم إنشاء الحساب وتسجيل الدخول.':'تم تسجيل الدخول بنجاح.';await loadMembership();}
+else status.textContent='تم إرسال طلب إنشاء الحساب. افحص بريدك لتأكيده، ثم سجّل الدخول.';
+}catch(error){status.textContent=error.message||'تعذر الاتصال بخدمة الحسابات.';}
+}
+document.getElementById('membershipLogin').addEventListener('click',()=>membershipAuth('login'));
+document.getElementById('membershipSignup').addEventListener('click',()=>membershipAuth('signup'));
+document.getElementById('membershipLogout').addEventListener('click',()=>{sessionStorage.removeItem('bawabatsyria_access_token');window.BAWABA_ACCESS_TOKEN='';membershipAuthStatusReset();loadMembership();});
+function membershipAuthStatusReset(){document.getElementById('membershipAuthStatus').textContent='تم تسجيل الخروج من هذه الجلسة.';}
 function membershipNode(tag,text,className){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;}
 function openMembership(){panel.classList.remove('open');membershipPanel.classList.add('open');membershipPanel.scrollIntoView({behavior:'smooth',block:'start'});loadMembership();}
 async function loadMembership(){
