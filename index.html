@@ -107,6 +107,7 @@ const sections = [
     { id: 'fertilizers', title: 'بورصة الأسمدة والمغذيات', icon: '🧪', desc: 'حاسبة كميات التسميد الكيماوي والعضوي للدونم وصناعة الكومبوست الطبيعي من بقايا المنزل' },
     { id: 'birds_pets', title: 'واحة الطيور وحيوانات الزينة', icon: '🦜', desc: 'العناية بالطيور والكناري والداجن، جداول التغذية وتشخيص الأمراض البيطرية الشائعة وعزلها' },
     { id: 'sports_radar', title: 'مركز كرة القدم والمباريات', icon: '⚽', desc: 'تابع البطولات والفرق المفضلة، واستعد لمركز النتائج والمواعيد والإحصائيات والتنبيهات والتحليل الكروي' },
+    { id: 'zodiac_world', title: 'عالم الأبراج والأسرار والترفيه', icon: '🔮', desc: 'الأبراج اليومية والتوافق العاطفي وقراءة الفنجان وتاروت تفاعلي واختبارات الشخصية ورسائل الكون' },
     { id: 'news', title: 'أخبار المحافظات المباشرة', icon: '📰', desc: 'تغطية فخمة وموجزة لآخر الأحداث المحلية وتلخيصها عبر الذكاء الاصطناعي بحيادية تامة' },
     { id: 'expatriates_invest', title: 'المغتربون يستثمرون داخل البلاد', icon: '💎', desc: 'أفكار مشاريع استثمارية وإنتاجية مدروسة ومربحة لتنمية المجتمع برؤوس أموال اغترابية' },
     { id: 'heritage', title: 'التراث السوري اللامادي والأصالة', icon: '🏺', desc: 'موسوعة فلكلور المحافظات، الأهازيج، الأزياء والعادات الشعبية لحفظ الهوية السورية الوطنية' },
@@ -115,7 +116,7 @@ const sections = [
     { id: 'syria_ai', title: 'المساعد الذكي سوريا AI الشامل', icon: '🤖', desc: 'محرك الدردشة المركزي والمجاني للإجابة الفورية عن أي معاملة أو تفصيل داخل القطر' }
 ]
 // ترتيب الصفحة الرئيسية حسب الجذب ثم الفائدة، مع إبقاء جميع الأقسام ووظائفها كما هي.
-const sectionPriority = ["prices","news","sports_radar","chef","mirror","syria_ai","travel_visa","tourism","apps_games","nostalgia_archive","body_language","directory_services","jobs","freelance_vip","marketing_vip","video_factory_vip","trading_academy","trader_market","expatriates_invest","accounting_vip","code_sandbox","engineer_vip","no_khosoosie","syria_curriculum","education","health","cash_shield","security","telecom","energy","domestic_economy","water","transport","cars_guide","realestate","civil","consular","legal","business","reports","solidarity","culture","heritage","agriculture","fertilizers","birds_pets"];
+const sectionPriority = ["prices","news","sports_radar","zodiac_world","chef","mirror","syria_ai","travel_visa","tourism","apps_games","nostalgia_archive","body_language","directory_services","jobs","freelance_vip","marketing_vip","video_factory_vip","trading_academy","trader_market","expatriates_invest","accounting_vip","code_sandbox","engineer_vip","no_khosoosie","syria_curriculum","education","health","cash_shield","security","telecom","energy","domestic_economy","water","transport","cars_guide","realestate","civil","consular","legal","business","reports","solidarity","culture","heritage","agriculture","fertilizers","birds_pets"];
 const sectionRank = new Map(sectionPriority.map((id,index)=>[id,index]));
 sections.sort((a,b)=>(sectionRank.get(a.id)??999)-(sectionRank.get(b.id)??999));
 window.BAWABA_SECTIONS=sections;
@@ -448,6 +449,104 @@ function appendFreeAICatalog(parent){
   parent.appendChild(catalog);
 }
 
+
+function renderMysticModule(parent){
+  const signs=[
+    ['aries','الحمل','♈'],['taurus','الثور','♉'],['gemini','الجوزاء','♊'],['cancer','السرطان','♋'],
+    ['leo','الأسد','♌'],['virgo','العذراء','♍'],['libra','الميزان','♎'],['scorpio','العقرب','♏'],
+    ['sagittarius','القوس','♐'],['capricorn','الجدي','♑'],['aquarius','الدلو','♒'],['pisces','الحوت','♓']
+  ];
+  const signOptions=signs.map(x=>'<option value="'+x[0]+'">'+x[2]+' '+x[1]+'</option>').join('');
+  parent.innerHTML=`
+  <style>
+  .mystic-wrap{display:grid;gap:16px}.mystic-tabs{display:flex;gap:8px;flex-wrap:wrap}
+  .mystic-tabs button{border:1px solid var(--line);background:#17243b;color:var(--text);padding:9px 13px;border-radius:22px;cursor:pointer}
+  .mystic-tabs button.active{background:var(--gold);color:#21182a;border-color:var(--gold)}
+  .mystic-card{background:linear-gradient(145deg,#17152e,#202b46);border:1px solid #65518a;border-radius:15px;padding:16px}
+  .mystic-card h3{color:var(--gold2);margin:0 0 12px}.mystic-card p{line-height:1.9}
+  .mystic-card label{display:block;margin:10px 0;color:var(--muted)}.mystic-card select,.mystic-card input,.mystic-card textarea{display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:9px;background:#0b1527;color:white}
+  .mystic-result{margin-top:12px;padding:14px;border-radius:11px;background:#101a30;line-height:1.9;white-space:pre-wrap;min-height:45px}
+  .mystic-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+  .mystic-hidden{display:none}.mystic-tarot{font-size:44px;text-align:center;padding:18px;border:1px solid #8064a5;border-radius:13px;background:linear-gradient(160deg,#30204c,#101a30)}
+  </style>
+  <div class="mystic-wrap">
+    <div class="notice">✨ مساحة ترفيهية للفضول والتأمل والمرح. القراءات رمزية وليست تنبؤات مؤكدة أو نصائح لاتخاذ قرارات مصيرية.</div>
+    <div class="mystic-tabs" id="mysticTabs">
+      <button class="active" data-tab="daily">🌟 برجي اليوم</button><button data-tab="love">💞 التوافق</button>
+      <button data-tab="tarot">🃏 التاروت</button><button data-tab="coffee">☕ قراءة الفنجان</button>
+      <button data-tab="cosmos">🌙 رسالة الكون</button><button data-tab="quiz">🧠 اختبر شخصيتك</button>
+      <button data-tab="fun">🎲 ألعاب الحظ</button>
+    </div>
+    <section class="mystic-card" data-panel="daily"><h3>🌟 اكتشف أجواء برجك اليوم</h3>
+      <label>اختر برجك<select id="mSign">${signOptions}</select></label>
+      <button class="btn" id="mDaily">اعرض قراءة اليوم</button><div class="mystic-result" id="mDailyOut">اختر برجك واضغط لعرض قراءة ترفيهية لليوم.</div>
+    </section>
+    <section class="mystic-card mystic-hidden" data-panel="love"><h3>💞 مختبر التوافق العاطفي</h3><div class="mystic-grid">
+      <label>برجك<select id="mLoveA">${signOptions}</select></label><label>برج الطرف الآخر<select id="mLoveB">${signOptions}</select></label></div>
+      <button class="btn" id="mLove">حلّل التوافق</button><div class="mystic-result" id="mLoveOut"></div>
+    </section>
+    <section class="mystic-card mystic-hidden" data-panel="tarot"><h3>🃏 اسحب بطاقة تاروت</h3><p>ركّز على سؤال عام أو موضوع يشغل بالك، ثم اختر سحب بطاقة واحدة أو ثلاث بطاقات.</p>
+      <div class="mystic-tabs"><button class="btn" id="mOne">بطاقة واحدة</button><button class="btn secondary" id="mThree">قراءة ثلاث بطاقات</button></div><div class="mystic-grid" id="mTarotOut"></div>
+    </section>
+    <section class="mystic-card mystic-hidden" data-panel="coffee"><h3>☕ قراءة الفنجان بالصور</h3>
+      <p>ارفع صورة واضحة للفنجان بعد شرب القهوة، بحيث تظهر ترسّبات القهوة من الداخل.</p>
+      <label>صورة الفنجان<input id="mCoffeeFile" type="file" accept="image/*"></label>
+      <img id="mCoffeePreview" alt="معاينة صورة الفنجان" style="display:none;max-width:100%;max-height:320px;border-radius:12px;margin-top:10px">
+      <div class="mystic-result" id="mCoffeeOut">رفع الصورة يجهّزها للقراءة. تحليل الصورة الذكي سيتفعّل بعد ربط مفتاح الذكاء الاصطناعي.</div>
+    </section>
+    <section class="mystic-card mystic-hidden" data-panel="cosmos"><h3>🌙 رسالة الكون ورقم الحظ</h3>
+      <button class="btn" id="mCosmos">اكشف رسالتي</button><div class="mystic-result" id="mCosmosOut"></div>
+    </section>
+    <section class="mystic-card mystic-hidden" data-panel="quiz"><h3>🧠 اختبار الشخصية السريع</h3>
+      <div id="mQuizQ" class="mystic-result">عندما تواجه يوماً مليئاً بالتحديات، ما أول ما تفعله؟</div>
+      <div class="mystic-grid" id="mQuizChoices">
+        <button class="btn secondary" data-answer="a">أرتّب أفكاري وأضع خطة</button><button class="btn secondary" data-answer="b">أستشير شخصاً أثق به</button>
+        <button class="btn secondary" data-answer="c">أبدأ فوراً وأتعلم بالطريق</button><button class="btn secondary" data-answer="d">أهدأ وأنتظر اللحظة المناسبة</button>
+      </div><div class="mystic-result" id="mQuizOut"></div>
+    </section>
+    <section class="mystic-card mystic-hidden" data-panel="fun"><h3>🎲 عجلة المرح وأسئلة خفيفة</h3>
+      <label>اختر اللعبة<select id="mFunType"><option value="yes">الكرة السحرية: نعم أم لا؟</option><option value="color">لون اليوم</option><option value="challenge">تحدي اليوم</option></select></label>
+      <label>اكتب سؤالك أو اتركه فارغاً<input id="mFunQuestion" maxlength="160" placeholder="سؤال خفيف للتسلية (اختياري)"></label>
+      <button class="btn" id="mFun">جرّب حظك</button><div class="mystic-result" id="mFunOut"></div>
+    </section>
+    <div class="notice">🔐 خصوصيتك: أدوات هذه النسخة تعمل محلياً داخل المتصفح. لا نرفع الصور أو نحفظ إجاباتك على خادم. عند ربط الذكاء الاصطناعي سنمرّر فقط المدخلات اللازمة وبما يتوافق مع سياسة الخصوصية.</div>
+  </div>`;
+  const $=id=>parent.querySelector('#'+id);
+  parent.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>{
+    parent.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===btn));
+    parent.querySelectorAll('[data-panel]').forEach(x=>x.classList.toggle('mystic-hidden',x.dataset.panel!==btn.dataset.tab));
+  }));
+  const daily=[
+    'قد يكون اليوم مناسباً لترتيب أولوية مؤجلة. خذ خطوة صغيرة ولا تستعجل النتائج.',
+    'امنح الحوار الهادئ فرصة؛ سؤال واضح قد يزيل سوء فهم بسيطاً.',
+    'انتبه لوقتك وطاقتك، ووازن بين الحماس والراحة قبل أي التزام.',
+    'جرّب فكرة جديدة لكن ابدأ بنسخة صغيرة قابلة للتعديل.',
+    'تذكّر أن التقدّم لا يحتاج إلى الكمال؛ الاستمرارية أهم من الاندفاع.'
+  ];
+  const seed=(str)=>{let h=0;for(let i=0;i<str.length;i++)h=(h*31+str.charCodeAt(i))>>>0;return h;};
+  const choose=(arr,n)=>arr[n%arr.length];
+  $('mDaily').onclick=()=>{const sign=signs.find(x=>x[0]===$('mSign').value),d=new Date().toISOString().slice(0,10),n=seed(sign[0]+d);
+    $('mDailyOut').textContent=sign[2]+' '+sign[1]+' · '+d+'\n\n'+choose(daily,n)+'\n\nالحب: كن واضحاً ولطيفاً.\nالعمل: ركّز على مهمة واحدة.\nالعناية بنفسك: خصص وقتاً قصيراً للراحة.\nرقم رمزي اليوم: '+(n%9+1)+'.';
+  };
+  const names=Object.fromEntries(signs.map(x=>[x[0],x[1]]));
+  $('mLove').onclick=()=>{const a=$('mLoveA').value,b=$('mLoveB').value,n=seed([a,b].sort().join('-'));
+    const scores=[62,68,73,77,81,86,91,95],score=a===b?78:choose(scores,n);
+    const tips=['الانسجام يزداد عندما يصغي كل طرف للآخر دون افتراضات.','الاختلاف قد يكون مساحة للتكامل إذا وُجد الاحترام.','الصراحة والحدود الواضحة أهم من أي تشابه في الطباع.'];
+    $('mLoveOut').textContent='التوافق الرمزي بين '+names[a]+' و'+names[b]+': '+score+'%\n\n'+choose(tips,n>>2)+'\nهذه النسبة للمرح فقط ولا تقيس نجاح علاقة حقيقية.';
+  };
+  const cards=[['🌙','القمر','امنح نفسك وقتاً للتأمل ولا تستعجل الإجابات.'],['⭐','النجم','تمسّك بالأمل وحوّل أمنية صغيرة إلى خطوة عملية.'],['🗝️','المفتاح','قد يساعدك سؤال مختلف على رؤية فرصة جديدة.'],['🌿','الاعتدال','التوازن والهدوء يساعدانك على ترتيب أولوياتك.'],['🦋','التحوّل','التغيير يبدأ غالباً بعادة صغيرة.'],['☀️','الشمس','شارك طاقتك الإيجابية مع من حولك.'],['🧭','البوصلة','حدّد ما يهمك قبل اختيار الاتجاه.'],['💧','النقاء','اترك مساحة للراحة وتجديد النشاط.']];
+  const draw=count=>{const out=$('mTarotOut');out.innerHTML='';const used=new Set();for(let i=0;i<count;i++){let n=Math.floor(Math.random()*cards.length);while(used.has(n))n=(n+1)%cards.length;used.add(n);const c=cards[n],div=document.createElement('div');div.className='mystic-card';div.innerHTML='<div class="mystic-tarot">'+c[0]+'</div><h3 style="text-align:center;margin-top:10px">'+(count===1?'بطاقتك: ':['الماضي: ','الحاضر: ','تأمل للمستقبل: '][i])+c[1]+'</h3><p>'+c[2]+'</p>';out.appendChild(div);}};
+  $('mOne').onclick=()=>draw(1);$('mThree').onclick=()=>draw(3);
+  let coffeeUrl=null;$('mCoffeeFile').onchange=()=>{const f=$('mCoffeeFile').files[0];if(!f)return;if(!f.type.startsWith('image/')){$('mCoffeeOut').textContent='يرجى اختيار صورة بصيغة صورة.';return;}if(f.size>8*1024*1024){$('mCoffeeOut').textContent='حجم الصورة أكبر من 8 ميغابايت.';return;}if(coffeeUrl)URL.revokeObjectURL(coffeeUrl);coffeeUrl=URL.createObjectURL(f);$('mCoffeePreview').src=coffeeUrl;$('mCoffeePreview').style.display='block';$('mCoffeeOut').textContent='تم تجهيز الصورة محلياً. قراءة تفاصيل الفنجان بالذكاء الاصطناعي ستصبح متاحة فور ربط مفتاح النموذج؛ لم نحلّل الصورة أو نرسلها لأي جهة.';};
+  $('mCosmos').onclick=()=>{const lines=['أحياناً تكون الخطوة الهادئة أقوى من القفزة الكبيرة.','امنح فكرة مؤجلة فرصة جديدة اليوم.','لا تقارن بدايتك بمنتصف طريق شخص آخر.','اسأل بوضوح، واستمع بقلب هادئ.','احتفل بتقدمك الصغير؛ فهو جزء من الصورة الكبيرة.'];const n=Math.floor(Math.random()*lines.length);$('mCosmosOut').textContent='رسالتك: '+lines[n]+'\nرقم المرح: '+(Math.floor(Math.random()*99)+1)+' · لون اليوم: '+choose(['البنفسجي','الأزرق','الذهبي','الأخضر'],n);};
+  const quiz=['عندما تواجه يوماً مليئاً بالتحديات، ما أول ما تفعله؟','في رحلة جديدة، ما الذي يجذبك أكثر؟','عندما تعمل ضمن فريق، ما الدور الذي ترتاح له؟'];
+  const answers=[['أرتّب أفكاري وأضع خطة','أستشير شخصاً أثق به','أبدأ فوراً وأتعلم بالطريق','أهدأ وأنتظر اللحظة المناسبة'],['اكتشاف أماكن وأفكار جديدة','التعرّف إلى أشخاص جدد','التحدي والإنجاز','الهدوء والطبيعة'],['التخطيط والتنظيم','دعم الفريق والاستماع','المبادرة والتنفيذ','حل الخلافات بهدوء']];
+  let qi=0,points={a:0,b:0,c:0,d:0};
+  const showQuiz=()=>{ $('mQuizQ').textContent=quiz[qi];$('mQuizChoices').innerHTML=answers[qi].map((v,i)=>'<button class="btn secondary" data-answer="'+['a','b','c','d'][i]+'">'+v+'</button>').join('');$('mQuizChoices').querySelectorAll('button').forEach(b=>b.onclick=()=>{points[b.dataset.answer]++;qi++;if(qi<quiz.length)showQuiz();else{const k=Object.keys(points).sort((a,b)=>points[b]-points[a])[0];$('mQuizOut').textContent=({a:'شخصية المنظّم: تحب الوضوح والتخطيط.',b:'شخصية المتواصل: تثمّن العلاقات والتعاون.',c:'شخصية المبادر: تحب التجربة والحركة.',d:'شخصية المتأمل: تفضّل التوازن والتفكير.'})[k]+' هذا اختبار ترفيهي مبسّط وليس تقييماً نفسياً معتمداً.';$('mQuizChoices').innerHTML='<button class="btn" id="mQuizAgain">إعادة الاختبار</button>';$('mQuizAgain').onclick=()=>{qi=0;points={a:0,b:0,c:0,d:0};$('mQuizOut').textContent='';showQuiz();};}});};
+  showQuiz();
+  $('mFun').onclick=()=>{const type=$('mFunType').value,q=$('mFunQuestion').value.trim(),opts=type==='yes'?['الإشارات تقول: جرّب بعد أن تفكر جيداً.','الجواب الرمزي: نعم، إذا كانت الخطوة آمنة.','ليس الآن؛ ربما تحتاج معلومات أكثر.']:type==='color'?['بنفسجي — خيال وتجدد','أزرق — هدوء وتركيز','ذهبي — تفاؤل وطموح','أخضر — توازن ونمو']:['أرسل رسالة امتنان لشخص تحبه.','تعلّم شيئاً جديداً خلال عشر دقائق.','ابتسم لشخص لا تتوقعه.','رتّب زاوية صغيرة من مساحتك.'];$('mFunOut').textContent=(q?'سؤالك: '+q+'\n':'')+choose(opts,Math.floor(Math.random()*opts.length))+'\n(للترفيه فقط!)';};
+}
+
 async function openSection(sec){
 const vipSections=['engineer_vip','marketing_vip','video_factory_vip','freelance_vip','accounting_vip'];
 if(vipSections.includes(sec.id)){
@@ -481,6 +580,7 @@ tool.replaceChildren();panel.classList.add('open');panel.scrollIntoView({behavio
 }
 document.getElementById('detailTitle').textContent=sec.title;document.getElementById('detailDesc').textContent=sec.desc;const tool=document.getElementById('specialTool');tool.innerHTML='';document.getElementById('detailNotice').style.display='block';
 if(sec.id==='sports_radar'){document.getElementById('detailNotice').textContent='مركز كرة قدم موسّع يضم البطولات الكبرى والديربيات وموسوعة الأندية والمنتخبات وترتيباً مرجعياً للشعبية وقائمة متابعة شخصية. النتائج الحية والترتيب المتجدد والإحصائيات الدقيقة تتطلب ربط مزود بيانات رياضي.';renderFootballModule(tool);}
+else if(sec.id==='zodiac_world'){document.getElementById('detailNotice').textContent='عالم ترفيهي تفاعلي للأبراج والتوافق والتاروت ورسائل المرح. قراءة صور الفنجان الذكية جاهزة من ناحية الواجهة وتنتظر ربط نموذج الذكاء الاصطناعي. النتائج رمزية وليست تنبؤات مؤكدة.';renderMysticModule(tool);}
 else if(sec.id==='prices'){document.getElementById('detailNotice').textContent='أدخل سعر الصرف الذي تريد استخدامه بنفسك. لا تعرض البوابة حالياً أسعاراً سوقية مباشرة، لذلك لن تُقدّم أرقاماً قديمة على أنها لحظية.';tool.innerHTML='<div class="calc"><label>المبلغ<input id="amount" type="number" min="0" step="any" value="1"></label><label>سعر الوحدة<input id="rate" type="number" min="0" step="any" placeholder="أدخل السعر"></label><label>العملية<select id="operation"><option value="multiply">ضرب (تحويل إلى العملة المقابلة)</option><option value="divide">قسمة</option></select></label></div><button class="btn" id="calcBtn" style="margin-top:12px">احسب</button><div class="result" id="calcResult"></div>';document.getElementById('calcBtn').onclick=()=>{const a=Number(document.getElementById('amount').value),r=Number(document.getElementById('rate').value),op=document.getElementById('operation').value;document.getElementById('calcResult').textContent=Number.isFinite(a)&&Number.isFinite(r)&&r>0?(op==='multiply'?a*r:a/r).toLocaleString('en-US',{maximumFractionDigits:4}):'أدخل مبلغاً وسعراً صحيحين أكبر من صفر.';};}
 else if(sec.id==='chef'){document.getElementById('detailNotice').textContent='أداة اختيار عشوائي بسيطة تعمل داخل المتصفح، ولا تحتاج إلى اتصال بخدمة خارجية.';tool.innerHTML='<button class="btn" id="mealBtn">اقترح طبخة عشوائية</button><div class="result" id="mealResult"></div>';document.getElementById('mealBtn').onclick=()=>{const meals=['مجدّرة','يبرق','فتّة حمص','مقلوبة','شوربة عدس','بطاطا بالفرن','فاصولياء بالزيت','كبة بالصينية'];document.getElementById('mealResult').textContent=meals[Math.floor(Math.random()*meals.length)];};}
 
