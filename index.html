@@ -110,7 +110,7 @@ const items=readStock();list.innerHTML='';
 if(!items.length){list.textContent='لا توجد أصناف محفوظة بعد.';return;}
 const table=document.createElement('table');table.style.cssText='width:100%;border-collapse:collapse;font-size:13px';
 const head=document.createElement('tr');
-['الصنف','الكمية','التكلفة','البيع','الربح المتوقع للوحدة',''].forEach(t=>{const th=document.createElement('th');th.textContent=t;th.style.cssText='padding:9px;border-bottom:1px solid var(--line);color:var(--gold2);text-align:right';head.appendChild(th);});
+['الصنف','الكمية','التكلفة','البيع','الربح المتوقع للصنف',''].forEach(t=>{const th=document.createElement('th');th.textContent=t;th.style.cssText='padding:9px;border-bottom:1px solid var(--line);color:var(--gold2);text-align:right';head.appendChild(th);});
 table.appendChild(head);
 items.forEach((item,index)=>{
 const tr=document.createElement('tr');
