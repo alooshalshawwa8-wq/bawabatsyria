@@ -143,9 +143,13 @@ const sections = [
     ,{ id: 'events_calendar', title: 'منظم المناسبات والفعاليات', icon: '🗓️', desc: 'تخطيط المناسبات، قوائم المهام والضيوف والميزانية، وجدول التحضير وتوزيع المسؤوليات' }
     ,{ id: 'syria_marketplace', title: 'سوق سورية للإعلانات المبوبة', icon: '🏷️', desc: 'إنشاء إعلانات بيع وشراء وخدمات، قوالب وصف احترافية، قوائم تحقق للسلامة وتجهيز الإعلان للنشر' }
 
+    ,{ id: 'auto_moto_gallery', title: 'عالم السيارات والدراجات النارية الحديثة', icon: '🏎️', desc: 'معرض للموديلات الحديثة، مقارنة المواصفات والمحركات والمدى والتقنيات، مع صور وتصنيفات للسيارات والدراجات النارية' }
+    ,{ id: 'tech_devices', title: 'دليل الموبايلات واللابتوبات الحديثة', icon: '📱', desc: 'موسوعة الهواتف واللابتوبات، مقارنة المعالجات والشاشات والكاميرات والبطاريات والذاكرة، مع صور ومواصفات الأجهزة' }
+    ,{ id: 'luxury_villas', title: 'عالم الفيلات والقصور الفاخرة', icon: '🏰', desc: 'أفكار وتصاميم معمارية للفيلات والقصور، واجهات وديكورات ومخططات ومساحات وحاسبة تقديرية لتكاليف البناء' }
+
 ]
 // ترتيب الصفحة الرئيسية حسب الجذب ثم الفائدة، مع إبقاء جميع الأقسام ووظائفها كما هي.
-const sectionPriority = ["sports_radar","zodiac_world","news","ecommerce_studio","syria_marketplace","design_lab","language_academy","fitness_coach","events_calendar","prices","chef","mirror","syria_ai","travel_visa","tourism","apps_games","nostalgia_archive","body_language","directory_services","jobs","freelance_vip","marketing_vip","video_factory_vip","trading_academy","trader_market","expatriates_invest","accounting_vip","code_sandbox","engineer_vip","no_khosoosie","syria_curriculum","education","health","cash_shield","security","telecom","energy","domestic_economy","water","transport","cars_guide","realestate","civil","consular","legal","business","reports","solidarity","culture","heritage","agriculture","fertilizers","birds_pets"];
+const sectionPriority = ["auto_moto_gallery","tech_devices","luxury_villas","sports_radar","zodiac_world","news","ecommerce_studio","syria_marketplace","design_lab","language_academy","fitness_coach","events_calendar","prices","chef","mirror","syria_ai","travel_visa","tourism","apps_games","nostalgia_archive","body_language","directory_services","jobs","freelance_vip","marketing_vip","video_factory_vip","trading_academy","trader_market","expatriates_invest","accounting_vip","code_sandbox","engineer_vip","no_khosoosie","syria_curriculum","education","health","cash_shield","security","telecom","energy","domestic_economy","water","transport","cars_guide","realestate","civil","consular","legal","business","reports","solidarity","culture","heritage","agriculture","fertilizers","birds_pets"];
 const sectionRank = new Map(sectionPriority.map((id,index)=>[id,index]));
 sections.sort((a,b)=>(sectionRank.get(a.id)??999)-(sectionRank.get(b.id)??999));
 window.BAWABA_SECTIONS=sections;
@@ -627,7 +631,107 @@ function renderMysticModule(parent){
   $('mFun').onclick=()=>{const type=$('mFunType').value,q=$('mFunQuestion').value.trim(),opts=type==='yes'?['الإشارات تقول: جرّب بعد أن تفكر جيداً.','الجواب الرمزي: نعم، إذا كانت الخطوة آمنة.','ليس الآن؛ ربما تحتاج معلومات أكثر.']:type==='color'?['بنفسجي — خيال وتجدد','أزرق — هدوء وتركيز','ذهبي — تفاؤل وطموح','أخضر — توازن ونمو']:['أرسل رسالة امتنان لشخص تحبه.','تعلّم شيئاً جديداً خلال عشر دقائق.','ابتسم لشخص لا تتوقعه.','رتّب زاوية صغيرة من مساحتك.'];$('mFunOut').textContent=(q?'سؤالك: '+q+'\n':'')+choose(opts,Math.floor(Math.random()*opts.length))+'\n(للترفيه فقط!)';};
 }
 
-async function openSection(sec){
+async 
+function renderPremiumCatalogModule(sec,tool){
+  const catalogs={
+    auto_moto_gallery:{
+      heading:'معرض السيارات والدراجات النارية',
+      intro:'استكشف فئات المركبات وموديلاتها ومواصفاتها الأساسية. المواصفات تختلف باختلاف سنة الصنع والفئة والسوق؛ راجع صفحة الشركة والوكيل قبل الشراء.',
+      groups:[
+        {id:'cars',label:'السيارات',items:[
+          {name:'BMW i5 eDrive40',type:'سيدان كهربائية',year:'جيل 2024–2025',image:'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1000&q=85',power:'محرك كهربائي خلفي',output:'حوالي 340 حصاناً',range:'مدى WLTP يختلف حسب التجهيز والبطارية',drive:'دفع خلفي',features:'شاشة منحنية، أنظمة مساعدة السائق، شحن سريع',note:'مثال لفئة السيدان التنفيذية الكهربائية.'},
+          {name:'Mercedes-Benz EQS',type:'سيدان فاخرة كهربائية',year:'جيل 2022–2025',image:'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=1000&q=85',power:'محرك/محركان كهربائيان بحسب الفئة',output:'تختلف القوة حسب EQS 450+ أو AMG',range:'مدى WLTP يختلف حسب الفئة والعجلات',drive:'خلفي أو رباعي 4MATIC',features:'MBUX Hyperscreen اختياري، راحة عالية، شحن سريع',note:'تتوفر فئات متعددة بتجهيزات ومدى مختلفين.'},
+          {name:'Porsche Taycan',type:'كوبيه/سيدان رياضية كهربائية',year:'تحديثات 2024–2025',image:'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1000&q=85',power:'منظومة كهربائية بفئات متعددة',output:'القوة تختلف كثيراً بين الفئات',range:'مدى WLTP حسب الفئة والبطارية',drive:'خلفي أو رباعي',features:'أداء رياضي، شحن عالي القدرة، تعليق متطور',note:'اختر الفئة بدقة عند مقارنة السعر والأداء.'},
+          {name:'Toyota Land Cruiser 300',type:'SUV دفع رباعي',year:'جيل 2022–2025',image:'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=1000&q=85',power:'V6 توين تيربو أو محركات حسب السوق',output:'نحو 409 حصاناً لفئة 3.5L في أسواق محددة',range:'مدى القيادة يعتمد على المحرك والخزان',drive:'دفع رباعي',features:'شاصي قوي، أنظمة طرق وعرة، مقصورة عائلية',note:'تختلف المحركات والتجهيزات من بلد لآخر.'},
+          {name:'Range Rover Sport',type:'SUV فاخرة',year:'الجيل الحالي منذ 2022',image:'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=1000&q=85',power:'بنزين/ديزل/هجين بحسب السوق',output:'عدة مستويات للقوة',range:'تتوفر فئة هجينة قابلة للشحن في بعض الأسواق',drive:'دفع رباعي',features:'تعليق هوائي، أنظمة قيادة متعددة، مقصورة فاخرة',note:'راجع نوع المحرك والفئة قبل المقارنة.'},
+          {name:'Audi Q6 e-tron',type:'SUV كهربائية',year:'2024–2025',image:'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=1000&q=85',power:'منظومة كهربائية بفئات متعددة',output:'تختلف حسب النسخة',range:'مدى WLTP حسب البطارية والفئة',drive:'خلفي أو quattro',features:'منصة PPE، شاشات رقمية، شحن سريع',note:'الأرقام النهائية مرتبطة بسوق البيع والتجهيز.'}
+        ]},
+        {id:'bikes',label:'الدراجات النارية',items:[
+          {name:'BMW S 1000 RR',type:'سوبرسبورت',year:'موديلات 2024–2025',image:'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=1000&q=85',power:'محرك 4 أسطوانات خطي 999cc',output:'نحو 210 أحصنة بحسب النسخة والسوق',drive:'سلسلة نقل حركة',features:'أوضاع قيادة، ABS Pro، تحكم جر إلكتروني',note:'دراجة أداء عالٍ تتطلب خبرة وتجهيز حماية مناسباً.'},
+          {name:'Ducati Panigale V4',type:'سوبرسبورت',year:'موديلات 2024–2025',image:'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&w=1000&q=85',power:'محرك V4 بسعة تقارب 1.1 لتر',output:'تختلف القوة باختلاف الجيل والتجهيز',drive:'سلسلة نقل حركة',features:'إلكترونيات سباق، أوضاع قيادة، مكابح عالية الأداء',note:'مواصفات الحلبات قد تختلف عن النسخ المرخصة للطرق.'},
+          {name:'Yamaha YZF-R1',type:'سوبرسبورت',year:'موديلات حديثة حسب السوق',image:'https://images.unsplash.com/photo-1591637333184-19aa84b3e01f?auto=format&fit=crop&w=1000&q=85',power:'محرك 4 أسطوانات Crossplane سعة 998cc',output:'يختلف حسب سنة الطراز والسوق',drive:'سلسلة نقل حركة',features:'تحكم جر، Quickshifter، أنظمة مساعدة إلكترونية',note:'توافر الطراز وتجهيزه القانوني يختلفان بين البلدان.'},
+          {name:'Honda Africa Twin',type:'مغامرات/سياحية',year:'موديلات 2024–2025',image:'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=1000&q=85',power:'محرك ثنائي الأسطوانات 1100cc تقريباً',output:'نحو 100 حصان بحسب النسخة',drive:'ناقل يدوي أو DCT حسب الفئة',features:'تعليق طويل، وضعيات طرق وعرة، شاشة TFT',note:'مناسبة لفئة المغامرات والرحلات الطويلة.'}
+        ]}
+      ]
+    },
+    tech_devices:{
+      heading:'موسوعة الأجهزة الذكية والحواسيب',
+      intro:'مقارنة مرجعية لأجهزة معروفة ومواصفاتها العامة. قد تختلف الذاكرة والمعالج والشاشة حسب تكوين الجهاز والمنطقة؛ تحقق من رقم الطراز قبل الشراء.',
+      groups:[
+        {id:'phones',label:'الموبايلات',items:[
+          {name:'Apple iPhone 16 Pro',type:'هاتف رائد',year:'إصدار 2024',image:'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?auto=format&fit=crop&w=1000&q=85',screen:'OLED مقاس 6.3 بوصة تقريباً، ProMotion 120Hz',chip:'Apple A18 Pro',camera:'ثلاث كاميرات خلفية مع تقريب بصري؛ تصوير Pro',battery:'بطارية مدمجة وشحن USB‑C؛ الأداء الفعلي يتبع الاستخدام',memory:'خيارات تخزين متعددة حسب السوق',features:'Face ID، مقاومة ماء وغبار، منظومة iOS',note:'تختلف سعات التخزين والترددات حسب المنطقة.'},
+          {name:'Samsung Galaxy S25 Ultra',type:'هاتف رائد Android',year:'إصدار 2025',image:'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1000&q=85',screen:'Dynamic AMOLED 2X مقاس 6.9 بوصة، 120Hz',chip:'Snapdragon 8 Elite for Galaxy',camera:'كاميرا رئيسية 200MP مع عدسات تقريب واسعة',battery:'5000mAh تقريباً، شحن سلكي ولاسلكي',memory:'خيارات RAM وتخزين متعددة',features:'S Pen، Galaxy AI، إطار تيتانيوم',note:'تحقق من نسخة المعالج والاتصال الخاصة ببلدك.'},
+          {name:'Google Pixel 9 Pro',type:'هاتف رائد Android',year:'إصدار 2024',image:'https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=1000&q=85',screen:'LTPO OLED مقاس 6.3 بوصة تقريباً، 120Hz',chip:'Google Tensor G4',camera:'ثلاث كاميرات خلفية مع تقريب بصري',battery:'بطارية تتجاوز 4500mAh تقريباً',memory:'خيارات تخزين متعددة',features:'تصوير حسابي، مزايا Pixel AI، تحديثات Android',note:'بعض ميزات الذكاء الاصطناعي تختلف حسب اللغة والبلد.'},
+          {name:'Xiaomi 15 Ultra',type:'هاتف رائد للتصوير',year:'إصدار 2025',image:'https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?auto=format&fit=crop&w=1000&q=85',screen:'AMOLED LTPO قرابة 6.7 بوصة، 120Hz',chip:'Snapdragon 8 Elite',camera:'منظومة كاميرات Leica متعددة العدسات',battery:'السعة وسرعة الشحن تختلف حسب السوق',memory:'خيارات تخزين ورام متعددة',features:'شحن سريع، تصوير متقدم، HyperOS',note:'راجع النسخة الإقليمية بسبب اختلاف البطارية والشحن.'}
+        ]},
+        {id:'laptops',label:'اللابتوبات',items:[
+          {name:'Apple MacBook Pro 14-inch M4',type:'لابتوب احترافي',year:'إصدار 2024',image:'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1000&q=85',screen:'Liquid Retina XDR مقاس 14.2 بوصة',chip:'Apple M4 أو M4 Pro حسب التكوين',graphics:'GPU مدمج ضمن Apple Silicon',memory:'ذاكرة موحدة وتخزين SSD بتكوينات متعددة',battery:'عمر طويل يختلف حسب العمل والإعدادات',features:'macOS، منافذ Thunderbolt، شاشة عالية السطوع',note:'اختر الرام والتخزين وفق البرامج وحجم المشاريع.'},
+          {name:'Dell XPS 14',type:'لابتوب فاخر محمول',year:'تكوينات 2024–2025',image:'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=1000&q=85',screen:'شاشة 14.5 بوصة؛ خيارات IPS أو OLED بحسب التكوين',chip:'Intel Core Ultra بحسب الجيل',graphics:'رسوميات مدمجة أو منفصلة حسب النسخة',memory:'RAM ملحومة في بعض التكوينات؛ تحقق قبل الشراء',battery:'تختلف حسب الشاشة والمعالج',features:'هيكل مدمج، شاشة حديثة، منافذ USB‑C',note:'اسم XPS 14 يشمل أجيالاً وتكوينات مختلفة.'},
+          {name:'Lenovo ThinkPad X1 Carbon Gen 13',type:'لابتوب أعمال',year:'جيل 2025',image:'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=1000&q=85',screen:'14 بوصة بخيارات دقة ونوع متعددة',chip:'Intel Core Ultra بحسب التكوين',graphics:'رسوميات Intel مدمجة',memory:'ذاكرة LPDDR ملحومة حسب التكوين',battery:'مصمم للتنقل والعمل المكتبي',features:'هيكل خفيف، لوحة TrackPoint، ميزات أمان أعمال',note:'راجع تكوين الشاشة والذاكرة قبل اعتماد الطلب.'},
+          {name:'ASUS ROG Zephyrus G16',type:'لابتوب ألعاب وصناعة محتوى',year:'تكوينات 2024–2025',image:'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=1000&q=85',screen:'16 بوصة؛ OLED أو IPS بحسب النسخة',chip:'Intel Core Ultra أو AMD Ryzen بحسب الإصدار',graphics:'NVIDIA GeForce RTX بحسب التكوين',memory:'RAM وتخزين SSD بحسب الفئة',battery:'تختلف بوضوح مع حمل الألعاب والبطاقة الرسومية',features:'تبريد مخصص، شاشة سريعة، أداء رسومي قوي',note:'للتصميم والألعاب قارن بطاقة الرسوميات وحد الطاقة لا الاسم فقط.'}
+        ]}
+      ]
+    },
+    luxury_villas:{
+      heading:'معرض الفيلات والقصور والتصاميم المعمارية',
+      intro:'أفكار تصميمية وإلهام بصري للمشاريع السكنية الفاخرة. الصور مرجعية إلهامية وليست مخططات تنفيذية أو عروض عقارية للبيع.',
+      groups:[{id:'designs',label:'أنماط الفيلات والقصور',items:[
+        {name:'فيلا مودرن بواجهات زجاجية',type:'عمارة معاصرة',year:'تصميم إلهامي',image:'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1000&q=85',area:'مساحة مبنية مقترحة 350–550 م²',floors:'طابقان مع سطح خدمات اختياري',spaces:'استقبال مفتوح، صالة عائلية، 4–5 أجنحة، مطبخ رئيسي وتحضيري',facade:'زجاج واسع، حجر طبيعي، خطوط أفقية، تظليل شمسي',amenities:'مسبح وحديقة وكراج بحسب مساحة الأرض',note:'يحتاج التصميم إلى دراسة الخصوصية والحرارة واتجاه الشمس.'},
+        {name:'قصر كلاسيكي نيوكلاسيك',type:'قصر سكني فاخر',year:'تصميم إلهامي',image:'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1000&q=85',area:'مساحة مبنية مقترحة 700–1200 م²',floors:'طابقان أو ثلاثة وفق التنظيم',spaces:'مدخل احتفالي، صالونات استقبال، أجنحة نوم، مكتبة، قاعة طعام',facade:'أعمدة متناظرة، حجر منحوت، كرانيش وتفاصيل كلاسيكية',amenities:'حدائق رسمية، نافورة، مجلس ضيافة وكراج',note:'التفاصيل الزخرفية ترفع كلفة التنفيذ والصيانة.'},
+        {name:'فيلا متوسطية بحوض سباحة',type:'طراز متوسطي',year:'تصميم إلهامي',image:'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1000&q=85',area:'مساحة مبنية مقترحة 300–500 م²',floors:'طابقان',spaces:'صالة مطلة، أجنحة نوم، تراسات، مطبخ مفتوح',facade:'حجر فاتح، أقواس ناعمة، قرميد أو سقف مائل',amenities:'مسبح، جلسة خارجية، حديقة متوسطية',note:'مناسبة للمناخات الدافئة مع معالجة العزل والرطوبة.'},
+        {name:'فيلا شامية معاصرة',type:'هوية شامية حديثة',year:'تصميم إلهامي',image:'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=1000&q=85',area:'مساحة مبنية مقترحة 280–450 م²',floors:'طابقان حول فناء داخلي',spaces:'باحة سماوية، إيوان معاصر، صالون، أجنحة عائلية',facade:'حجر محلي، خشب، مشربيات، فناء داخلي',amenities:'نافورة فناء، سطح أخضر، جلسات مظللة',note:'يحافظ الفناء على الخصوصية ويعزز التهوية الطبيعية.'},
+        {name:'قصر ريفي بإطلالة جبلية',type:'منزل ريفي فاخر',year:'تصميم إلهامي',image:'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1000&q=85',area:'مساحة مبنية مقترحة 450–800 م²',floors:'طابقان مع قبو اختياري',spaces:'صالون بانورامي، أجنحة ضيوف، غرفة هوايات، مطبخ واسع',facade:'حجر طبيعي، شرفات عميقة، أسقف مائلة',amenities:'حدائق مدرجة، جلسات خارجية، مرآب',note:'يجب فحص التربة وتصريف مياه الأمطار والطرق قبل التصميم.'},
+        {name:'فيلا ذكية ومستدامة',type:'عمارة خضراء وتقنيات منزلية',year:'تصميم إلهامي',image:'https://images.unsplash.com/photo-1600607687644-c7171b42498f?auto=format&fit=crop&w=1000&q=85',area:'مساحة مبنية مقترحة 320–600 م²',floors:'طابقان',spaces:'مساحات مرنة، مكتب منزلي، أجنحة، غرفة خدمات تقنية',facade:'تظليل معماري، زجاج عازل، مواد منخفضة الصيانة',amenities:'ألواح شمسية، تجميع مياه، شحن مركبة كهربائية',note:'تحدد جدوى الأنظمة المستدامة وفق المناخ والتكلفة المحلية.'}
+      ]}]
+    }
+  };
+  const catalog=catalogs[sec.id];if(!catalog)return;
+  document.getElementById('detailNotice').textContent=catalog.intro;
+  const style=document.createElement('style');
+  style.textContent='.pc-head{padding:18px;border:1px solid #65522f;border-radius:15px;background:linear-gradient(120deg,#1b3551,#101b2e 65%,#30291d);margin:12px 0}.pc-head h3{color:var(--gold2);margin:0 0 8px;font-size:22px}.pc-head p{margin:0;color:#c5d1e1;line-height:1.9}.pc-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.pc-tabs button{border:1px solid var(--line);background:#0c1729;color:#e5edf7;padding:9px 14px;border-radius:22px}.pc-tabs button.active{background:var(--gold);color:#172033;font-weight:700}.pc-search{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#0b1527;color:white;margin:5px 0 14px}.pc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:13px}.pc-card{overflow:hidden;border:1px solid var(--line);border-radius:14px;background:#0d192b}.pc-card img{display:block;width:100%;height:165px;object-fit:cover;background:#172944}.pc-card-body{padding:13px}.pc-card h4{margin:0 0 6px;color:var(--gold2);font-size:16px}.pc-meta{font-size:12px;color:#b9c7d9;margin-bottom:8px}.pc-specs{display:grid;gap:6px;font-size:12px;color:#d2dbea;line-height:1.7}.pc-specs b{color:#f0d28c}.pc-card details{margin-top:10px;border-top:1px solid var(--line);padding-top:9px;color:#dbe5f2;font-size:12px;line-height:1.8}.pc-card summary{cursor:pointer;color:#ffdc91;font-weight:700}.pc-empty{padding:20px;border:1px dashed var(--line);border-radius:12px;color:var(--muted);text-align:center;grid-column:1/-1}.pc-calc{margin-top:20px;padding:15px;border:1px solid #465d7d;border-radius:13px;background:#101d31}.pc-calc h4{color:var(--gold2);margin:0 0 8px}.pc-calc .calc{margin:10px 0}';
+  const hero=document.createElement('div');hero.className='pc-head';
+  const h=document.createElement('h3');h.textContent=sec.icon+' '+catalog.heading;
+  const p=document.createElement('p');p.textContent=catalog.intro;hero.append(h,p);tool.replaceChildren(style,hero);
+  const tabs=document.createElement('div');tabs.className='pc-tabs';
+  const search=document.createElement('input');search.className='pc-search';search.type='search';search.placeholder='ابحث عن موديل أو مواصفة أو نمط…';search.setAttribute('aria-label','ابحث في المعرض');
+  const grid=document.createElement('div');grid.className='pc-grid';
+  let active=catalog.groups[0].id;
+  function draw(){
+    grid.replaceChildren();
+    const q=search.value.trim().toLocaleLowerCase('ar');
+    const group=catalog.groups.find(x=>x.id===active);
+    const items=(group?group.items:[]).filter(item=>!q||Object.values(item).join(' ').toLocaleLowerCase('ar').includes(q));
+    if(!items.length){const empty=document.createElement('div');empty.className='pc-empty';empty.textContent='ما لقينا نتائج مطابقة. جرّب كلمة بحث تانية.';grid.appendChild(empty);return;}
+    items.forEach(item=>{
+      const card=document.createElement('article');card.className='pc-card';
+      const img=document.createElement('img');img.src=item.image;img.alt='صورة توضيحية: '+item.name;img.loading='lazy';img.referrerPolicy='no-referrer';img.onerror=()=>{img.style.display='none';};card.appendChild(img);
+      const body=document.createElement('div');body.className='pc-card-body';
+      const title=document.createElement('h4');title.textContent=item.name;
+      const meta=document.createElement('div');meta.className='pc-meta';meta.textContent=item.type+' · '+item.year;
+      const specs=document.createElement('div');specs.className='pc-specs';
+      const keys=sec.id==='auto_moto_gallery'?['power','output','drive','features']:sec.id==='tech_devices'?['screen','chip','camera','battery','memory','graphics','features']:['area','floors','spaces','facade','amenities'];
+      keys.filter(k=>item[k]).forEach(k=>{const row=document.createElement('div');const label=document.createElement('b');label.textContent=({power:'المحرك',output:'القوة',drive:'نظام الدفع',features:'التقنيات',screen:'الشاشة',chip:'المعالج',camera:'الكاميرات',battery:'البطارية',memory:'الذاكرة والتخزين',graphics:'الرسوميات',area:'المساحة',floors:'الطوابق',spaces:'التوزيع الداخلي',facade:'الواجهة',amenities:'المرافق'})[k]+': ';row.append(label,document.createTextNode(item[k]));specs.appendChild(row);});
+      const details=document.createElement('details');const summary=document.createElement('summary');summary.textContent='تفاصيل وملاحظات إضافية';const note=document.createElement('p');note.textContent=item.note||'راجع المواصفات الرسمية والتفاصيل الخاصة بالسوق.';details.append(summary,note);
+      body.append(title,meta,specs,details);card.appendChild(body);grid.appendChild(card);
+    });
+  }
+  catalog.groups.forEach((group,index)=>{const btn=document.createElement('button');btn.type='button';btn.textContent=group.label;btn.className=index===0?'active':'';btn.addEventListener('click',()=>{active=group.id;tabs.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===btn));draw();});tabs.appendChild(btn);});
+  search.addEventListener('input',draw);tool.append(tabs,search,grid);draw();
+  if(sec.id==='luxury_villas'){
+    const box=document.createElement('section');box.className='pc-calc';
+    const title=document.createElement('h4');title.textContent='حاسبة تقدير تكلفة البناء';const desc=document.createElement('p');desc.className='pc-meta';desc.textContent='أدخل المساحة المبنية وسعر المتر الذي تحصل عليه من مهندس أو مقاول محلي. النتيجة حسابية أولية ولا تشمل بالضرورة الأرض والتراخيص والأثاث والتمويل.';
+    const fields=document.createElement('div');fields.className='calc';
+    const area=document.createElement('input');area.type='number';area.min='1';area.placeholder='مثال: 450';area.setAttribute('aria-label','المساحة المبنية بالمتر المربع');
+    const price=document.createElement('input');price.type='number';price.min='0';price.step='any';price.placeholder='أدخل تكلفة المتر';price.setAttribute('aria-label','تكلفة المتر المربع');
+    const l1=document.createElement('label');l1.textContent='المساحة المبنية م²';l1.appendChild(area);
+    const l2=document.createElement('label');l2.textContent='تكلفة المتر المربع';l2.appendChild(price);fields.append(l1,l2);
+    const btn=document.createElement('button');btn.type='button';btn.className='btn';btn.textContent='احسب التكلفة التقريبية';
+    const result=document.createElement('div');result.className='result';btn.addEventListener('click',()=>{const a=Number(area.value),p=Number(price.value);result.textContent=a>0&&p>0?'التكلفة الحسابية الأولية: '+(a*p).toLocaleString('en-US',{maximumFractionDigits:2})+' (وفق العملة التي أدخلت بها سعر المتر).':'أدخل مساحة موجبة وتكلفة متر أكبر من صفر.';});
+    box.append(title,desc,fields,btn,result);tool.appendChild(box);
+  }
+}
+
+function openSection(sec){
 const vipSections=['engineer_vip','marketing_vip','video_factory_vip','freelance_vip','accounting_vip'];
 if(vipSections.includes(sec.id)){
 const token=await refreshMembershipSession(),tool=document.getElementById('specialTool');
@@ -681,6 +785,7 @@ copy.disabled=false;
 copy.onclick=async()=>{try{await navigator.clipboard.writeText(output.value);message.textContent='تم نسخ الإعلان.';}catch(e){output.focus();output.select();message.textContent='تعذّر النسخ التلقائي؛ حدّد النص وانسخه يدوياً.';}};
 }
 
+else if(['auto_moto_gallery','tech_devices','luxury_villas'].includes(sec.id)){renderPremiumCatalogModule(sec,tool);}
 else if(renderUtilityModule(sec,tool)){}
 
 else if(sec.id==='accounting_vip'){
