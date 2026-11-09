@@ -279,10 +279,10 @@ function renderFootballModule(tool){
     if(!response.ok)throw new Error(data.error||'تعذر جلب البيانات الرياضية.');
     return data;
   }
-  function showPane(name){
+  function showPane(name,skipLoad=false){
     wrap.querySelectorAll('.fb-tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===name));
     wrap.querySelectorAll('.fb-pane').forEach(x=>x.classList.toggle('active',x.dataset.pane===name));
-    if(name==='matches'&&!matchesLoaded)loadFixtures('date');
+    if(name==='matches'&&!matchesLoaded&&!skipLoad)loadFixtures('date');
   }
   let matchesLoaded=false;
   const providerStatus=$('fbProviderStatus');
@@ -320,7 +320,7 @@ function renderFootballModule(tool){
   $('fbLoadToday')?.addEventListener('click',()=>loadFixtures('date'));
   $('fbLoadLive')?.addEventListener('click',()=>loadFixtures('live'));
   $('fbGoMatches')?.addEventListener('click',()=>showPane('matches'));
-  $('fbGoLive')?.addEventListener('click',()=>{showPane('matches');loadFixtures('live');});
+  $('fbGoLive')?.addEventListener('click',()=>{showPane('matches',true);loadFixtures('live');});
   $('fbSearchLeagues')?.addEventListener('click',async()=>{
     const query=$('fbLeagueSearch').value.trim(),box=$('fbLeaguesList'),status=$('fbStandingsStatus');
     box.replaceChildren();$('fbStandingsList').replaceChildren();
