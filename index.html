@@ -178,7 +178,7 @@ else if(renderUtilityModule(sec,tool)){}
 
 else if(sec.id==='accounting_vip'){
 document.getElementById('detailNotice').textContent='أدوات التاجر: احسب سعر البيع والربح والهامش، واحتفظ بسجل مخزون محلي على هذا الجهاز. البيانات لا تُرسل إلى خادم.';
-tool.innerHTML='<h3 style="color:var(--gold2)">حاسبة التسعير والربح</h3><div class="calc"><label>تكلفة القطعة<input id="mCost" type="number" min="0" step="any" placeholder="مثال: 10"></label><label>المصاريف الإضافية للقطعة<input id="mExpense" type="number" min="0" step="any" value="0"></label><label>سعر البيع<input id="mSale" type="number" min="0" step="any" placeholder="مثال: 16"></label><label>الكمية المباعة<input id="mQty" type="number" min="1" step="1" value="1"></label></div><button class="btn" id="mCalc" style="margin-top:12px">احسب الربح</button><div class="result" id="mResult" aria-live="polite"></div><div class="notice">هامش الربح = الربح ÷ إجمالي المبيعات. نسبة الزيادة على التكلفة تختلف عن هامش الربح.</div><hr style="border-color:var(--line);margin:24px 0"><h3 style="color:var(--gold2)">دفتر المخزون المحلي</h3><div class="calc"><label>اسم الصنف<input id="stockName" maxlength="60" placeholder="اسم المنتج"></label><label>الكمية<input id="stockQty" type="number" min="0" step="1" placeholder="الكمية"></label><label>تكلفة الوحدة<input id="stockCost" type="number" min="0" step="any" placeholder="التكلفة"></label><label>سعر البيع<input id="stockSale" type="number" min="0" step="any" placeholder="سعر البيع"></label></div><button class="btn" id="stockAdd" style="margin-top:12px">إضافة إلى المخزون</button><div id="stockMessage" class="notice" aria-live="polite">يُحفظ السجل على هذا المتصفح فقط. امسح بيانات المتصفح أو بدّل الجهاز وقد تفقد السجل.</div><div id="stockList" style="overflow-x:auto;margin-top:14px"></div>';
+tool.innerHTML='<h3 style="color:var(--gold2)">حاسبة التسعير والربح</h3><div class="calc"><label>تكلفة القطعة<input id="mCost" type="number" min="0" step="any" placeholder="مثال: 10"></label><label>المصاريف الإضافية للقطعة<input id="mExpense" type="number" min="0" step="any" value="0"></label><label>سعر البيع<input id="mSale" type="number" min="0" step="any" placeholder="مثال: 16"></label><label>الكمية المباعة<input id="mQty" type="number" min="1" step="1" value="1"></label></div><button class="btn" id="mCalc" style="margin-top:12px">احسب الربح</button><div class="result" id="mResult" aria-live="polite"></div><div class="notice">هامش الربح = الربح ÷ إجمالي المبيعات. نسبة الزيادة على التكلفة تختلف عن هامش الربح.</div><hr style="border-color:var(--line);margin:24px 0"><h3 style="color:var(--gold2)">دفتر المخزون المحلي</h3><div class="calc"><label>اسم الصنف<input id="stockName" maxlength="60" placeholder="اسم المنتج"></label><label>الكمية<input id="stockQty" type="number" min="0" step="1" placeholder="الكمية"></label><label>تكلفة الوحدة<input id="stockCost" type="number" min="0" step="any" placeholder="التكلفة"></label><label>سعر البيع<input id="stockSale" type="number" min="0" step="any" placeholder="سعر البيع"></label></div><button class="btn" id="stockAdd" style="margin-top:12px">إضافة إلى المخزون</button><div class="calc" style="margin-top:10px"><button class="btn secondary" type="button" id="stockExport">تنزيل نسخة احتياطية</button><button class="btn secondary" type="button" id="stockImportBtn">استيراد نسخة احتياطية</button><input id="stockImportFile" type="file" accept="application/json,.json" hidden></div><div id="stockMessage" class="notice" aria-live="polite">يُحفظ السجل على هذا المتصفح فقط. امسح بيانات المتصفح أو بدّل الجهاز وقد تفقد السجل.</div><div id="stockList" style="overflow-x:auto;margin-top:14px"></div>';
 const fmt=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits:2});
 document.getElementById('mCalc').onclick=()=>{
 const c=Number(document.getElementById('mCost').value),e=Number(document.getElementById('mExpense').value||0),s=Number(document.getElementById('mSale').value),q=Number(document.getElementById('mQty').value);
@@ -212,6 +212,30 @@ const items=readStock();items.push({name,qty,cost,sale});
 if(!saveStock(items)){msg.textContent='تعذر الحفظ في هذا المتصفح. تحقق من مساحة التخزين وإعدادات الخصوصية.';return;}
 ['stockName','stockQty','stockCost','stockSale'].forEach(id=>document.getElementById(id).value='');
 msg.textContent='تم حفظ الصنف محلياً على هذا الجهاز.';renderStock();
+};
+document.getElementById('stockExport').onclick=()=>{
+const items=readStock(),backup={app:'bawabatsyria-stock',version:1,createdAt:new Date().toISOString(),items};
+const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+const url=URL.createObjectURL(blob),a=document.createElement('a');
+a.href=url;a.download='bawabatsyria-stock-backup-'+new Date().toISOString().slice(0,10)+'.json';
+document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+msg.textContent='تم تجهيز نسخة احتياطية من '+items.length+' صنف. احتفظ بالملف في مكان آمن.';
+};
+const importBtn=document.getElementById('stockImportBtn'),importFile=document.getElementById('stockImportFile');
+importBtn.onclick=()=>importFile.click();
+importFile.onchange=async()=>{
+const file=importFile.files&&importFile.files[0];if(!file)return;
+try{
+if(file.size>2*1024*1024)throw new Error('حجم الملف أكبر من الحد المسموح (2 ميغابايت).');
+const data=JSON.parse(await file.text()),incoming=Array.isArray(data)?data:(data&&data.app==='bawabatsyria-stock'&&data.version===1?data.items:null);
+if(!Array.isArray(incoming)||incoming.length>10000)throw new Error('ملف النسخة الاحتياطية غير صالح أو يحتوي عدداً كبيراً من الأصناف.');
+const valid=incoming.filter(x=>x&&typeof x.name==='string'&&x.name.trim().length>0&&x.name.trim().length<=60&&Number.isInteger(x.qty)&&x.qty>=0&&Number.isFinite(x.cost)&&x.cost>=0&&Number.isFinite(x.sale)&&x.sale>=0);
+if(valid.length!==incoming.length)throw new Error('تحتوي النسخة على بيانات غير صالحة؛ لم يتم استيراد أي شيء.');
+const merged=readStock().concat(valid);
+if(!saveStock(merged))throw new Error('تعذر الحفظ. قد تكون مساحة التخزين ممتلئة.');
+renderStock();msg.textContent='تم استيراد '+valid.length+' صنف وإضافتها إلى السجل الحالي دون حذف الأصناف الموجودة.';
+}catch(error){msg.textContent=error.message||'تعذر قراءة النسخة الاحتياطية.';}
+finally{importFile.value='';}
 };
 renderStock();
 }
