@@ -1,0 +1,12 @@
+{
+  "name": "بوابة سورية الوطنية",
+  "short_name": "بوابة سورية",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1222",
+  "theme_color": "#101a31",
+  "description": "الموسوعة والخدمات الرقمية السورية"
+}
