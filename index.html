@@ -106,7 +106,7 @@ const sections = [
     { id: 'agriculture', title: 'الزراعة والثروة الحيوانية', icon: '🌾', desc: 'المهندس الزراعي لخدمة المحاصيل والوقاية من الآفات وطرق التربية المنزلية والإنتاجية' },
     { id: 'fertilizers', title: 'بورصة الأسمدة والمغذيات', icon: '🧪', desc: 'حاسبة كميات التسميد الكيماوي والعضوي للدونم وصناعة الكومبوست الطبيعي من بقايا المنزل' },
     { id: 'birds_pets', title: 'واحة الطيور وحيوانات الزينة', icon: '🦜', desc: 'العناية بالطيور والكناري والداجن، جداول التغذية وتشخيص الأمراض البيطرية الشائعة وعزلها' },
-    { id: 'sports_radar', title: 'رادار الملاعب وبث المباريات', icon: '⚽', desc: 'جدول مواعيد البث المباشر الفوري، إشعارات الأهداف التلقائية ومحلل تكتيك المباريات الحي' },
+    { id: 'sports_radar', title: 'مركز كرة القدم والمباريات', icon: '⚽', desc: 'تابع البطولات والفرق المفضلة، واستعد لمركز النتائج والمواعيد والإحصائيات والتنبيهات والتحليل الكروي' },
     { id: 'news', title: 'أخبار المحافظات المباشرة', icon: '📰', desc: 'تغطية فخمة وموجزة لآخر الأحداث المحلية وتلخيصها عبر الذكاء الاصطناعي بحيادية تامة' },
     { id: 'expatriates_invest', title: 'المغتربون يستثمرون داخل البلاد', icon: '💎', desc: 'أفكار مشاريع استثمارية وإنتاجية مدروسة ومربحة لتنمية المجتمع برؤوس أموال اغترابية' },
     { id: 'heritage', title: 'التراث السوري اللامادي والأصالة', icon: '🏺', desc: 'موسوعة فلكلور المحافظات، الأهازيج، الأزياء والعادات الشعبية لحفظ الهوية السورية الوطنية' },
@@ -172,6 +172,65 @@ syria_ai:{title:'مهيئ سؤال للخدمات والمعلومات السو�
 health:{title:'منظم التحضير للموعد الطبي',notice:'هذه الأداة لتنظيم الأسئلة والملاحظات قبل زيارة مختص فقط، ولا تشخّص الأمراض ولا تقترح علاجاً. عند وجود حالة طارئة أو أعراض شديدة مفاجئة، اتصل بخدمات الطوارئ المحلية فوراً.',fields:[['reason','سبب الزيارة أو السؤال','textarea','اكتب ما تريد مناقشته مع الطبيب'],['since','متى بدأت المشكلة؟','text','المدة والتغيرات الملحوظة'],['questions','أسئلة تريد طرحها','textarea','اكتب أسئلتك للطبيب'],['notes','ملاحظات تريد تذكرها','textarea','معلومات غير حساسة تساعدك على تذكر النقاط']],run:v=>{if(!v.reason.trim())return 'اكتب سبب الزيارة أو السؤال.';return 'ملاحظات التحضير للموعد الطبي\n\nسبب الزيارة:\n'+v.reason+'\n\nمتى بدأت؟\n'+(v.since||'يُستكمل أثناء الموعد')+'\n\nأسئلة للطبيب:\n'+(v.questions||'أضف أسئلتك هنا')+'\n\nملاحظات إضافية:\n'+(v.notes||'لا توجد')+'\n\nتذكير: خذ معك قائمة الأدوية أو التقارير التي يطلبها الطبيب، ولا توقف دواءً موصوفاً دون استشارته. هذه الورقة لا تحل محل التقييم الطبي.';}}
 
 };
+function renderFootballModule(tool){
+  const storageKey='bawabatsyria_football_favorites_v1';
+  const leagues=[
+    ['UCL','دوري أبطال أوروبا'],
+    ['EPL','الدوري الإنجليزي الممتاز'],
+    ['LaLiga','الدوري الإسباني'],
+    ['SerieA','الدوري الإيطالي'],
+    ['Bundesliga','الدوري الألماني'],
+    ['Ligue1','الدوري الفرنسي'],
+    ['MLS','الدوري الأمريكي']
+  ];
+  const wrap=document.createElement('div');
+  wrap.innerHTML=
+    '<h3 style="color:var(--gold2)">⚽ عالم كرة القدم</h3>'+
+    '<div class="notice" role="status">مركز المتابعة قيد التجهيز: لم نربط بعد مزود بيانات المباريات الحية، لذلك لن نعرض نتائج أو مواعيد غير مؤكدة.</div>'+
+    '<h3 style="margin-top:20px">البطولات</h3>'+
+    '<div class="calc"><label>اختر البطولة<select id="footballLeague"></select></label></div>'+
+    '<div class="notice" id="footballLeagueInfo">سيظهر جدول البطولة ونتائجها هنا بعد ربط مصدر بيانات رياضي موثوق.</div>'+
+    '<hr style="border-color:var(--line);margin:20px 0">'+
+    '<h3>فرقي المفضلة</h3>'+
+    '<p style="color:var(--muted)">أضف أسماء الفرق التي تشجعها لتجهيز قائمة متابعتك. تُحفظ القائمة على هذا المتصفح فقط.</p>'+
+    '<div class="calc"><label>اسم الفريق<input id="footballTeamInput" maxlength="60" placeholder="مثال: ريال مدريد"></label></div>'+
+    '<button class="btn" id="footballAddTeam" type="button" style="margin-top:10px">إضافة للفِرق المفضلة</button>'+
+    '<div id="footballTeamsList" class="notice" aria-live="polite" style="margin-top:12px"></div>'+
+    '<hr style="border-color:var(--line);margin:20px 0">'+
+    '<h3>المباريات والنتائج</h3>'+
+    '<div class="notice">سيُضاف هنا: المباريات القادمة، النتائج النهائية، المباريات الجارية، ترتيب الفرق، وإحصائيات المواجهات. التحديث المباشر والتنبيهات الفورية يتطلبان مزود بيانات وخدمة إشعارات معتمدة.</div>'+
+    '<h3 style="margin-top:20px">التحليل الكروي الذكي</h3>'+
+    '<div class="notice">سيحلل هذا الجزء أداء الفريقين والإحصائيات والتشكيلات عندما تتوفر بيانات المباراة الموثوقة؛ ولن يختلق توقعات أو إحصائيات.</div>';
+  tool.appendChild(wrap);
+  const select=wrap.querySelector('#footballLeague');
+  leagues.forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;select.appendChild(option);});
+  const info=wrap.querySelector('#footballLeagueInfo');
+  select.addEventListener('change',()=>{const label=select.options[select.selectedIndex].text;info.textContent='تم اختيار '+label+'. ستظهر المواعيد والنتائج والترتيب بعد ربط مصدر البيانات.';});
+  const list=wrap.querySelector('#footballTeamsList');
+  const input=wrap.querySelector('#footballTeamInput');
+  const read=()=>{try{const value=JSON.parse(localStorage.getItem(storageKey)||'[]');return Array.isArray(value)?value.filter(x=>typeof x==='string').slice(0,30):[];}catch(e){return [];}};
+  const save=items=>{try{localStorage.setItem(storageKey,JSON.stringify(items));return true;}catch(e){return false;}};
+  const render=()=>{
+    const teams=read();list.replaceChildren();
+    if(!teams.length){list.textContent='لم تضف فرقاً بعد.';return;}
+    teams.forEach((team,index)=>{
+      const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px;margin:7px 0';
+      const name=document.createElement('span');name.textContent='⚽ '+team;
+      const remove=document.createElement('button');remove.type='button';remove.className='btn secondary';remove.textContent='إزالة';
+      remove.addEventListener('click',()=>{const next=read();next.splice(index,1);if(save(next))render();else list.textContent='تعذر تحديث القائمة في مساحة التخزين المحلية.';});
+      row.append(name,remove);list.appendChild(row);
+    });
+  };
+  wrap.querySelector('#footballAddTeam').addEventListener('click',()=>{
+    const team=input.value.trim();if(!team){list.textContent='اكتب اسم الفريق أولاً.';return;}
+    const teams=read();if(teams.some(x=>x.toLocaleLowerCase()===team.toLocaleLowerCase())){list.textContent='هذا الفريق موجود بالفعل في قائمتك.';return;}
+    if(teams.length>=30){list.textContent='يمكنك حفظ 30 فريقاً كحد أقصى.';return;}
+    if(!save([...teams,team])){list.textContent='تعذر الحفظ على هذا المتصفح.';return;}
+    input.value='';render();
+  });
+  render();
+}
+
 function renderUtilityModule(sec,tool){
 const cfg=utilityModules[sec.id];if(!cfg)return false;
 document.getElementById('detailNotice').textContent=cfg.notice;
@@ -289,7 +348,8 @@ tool.replaceChildren();panel.classList.add('open');panel.scrollIntoView({behavio
 }
 }
 document.getElementById('detailTitle').textContent=sec.title;document.getElementById('detailDesc').textContent=sec.desc;const tool=document.getElementById('specialTool');tool.innerHTML='';document.getElementById('detailNotice').style.display='block';
-if(sec.id==='prices'){document.getElementById('detailNotice').textContent='أدخل سعر الصرف الذي تريد استخدامه بنفسك. لا تعرض البوابة حالياً أسعاراً سوقية مباشرة، لذلك لن تُقدّم أرقاماً قديمة على أنها لحظية.';tool.innerHTML='<div class="calc"><label>المبلغ<input id="amount" type="number" min="0" step="any" value="1"></label><label>سعر الوحدة<input id="rate" type="number" min="0" step="any" placeholder="أدخل السعر"></label><label>العملية<select id="operation"><option value="multiply">ضرب (تحويل إلى العملة المقابلة)</option><option value="divide">قسمة</option></select></label></div><button class="btn" id="calcBtn" style="margin-top:12px">احسب</button><div class="result" id="calcResult"></div>';document.getElementById('calcBtn').onclick=()=>{const a=Number(document.getElementById('amount').value),r=Number(document.getElementById('rate').value),op=document.getElementById('operation').value;document.getElementById('calcResult').textContent=Number.isFinite(a)&&Number.isFinite(r)&&r>0?(op==='multiply'?a*r:a/r).toLocaleString('en-US',{maximumFractionDigits:4}):'أدخل مبلغاً وسعراً صحيحين أكبر من صفر.';};}
+if(sec.id==='sports_radar'){document.getElementById('detailNotice').textContent='عالم كرة القدم: قائمة فرقك المفضلة تُحفظ محلياً. جداول المباريات والنتائج المباشرة والتنبيهات ستُفعّل بعد ربط مزود بيانات رياضي موثوق.';renderFootballModule(tool);}
+else if(sec.id==='prices'){document.getElementById('detailNotice').textContent='أدخل سعر الصرف الذي تريد استخدامه بنفسك. لا تعرض البوابة حالياً أسعاراً سوقية مباشرة، لذلك لن تُقدّم أرقاماً قديمة على أنها لحظية.';tool.innerHTML='<div class="calc"><label>المبلغ<input id="amount" type="number" min="0" step="any" value="1"></label><label>سعر الوحدة<input id="rate" type="number" min="0" step="any" placeholder="أدخل السعر"></label><label>العملية<select id="operation"><option value="multiply">ضرب (تحويل إلى العملة المقابلة)</option><option value="divide">قسمة</option></select></label></div><button class="btn" id="calcBtn" style="margin-top:12px">احسب</button><div class="result" id="calcResult"></div>';document.getElementById('calcBtn').onclick=()=>{const a=Number(document.getElementById('amount').value),r=Number(document.getElementById('rate').value),op=document.getElementById('operation').value;document.getElementById('calcResult').textContent=Number.isFinite(a)&&Number.isFinite(r)&&r>0?(op==='multiply'?a*r:a/r).toLocaleString('en-US',{maximumFractionDigits:4}):'أدخل مبلغاً وسعراً صحيحين أكبر من صفر.';};}
 else if(sec.id==='chef'){document.getElementById('detailNotice').textContent='أداة اختيار عشوائي بسيطة تعمل داخل المتصفح، ولا تحتاج إلى اتصال بخدمة خارجية.';tool.innerHTML='<button class="btn" id="mealBtn">اقترح طبخة عشوائية</button><div class="result" id="mealResult"></div>';document.getElementById('mealBtn').onclick=()=>{const meals=['مجدّرة','يبرق','فتّة حمص','مقلوبة','شوربة عدس','بطاطا بالفرن','فاصولياء بالزيت','كبة بالصينية'];document.getElementById('mealResult').textContent=meals[Math.floor(Math.random()*meals.length)];};}
 
 
