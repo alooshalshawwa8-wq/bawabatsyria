@@ -96,6 +96,15 @@ async function route(request, env) {
   if (path === "/api/health" && request.method === "GET") return json({ ok: true, service: "bawabatsyria-membership", version: 1 });
   if (path === "/api/plans" && request.method === "GET") return json({ plans: Object.entries(PLANS).map(([id, plan]) => ({ id, name: plan.name, checkoutEnabled: Boolean(env[plan.priceEnv] && env.STRIPE_SECRET_KEY) })) });
   if (path === "/api/stripe/webhook" && request.method === "POST") return handleWebhook(request, env);
+  if (path === "/api/admin/points" && request.method === "POST") {
+    const supplied = request.headers.get("X-Points-Admin-Key") || "";
+    if (!env.POINTS_ADMIN_KEY || !safeEqual(supplied, env.POINTS_ADMIN_KEY)) return json({ error: "Forbidden" }, 403);
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body.userId !== "string" || !body.userId.trim() || !Number.isInteger(body.delta) || body.delta === 0 || Math.abs(body.delta) > 10000 || typeof body.reason !== "string" || !body.reason.trim() || body.reason.length > 160 || typeof body.idempotencyKey !== "string" || !/^[a-zA-Z0-9:_-]{8,120}$/.test(body.idempotencyKey)) return json({ error: "Invalid points entry" }, 400);
+    const result = await env.DB.prepare("INSERT OR IGNORE INTO points_ledger (id,user_id,delta,reason,idempotency_key,created_at) VALUES (?,?,?,?,?,?)")
+      .bind(crypto.randomUUID(), body.userId.trim(), body.delta, body.reason.trim(), body.idempotencyKey, Math.floor(Date.now() / 1000)).run();
+    return json({ accepted: Boolean(result.meta?.changes), duplicate: !result.meta?.changes }, 200);
+  }
   const user = await authenticate(request, env);
   if (!user) return json({ error: "Authentication required" }, 401);
   if (path === "/api/me" && request.method === "GET") {
