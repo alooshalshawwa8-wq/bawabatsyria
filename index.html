@@ -174,7 +174,7 @@ return true;
 async function openSection(sec){
 const vipSections=['engineer_vip','marketing_vip','video_factory_vip','freelance_vip','accounting_vip'];
 if(vipSections.includes(sec.id)){
-const token=membershipToken(),tool=document.getElementById('specialTool');
+const token=await refreshMembershipSession(),tool=document.getElementById('specialTool');
 if(!membershipApi){
 document.getElementById('detailNotice').textContent='تعذر الاتصال بخدمة التحقق من العضوية؛ أوقفنا فتح قسم VIP حمايةً لصلاحياتك.';
 tool.replaceChildren();panel.classList.add('open');panel.scrollIntoView({behavior:'smooth',block:'start'});return;
@@ -301,7 +301,31 @@ const membershipWallet=document.getElementById('membershipWallet');
 const membershipApi=(window.BAWABA_API_BASE||'').replace(/\/$/,'');
 const authUrl=(window.BAWABA_SUPABASE_URL||'').replace(/\/$/,'');
 const authAnonKey=window.BAWABA_SUPABASE_ANON_KEY||'';
-const membershipToken=()=>sessionStorage.getItem('bawabatsyria_access_token')||window.BAWABA_ACCESS_TOKEN||'';
+const AUTH_SESSION_KEY='bawabatsyria_auth_session';
+function readMembershipSession(){try{return JSON.parse(localStorage.getItem(AUTH_SESSION_KEY)||'null');}catch(e){return null;}}
+const membershipToken=()=>{const saved=readMembershipSession();return (saved&&saved.access_token)||localStorage.getItem('bawabatsyria_access_token')||window.BAWABA_ACCESS_TOKEN||'';};
+function saveMembershipSession(data){
+if(!data||!data.access_token)return;
+const session={access_token:data.access_token,refresh_token:data.refresh_token||((readMembershipSession()||{}).refresh_token)||'',expires_at:data.expires_at?Number(data.expires_at)*1000:Date.now()+Math.max(60,Number(data.expires_in)||3600)*1000};
+try{localStorage.setItem(AUTH_SESSION_KEY,JSON.stringify(session));localStorage.setItem('bawabatsyria_access_token',session.access_token);}catch(e){}
+window.BAWABA_ACCESS_TOKEN=session.access_token;
+}
+function clearMembershipSession(){try{localStorage.removeItem(AUTH_SESSION_KEY);localStorage.removeItem('bawabatsyria_access_token');}catch(e){}window.BAWABA_ACCESS_TOKEN='';}
+async function refreshMembershipSession(force=false){
+const saved=readMembershipSession();
+if(!saved||!saved.refresh_token)return membershipToken();
+if(!force&&Number(saved.expires_at)>Date.now()+60000)return saved.access_token;
+try{
+const response=await fetch(authUrl+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'content-type':'application/json',apikey:authAnonKey},body:JSON.stringify({refresh_token:saved.refresh_token})});
+const data=await response.json();
+if(!response.ok)throw new Error(data.msg||data.message||data.error_description||'تعذر تجديد جلسة الدخول');
+saveMembershipSession(data);
+return data.access_token||'';
+}catch(error){
+if(!navigator.onLine)return saved.access_token||'';
+return saved.access_token&&Number(saved.expires_at)>Date.now()?saved.access_token:'';
+}
+}
 async function membershipAuth(mode){
 const email=document.getElementById('membershipEmail').value.trim(),password=document.getElementById('membershipPassword').value;
 const status=document.getElementById('membershipAuthStatus');
@@ -313,17 +337,18 @@ const endpoint=mode==='signup'?'/auth/v1/signup':'/auth/v1/token?grant_type=pass
 const response=await fetch(authUrl+endpoint,{method:'POST',headers:{'content-type':'application/json',apikey:authAnonKey},body:JSON.stringify({email,password})});
 const data=await response.json();
 if(!response.ok)throw new Error(data.msg||data.message||data.error_description||data.error||'تعذر إتمام الطلب');
-if(data.access_token){sessionStorage.setItem('bawabatsyria_access_token',data.access_token);window.BAWABA_ACCESS_TOKEN=data.access_token;status.textContent=mode==='signup'?'تم إنشاء الحساب وتسجيل الدخول.':'تم تسجيل الدخول بنجاح.';await loadMembership();}
+if(data.access_token){saveMembershipSession(data);status.textContent=mode==='signup'?'تم إنشاء الحساب وتسجيل الدخول.':'تم تسجيل الدخول بنجاح.';await loadMembership();}
 else status.textContent='تم إرسال طلب إنشاء الحساب. افحص بريدك لتأكيده، ثم سجّل الدخول.';
 }catch(error){status.textContent=error.message||'تعذر الاتصال بخدمة الحسابات.';}
 }
 document.getElementById('membershipLogin').addEventListener('click',()=>membershipAuth('login'));
 document.getElementById('membershipSignup').addEventListener('click',()=>membershipAuth('signup'));
-document.getElementById('membershipLogout').addEventListener('click',()=>{sessionStorage.removeItem('bawabatsyria_access_token');window.BAWABA_ACCESS_TOKEN='';membershipAuthStatusReset();loadMembership();});
+document.getElementById('membershipLogout').addEventListener('click',()=>{clearMembershipSession();membershipAuthStatusReset();loadMembership();});
 function membershipAuthStatusReset(){document.getElementById('membershipAuthStatus').textContent='تم تسجيل الخروج من هذه الجلسة.';}
 function membershipNode(tag,text,className){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;}
 function openMembership(){panel.classList.remove('open');membershipPanel.classList.add('open');membershipPanel.scrollIntoView({behavior:'smooth',block:'start'});loadMembership();}
 async function loadMembership(){
+await refreshMembershipSession();
 membershipPlans.replaceChildren();
 if(!membershipApi){membershipStatus.textContent='واجهة العضوية جاهزة، لكن خادم العضوية لم يُنشر أو يُربط بعد. لن نعرض دفعاً وهمياً أو نفعّل VIP قبل ربط الخادم.';membershipPlans.append(membershipNode('div','الاحترافية · VIP · الأعمال — الأسعار ومعالجة الدفع تُحمّل من الخادم بعد تهيئته.','empty'));return;}
 membershipStatus.textContent='جارٍ الاتصال بخدمة العضوية…';
@@ -351,13 +376,17 @@ const ownerEntitlement=(me.entitlements||[]).some(x=>x.entitlement_key==='owner_
 }catch(error){membershipStatus.textContent='خدمة العضوية غير متاحة حالياً. تحقق من إعداد الخادم ومفاتيح المصادقة والدفع.';}
 }
 async function startMembershipCheckout(planId){
-if(!membershipApi||!membershipToken())return;
+const token=await refreshMembershipSession();
+if(!membershipApi||!token)return;
 try{
-const response=await fetch(membershipApi+'/api/checkout',{method:'POST',headers:{authorization:'Bearer '+membershipToken(),'content-type':'application/json'},body:JSON.stringify({planId})});
+const response=await fetch(membershipApi+'/api/checkout',{method:'POST',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify({planId})});
 const data=await response.json();if(!response.ok||!data.checkoutUrl)throw new Error(data.error||'تعذر بدء الدفع');
 location.href=data.checkoutUrl;
 }catch(error){membershipStatus.textContent=error.message||'تعذر بدء عملية الدفع.';}
 }
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshMembershipSession();});
+window.addEventListener('pageshow',()=>refreshMembershipSession());
+refreshMembershipSession();
 document.getElementById('membershipBtn').addEventListener('click',openMembership);
 document.getElementById('membershipBack').addEventListener('click',()=>{membershipPanel.classList.remove('open');showHome();});
 if(new URLSearchParams(location.search).get('membership')==='success'){openMembership();membershipStatus.textContent='وصلت من صفحة الدفع. يجري التحقق من تأكيد مزود الدفع؛ قد يستغرق تحديث الصلاحيات لحظات.';}
