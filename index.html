@@ -114,9 +114,16 @@ const sections = [
     { id: 'security', title: 'درع الحماية والتحصين البرمجي', icon: '🛡️', desc: 'فحص فوري للروابط والملفات من الاختراق وكشف صفحات الاحتيال الإلكتروني لحمايتك رقمياً' },
     { id: 'reports', title: 'بلاغات المواطن والشكاوى الإدارية', icon: '📩', desc: 'إعادة صياغة الشكاوى الموجهة للمديريات والمجالس المحلية بأسلوب رسمي وقانوني محكم' },
     { id: 'syria_ai', title: 'المساعد الذكي سوريا AI الشامل', icon: '🤖', desc: 'محرك الدردشة المركزي والمجاني للإجابة الفورية عن أي معاملة أو تفصيل داخل القطر' }
+    ,{ id: 'ecommerce_studio', title: 'استوديو التجارة الإلكترونية والمتاجر', icon: '🛒', desc: 'تجهيز صفحات المنتجات، حاسبة التسعير والربحية، تنظيم الطلبات وخطة إطلاق المتجر خطوة بخطوة' }
+    ,{ id: 'design_lab', title: 'مختبر التصميم وصناعة المحتوى', icon: '🎨', desc: 'تخطيط الهوية البصرية، أفكار المنشورات، تقويم المحتوى، موجزات التصميم وحزم الحملات الإبداعية' }
+    ,{ id: 'language_academy', title: 'أكاديمية اللغات والترجمة', icon: '🌍', desc: 'خطط تعلم اللغات، بطاقات المفردات، تدريبات المحادثة، تمارين القواعد ومتابعة التقدم اليومي' }
+    ,{ id: 'fitness_coach', title: 'مدرب اللياقة والعادات الصحية', icon: '🏃', desc: 'مخطط نشاط أسبوعي، متتبع العادات، حاسبة أهداف عامة وسجل التقدم مع إرشادات آمنة غير تشخيصية' }
+    ,{ id: 'events_calendar', title: 'منظم المناسبات والفعاليات', icon: '🗓️', desc: 'تخطيط المناسبات، قوائم المهام والضيوف والميزانية، وجدول التحضير وتوزيع المسؤوليات' }
+    ,{ id: 'syria_marketplace', title: 'سوق سورية للإعلانات المبوبة', icon: '🏷️', desc: 'إنشاء إعلانات بيع وشراء وخدمات، قوالب وصف احترافية، قوائم تحقق للسلامة وتجهيز الإعلان للنشر' }
+
 ]
 // ترتيب الصفحة الرئيسية حسب الجذب ثم الفائدة، مع إبقاء جميع الأقسام ووظائفها كما هي.
-const sectionPriority = ["prices","news","sports_radar","zodiac_world","chef","mirror","syria_ai","travel_visa","tourism","apps_games","nostalgia_archive","body_language","directory_services","jobs","freelance_vip","marketing_vip","video_factory_vip","trading_academy","trader_market","expatriates_invest","accounting_vip","code_sandbox","engineer_vip","no_khosoosie","syria_curriculum","education","health","cash_shield","security","telecom","energy","domestic_economy","water","transport","cars_guide","realestate","civil","consular","legal","business","reports","solidarity","culture","heritage","agriculture","fertilizers","birds_pets"];
+const sectionPriority = ["sports_radar","zodiac_world","news","ecommerce_studio","syria_marketplace","design_lab","language_academy","fitness_coach","events_calendar","prices","chef","mirror","syria_ai","travel_visa","tourism","apps_games","nostalgia_archive","body_language","directory_services","jobs","freelance_vip","marketing_vip","video_factory_vip","trading_academy","trader_market","expatriates_invest","accounting_vip","code_sandbox","engineer_vip","no_khosoosie","syria_curriculum","education","health","cash_shield","security","telecom","energy","domestic_economy","water","transport","cars_guide","realestate","civil","consular","legal","business","reports","solidarity","culture","heritage","agriculture","fertilizers","birds_pets"];
 const sectionRank = new Map(sectionPriority.map((id,index)=>[id,index]));
 sections.sort((a,b)=>(sectionRank.get(a.id)??999)-(sectionRank.get(b.id)??999));
 window.BAWABA_SECTIONS=sections;
@@ -380,6 +387,57 @@ copy.onclick=async()=>{try{await navigator.clipboard.writeText(output.value);cop
 return true;
 }
 
+
+
+Object.assign(utilityModules,{
+ecommerce_studio:{title:'حاسبة المتجر ومولد بطاقة المنتج',notice:'جهّز بطاقة منتج واحسب السعر الذي يغطي التكلفة والرسوم. النتيجة تقديرية ولا تتضمن الشحن أو الضرائب إلا إذا أضفتها إلى التكلفة.',fields:[['product','اسم المنتج','text','مثال: حقيبة ظهر'],['cost','تكلفة المنتج','number','مثال: 12'],['extra','تكاليف إضافية','number','مثال: 2'],['fee','رسوم المنصة %','number','مثال: 5'],['margin','هامش الربح المستهدف %','number','مثال: 25'],['benefit','أهم ميزة للمنتج','textarea','ما المشكلة التي يحلها المنتج؟']],run:v=>{const c=+v.cost,e=+v.extra,f=+v.fee,m=+v.margin;if(!v.product.trim()||c<0||e<0||f<0||f>=100||m<0||f+m>=100)return 'أدخل اسم المنتج وتحقق من القيم؛ مجموع الرسوم والهامش يجب أن يكون أقل من 100%.';const base=c+e,p=base/(1-f/100-m/100);return 'بطاقة المنتج: '+v.product+'\nالسعر المقترح التقريبي: '+p.toFixed(2)+'\nالتكلفة الأساسية: '+base.toFixed(2)+'\nالميزة: '+(v.benefit||'أضف ميزة واضحة للمنتج')+'\n\nراجع رسوم الدفع والشحن والضرائب قبل اعتماد السعر.';}},
+design_lab:{title:'مولّد موجز حملة محتوى',notice:'ينشئ موجزاً إبداعياً قابلاً للتعديل. لا ينتج صورة نهائية ولا ينشر المحتوى تلقائياً.',fields:[['brand','اسم العلامة أو المشروع','text','اسم المشروع'],['product','المنتج أو الفكرة','text','ما الذي نروّج له؟'],['audience','الجمهور المستهدف','text','مثال: طلاب الجامعات'],['platform','منصة النشر','text','إنستغرام، فيسبوك، تيك توك'],['tone','الأسلوب البصري والنبرة','text','عصري، بسيط، فاخر، مرح'],['goal','هدف الحملة','textarea','زيادة الوعي أو الطلبات أو التفاعل']],run:v=>{if(!v.brand||!v.product||!v.goal)return 'أدخل اسم المشروع والفكرة والهدف.';return 'موجز الحملة الإبداعية\nالعلامة: '+v.brand+'\nالفكرة: '+v.product+'\nالجمهور: '+(v.audience||'يُحدد لاحقاً')+'\nالمنصة: '+(v.platform||'متعددة')+'\nالنبرة: '+(v.tone||'متناسقة مع الهوية')+'\nالهدف: '+v.goal+'\n\nالمخرجات المطلوبة: منشور رئيسي، 3 قصص قصيرة، فكرة فيديو عمودي، عنوان جذاب، ودعوة واضحة لاتخاذ إجراء.';}},
+language_academy:{title:'منشئ جلسة تعلم ومراجعة',notice:'منظم تعلم شخصي. راجع الترجمات والقواعد مع مصدر موثوق أو مدرس، فالاقتراحات هنا قالب تدريبي وليست ترجمة معتمدة.',fields:[['language','اللغة المستهدفة','text','مثال: الإنجليزية'],['level','مستواك الحالي','text','مبتدئ، متوسط، متقدم'],['minutes','وقت الدراسة يومياً بالدقائق','number','مثال: 20'],['goal','هدفك من اللغة','textarea','محادثة، دراسة، عمل، سفر']],run:v=>{const m=+v.minutes;if(!v.language||m<=0||!v.goal)return 'أدخل اللغة ووقتاً يومياً وهدفاً واضحاً.';return 'خطة تعلم '+v.language+'\nالمستوى: '+(v.level||'يُحدد باختبار أولي')+'\nالهدف: '+v.goal+'\nالوقت اليومي: '+m+' دقيقة\n\nتقسيم الجلسة: '+Math.round(m*.3)+' دقيقة مفردات، '+Math.round(m*.3)+' دقيقة استماع/قراءة، '+Math.round(m*.25)+' دقيقة محادثة أو كتابة، '+Math.max(1,m-Math.round(m*.85))+' دقيقة مراجعة.\n\nاختبر نفسك أسبوعياً وسجّل الكلمات التي تتكرر أخطاؤك فيها.';}},
+fitness_coach:{title:'مخطط نشاط أسبوعي آمن',notice:'مخطط عام للنشاط والعادات وليس تشخيصاً أو خطة علاجية. اختر نشاطاً يناسب قدرتك، واستشر مختصاً عند وجود حالة صحية أو ألم.',fields:[['goal','الهدف العام','text','مثال: زيادة الحركة'],['days','عدد الأيام المتاحة أسبوعياً','number','مثال: 3'],['minutes','الدقائق في كل جلسة','number','مثال: 25'],['level','مستوى النشاط الحالي','text','خفيف، متوسط، مرتفع'],['limits','قيود أو تفضيلات','textarea','مثال: أفضل المشي وتجنب القفز']],run:v=>{const d=+v.days,m=+v.minutes;if(!v.goal||d<1||d>7||m<5||m>180)return 'أدخل هدفاً وعدداً من 1 إلى 7 أيام ومدة بين 5 و180 دقيقة.';return 'خطة نشاط أولية\nالهدف: '+v.goal+'\nالمستوى: '+(v.level||'خفيف كبداية')+'\nالأيام: '+d+' · مدة الجلسة: '+m+' دقيقة\nالتفضيلات: '+(v.limits||'لا توجد ملاحظات')+'\n\nوزّع الجلسات بين نشاط هوائي مناسب وتمارين قوة خفيفة وتمدد لطيف. ابدأ تدريجياً، واترك وقتاً للتعافي، وأوقف النشاط عند الألم أو الدوار.';}},
+events_calendar:{title:'مخطط المناسبة والميزانية',notice:'منظم تخطيطي محلي. لا يحجز القاعات أو الخدمات ولا يرسل دعوات.',fields:[['event','اسم المناسبة','text','مثال: حفل تخرج'],['date','التاريخ','text','اليوم أو التاريخ'],['guests','عدد الضيوف','number','مثال: 40'],['budget','الميزانية الإجمالية','number','مثال: 500'],['place','المكان','text','المنزل أو القاعة'],['notes','متطلبات خاصة','textarea','الضيافة، الصوت، التصوير']],run:v=>{const n=+v.guests,b=+v.budget;if(!v.event||n<1||b<0)return 'أدخل اسم المناسبة وعدداً صحيحاً للضيوف وميزانية غير سالبة.';return 'خطة المناسبة: '+v.event+'\nالتاريخ: '+(v.date||'يُحدد لاحقاً')+'\nالمكان: '+(v.place||'قيد الاختيار')+'\nالضيوف: '+n+'\nالميزانية: '+b.toFixed(2)+'\nالمتوسط المتاح لكل ضيف: '+(b/n).toFixed(2)+'\nالمتطلبات: '+(v.notes||'لا يوجد')+'\n\nتأكد من حجز المكان، الضيافة، الدعوات، البرنامج، التصوير، وخطة بديلة.';}},
+syria_marketplace:{title:'منشئ إعلان بيع أو خدمة',notice:'يجهّز نص الإعلان فقط ولا ينشره على منصة خارجية. لا تشارك رقمك أو عنوانك الشخصي علناً، وتحقق من الدفع قبل تسليم السلعة.',fields:[['title','عنوان الإعلان','text','مثال: هاتف بحالة ممتازة'],['category','التصنيف','text','أجهزة، منزل، سيارات، خدمات'],['condition','الحالة','text','جديد، مستعمل، مجدد'],['price','السعر والعملة','text','اكتب السعر بوضوح'],['area','المدينة أو المنطقة العامة','text','المحافظة أو الحي'],['details','الوصف والتفاصيل','textarea','المواصفات والعيوب إن وجدت']],run:v=>{if(!v.title||!v.category||!v.price)return 'أدخل عنوان الإعلان والتصنيف والسعر.';return 'إعلان جاهز للمراجعة\n'+v.title+'\nالتصنيف: '+v.category+' · الحالة: '+(v.condition||'غير محددة')+'\nالسعر: '+v.price+'\nالموقع العام: '+(v.area||'يُحدد عند التواصل')+'\n\n'+(v.details||'أضف وصفاً دقيقاً وصوراً واضحة.')+'\n\nللاستفسار: تواصل عبر رسائل المنصة التي ستنشر عليها الإعلان. لا ترسل رمز تحقق أو بيانات بطاقة أو دفعة مقدماً لمجهول.';}}
+});
+
+
+function renderSectionWorkspace(sec,tool){
+  if(tool.dataset.professionalWorkspace==='1')return;
+  tool.dataset.professionalWorkspace='1';
+  const original=Array.from(tool.childNodes);tool.replaceChildren();
+  const style=document.createElement('style');
+  style.textContent='.bw-workspace{margin:18px 0;padding:16px;border:1px solid #465d7d;border-radius:16px;background:linear-gradient(145deg,#14243b,#0d182a)}.bw-workspace-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.bw-workspace-head h3{margin:0;color:var(--gold2)}.bw-tabs{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0}.bw-tabs button{border:1px solid var(--line);background:#0d192b;color:#e7edf7;padding:9px 12px;border-radius:22px}.bw-tabs button.active{background:var(--gold);color:#172033;border-color:var(--gold)}.bw-pane{display:none}.bw-pane.active{display:block}.bw-tasks{display:grid;gap:9px}.bw-task{display:flex;align-items:flex-start;gap:9px;padding:10px;border:1px solid var(--line);border-radius:10px;background:#101d31;color:#dbe5f2}.bw-task input{margin-top:5px;accent-color:#e8b44d}.bw-notes{width:100%;min-height:150px;background:#0b1527;border:1px solid var(--line);border-radius:10px;color:white;padding:12px;line-height:1.8}.bw-progress{height:8px;background:#091321;border-radius:10px;overflow:hidden;margin:12px 0}.bw-progress span{display:block;height:100%;background:linear-gradient(90deg,#d89b31,#ffda83);width:0}.bw-small{font-size:12px;color:var(--muted);line-height:1.8}';
+  const shell=document.createElement('section');shell.className='bw-workspace';
+  const head=document.createElement('div');head.className='bw-workspace-head';
+  const title=document.createElement('h3');title.textContent='مساحة العمل الاحترافية · '+sec.title;
+  const tag=document.createElement('span');tag.className='bw-small';tag.textContent='أدوات محلية قابلة للحفظ';head.append(title,tag);shell.append(style,head);
+  const tabs=document.createElement('div');tabs.className='bw-tabs';const panes=document.createElement('div');
+  const makeTab=(id,label)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.pane=id;b.addEventListener('click',()=>{tabs.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));panes.querySelectorAll('.bw-pane').forEach(x=>x.classList.toggle('active',x.dataset.pane===id));});tabs.appendChild(b);};
+  const toolPane=document.createElement('section');toolPane.className='bw-pane active';toolPane.dataset.pane='tools';original.forEach(n=>toolPane.appendChild(n));
+  const tasksPane=document.createElement('section');tasksPane.className='bw-pane';tasksPane.dataset.pane='tasks';
+  const notesPane=document.createElement('section');notesPane.className='bw-pane';notesPane.dataset.pane='notes';
+  const key='bawaba_workspace_v2_'+sec.id;const defaults={
+    ecommerce_studio:['حدد المنتج والجمهور المستهدف','احسب التكلفة والرسوم وهامش الربح','اكتب وصفاً صادقاً وصوراً واضحة','راجع الشحن وسياسة الاستبدال قبل النشر'],
+    design_lab:['حدد هدف الحملة والجمهور','ثبّت الألوان والخطوط ونبرة العلامة','جهّز نسخاً مناسبة لكل منصة','راجع حقوق الصور والشعارات قبل النشر'],
+    language_academy:['حدد هدفاً أسبوعياً قابلاً للقياس','تعلّم مفردات ضمن جمل وسياق','تدرّب على الاستماع والمحادثة','راجع الأخطاء وسجّل التقدم'],
+    fitness_coach:['اختر نشاطاً يناسب قدرتك الحالية','ابدأ تدريجياً مع الإحماء','وزّع النشاط والراحة خلال الأسبوع','سجّل شعورك وتقدمك دون مبالغة'],
+    events_calendar:['حدد التاريخ والمكان والميزانية','أنشئ قائمة ضيوف ومسؤوليات','راجع الحجوزات والاحتياجات','جهّز خطة بديلة وتأكيدات قبل الموعد'],
+    syria_marketplace:['اكتب عنواناً دقيقاً وسعراً واضحاً','اذكر الحالة والعيوب بصدق','استخدم صوراً حديثة لا مضللة','لا تشارك رموز تحقق أو بيانات مالية']
+  };
+  const tasks=defaults[sec.id]||['حدد هدفك والنتيجة التي تريد الوصول إليها','استخدم الأداة أو النموذج الموجود في القسم','راجع المعلومات والأرقام قبل اعتمادها','احفظ ملاحظاتك والخطوة التالية'];
+  const saved=(()=>{try{return JSON.parse(localStorage.getItem(key)||'{}')}catch(e){return {}}})();
+  const progress=document.createElement('div');progress.className='bw-progress';const bar=document.createElement('span');progress.appendChild(bar);
+  const progressLabel=document.createElement('div');progressLabel.className='bw-small';const taskList=document.createElement('div');taskList.className='bw-tasks';
+  const updateProgress=()=>{const boxes=Array.from(taskList.querySelectorAll('input[type=checkbox]'));const done=boxes.filter(x=>x.checked).length;bar.style.width=(done/Math.max(1,boxes.length)*100)+'%';progressLabel.textContent='إنجازك: '+done+' من '+boxes.length+' مهام';try{const state=JSON.parse(localStorage.getItem(key)||'{}');state.tasks=boxes.map(x=>x.checked);localStorage.setItem(key,JSON.stringify(state));}catch(e){}};
+  tasks.forEach((task,index)=>{const label=document.createElement('label');label.className='bw-task';const input=document.createElement('input');input.type='checkbox';input.checked=Array.isArray(saved.tasks)?!!saved.tasks[index]:false;input.addEventListener('change',updateProgress);const span=document.createElement('span');span.textContent=task;label.append(input,span);taskList.appendChild(label);});
+  tasksPane.append(progress,progressLabel,taskList);
+  const notes=document.createElement('textarea');notes.className='bw-notes';notes.placeholder='اكتب أفكارك، ملاحظاتك، الأرقام أو الخطوة التالية…';notes.value=typeof saved.notes==='string'?saved.notes:'';
+  const noteActions=document.createElement('div');noteActions.className='panel-actions';const save=document.createElement('button');save.className='btn';save.type='button';save.textContent='احفظ ملاحظاتي على هذا الجهاز';
+  const exportBtn=document.createElement('button');exportBtn.className='btn secondary';exportBtn.type='button';exportBtn.textContent='تنزيل الملاحظات';const noteStatus=document.createElement('div');noteStatus.className='bw-small';
+  save.addEventListener('click',()=>{try{const state=JSON.parse(localStorage.getItem(key)||'{}');state.notes=notes.value;localStorage.setItem(key,JSON.stringify(state));noteStatus.textContent='انحفظت ملاحظاتك على هذا المتصفح فقط.';}catch(e){noteStatus.textContent='تعذر الحفظ؛ انسخ ملاحظاتك واحتفظ بها خارجياً.';}});
+  exportBtn.addEventListener('click',()=>{const blob=new Blob([notes.value],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='bawaba-'+sec.id+'-notes.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
+  noteActions.append(save,exportBtn);notesPane.append(notes,noteActions,noteStatus);
+  makeTab('tools','🧰 أدوات القسم');makeTab('tasks','🗂️ خطة التنفيذ');makeTab('notes','📝 ملاحظاتي');
+  panes.append(toolPane,tasksPane,notesPane);shell.append(tabs,panes);tool.appendChild(shell);updateProgress();
+}
 
 // Free AI directory and section-aware prompt helper.
 // External providers are opened by the visitor; no private API keys are stored in this public site.
@@ -724,6 +782,7 @@ function syrianizeSectionInterface(root){
   root._syrianObserver.observe(root,{subtree:true,childList:true,characterData:true});
 }
 
+renderSectionWorkspace(sec,tool);
 syrianizeSectionInterface(tool);
 appendFreeAIHelper(sec,tool);
 panel.classList.add('open');panel.scrollIntoView({behavior:'smooth',block:'start'});}
