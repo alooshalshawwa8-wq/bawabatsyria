@@ -100,7 +100,7 @@ const p=product.value.trim(),b=benefit.value.trim(),a=audience.value.trim(),pr=p
 if(!p||!b){message.textContent='يرجى إدخال اسم المنتج والفائدة الأساسية أولاً.';output.value='';copy.disabled=true;return;}
 const opening=tone.value==='حماسية'?'✨ وصل إليكم '+p+'!':tone.value==='احترافية'?'نقدّم لكم '+p+'.':'هل تبحث عن خيار يلبي احتياجك؟ تعرّف إلى '+p+'.';
 const lines=[opening,'',b+'.',a?'صُمّم/اختير ليناسب: '+a+'.':'',pr?'السعر: '+pr+'.':'',o?'عرض خاص: '+o+'.':'','',platform.value==='واتساب'?'للطلب أو الاستفسار، راسلنا الآن.':'📩 تواصل معنا لمعرفة التفاصيل والطلب.',''];
-output.value=lines.filter((line,index)=>line!==''||index===1).join('\n')+'\n#'+p.replace(/[^\\p{L}\\p{N}]/gu,'');
+output.value=lines.filter((line,index)=>line!==''||index===1).join('\n');
 message.textContent='تم إنشاء مسودة قابلة للتعديل. راجع السعر والتفاصيل قبل النشر.';
 copy.disabled=false;
 };
