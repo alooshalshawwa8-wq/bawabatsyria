@@ -782,6 +782,7 @@ function syrianizeSectionInterface(root){
   root._syrianObserver.observe(root,{subtree:true,childList:true,characterData:true});
 }
 
+delete tool.dataset.professionalWorkspace;
 renderSectionWorkspace(sec,tool);
 syrianizeSectionInterface(tool);
 appendFreeAIHelper(sec,tool);
