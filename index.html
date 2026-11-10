@@ -1286,12 +1286,29 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
 (function(){
   const launcher=document.getElementById('bawaba-assistant-launcher'),windowBox=document.getElementById('bawaba-assistant-window'),close=document.getElementById('bawaba-chat-close'),messages=document.getElementById('bawaba-chat-messages'),input=document.getElementById('bawaba-chat-input'),send=document.getElementById('bawaba-chat-send'),quick=document.getElementById('bawaba-chat-quick');
   if(!launcher||!windowBox)return;
-  const history=[];
+  const HISTORY_KEY='ofoq_nibras_chat_v1';
+  function loadHistory(){
+    try{
+      const saved=JSON.parse(sessionStorage.getItem(HISTORY_KEY)||'[]');
+      if(!Array.isArray(saved))return [];
+      return saved.filter(item=>item&&['user','assistant'].includes(item.role)&&typeof item.content==='string')
+        .map(item=>({role:item.role,content:item.content.slice(0,2000)})).slice(-20);
+    }catch(_){return [];}
+  }
+  const history=loadHistory();
+  function persistHistory(){
+    try{sessionStorage.setItem(HISTORY_KEY,JSON.stringify(history.slice(-20)));}catch(_){}
+  }
+  function remember(role,content){
+    history.push({role,content:String(content).slice(0,2000)});
+    if(history.length>20)history.splice(0,history.length-20);
+    persistHistory();
+  }
   const sections=Array.isArray(window.BAWABA_SECTIONS)?window.BAWABA_SECTIONS:[];
   function addMessage(text,role){
     const node=document.createElement('div');node.className='bawaba-chat-msg '+(role==='user'?'user':'bot');node.textContent=text;messages.appendChild(node);messages.scrollTop=messages.scrollHeight;
   }
-  function openChat(){windowBox.classList.add('open');launcher.style.display='none';if(!messages.childElementCount)addMessage('أهلا وسهلا فيك بأُفُق! 😊 أنا نَبْراس، مرشدك الذكي هون. خبرني شو عم تدور عليه، وبمشي معك خطوة خطوة لنوصل للقسم أو الخدمة المناسبة.','assistant');input.focus();}
+  function openChat(){windowBox.classList.add('open');launcher.style.display='none';if(!messages.childElementCount){if(history.length){history.forEach(item=>addMessage(item.content,item.role));quick.style.display='none';}else addMessage('أهلا وسهلا فيك بأُفُق! 😊 أنا نَبْراس، مرشدك الذكي هون. خبرني شو عم تدور عليه، وبمشي معك خطوة خطوة لنوصل للقسم أو الخدمة المناسبة.','assistant');}input.focus();}
   function closeChat(){windowBox.classList.remove('open');launcher.style.display='block';}
   function localGuide(q){
     const s=q.toLowerCase();
@@ -1310,15 +1327,15 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
   }
   async function ask(){
     const q=input.value.trim();if(!q||send.disabled)return;
-    input.value='';quick.style.display='none';addMessage(q,'user');history.push({role:'user',content:q});send.disabled=true;send.textContent='…';
+    input.value='';quick.style.display='none';addMessage(q,'user');remember('user',q);send.disabled=true;send.textContent='…';
     try{
-      const response=await fetch('https://elzquyehghuxhswogsch.supabase.co/functions/v1/site-assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history.slice(-10)})});
+      const response=await fetch('https://elzquyehghuxhswogsch.supabase.co/functions/v1/site-assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history.slice(-12)})});
       const data=await response.json().catch(()=>({}));
       if(!response.ok)throw new Error(data.error||'assistant unavailable');
-      addMessage(data.answer,'assistant');history.push({role:'assistant',content:data.answer});
+      addMessage(data.answer,'assistant');remember('assistant',data.answer);
     }catch(error){
       const fallback=localGuide(q);
-      addMessage(fallback,'assistant');
+      addMessage(fallback,'assistant');remember('assistant',fallback);
       if(!window.__bawabaAssistantNoticeShown){window.__bawabaAssistantNoticeShown=true;addMessage('ملاحظة صغيرة: عم اشتغل حالياً بوضع الإرشاد التجريبي. المساعد يعمل حالياً بوضع الإرشاد الأساسي؛ بعض الإجابات الذكية المتقدمة غير متاحة مؤقتاً.','assistant');}
     }finally{send.disabled=false;send.textContent='إرسال';input.focus();}
   }
