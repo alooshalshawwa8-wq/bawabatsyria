@@ -1063,7 +1063,7 @@ function ofoqSectionProfile(sec){
   if(p)return p;
   return {title:'الموسوعة والدليل العملي',image:'photo-1451187580459-43490279c0fa',topics:[['المفاهيم الأساسية','مدخل إلى '+sec.title,'تعرف إلى المصطلحات والمبادئ الرئيسية المرتبطة بهذا المجال.'],['الدليل العملي','خطوات الاستخدام والتطبيق','رتب احتياجك وحدد المتطلبات ثم نفذ الخطوات وتحقق من النتيجة.'],['الأدوات والنماذج','اختيار الحل المناسب','قارن الخيارات وفق الجودة والتكلفة والخصوصية وسهولة الاستخدام.'],['المراجع والتحديث','التحقق من المعلومات','ارجع إلى المصادر الرسمية وحدد تاريخ آخر تحقق للمعلومات المتغيرة.']]};
 }
-function addOfoqKnowledgeStudio(sec,toolPane,panes,tabs,makeTab){
+function addOfoqKnowledgeStudio(sec,toolPane,panes,tabs,makeTab){\n  if(!document.getElementById('ofoq-branch-interaction-style')){const branchStyle=document.createElement('style');branchStyle.id='ofoq-branch-interaction-style';branchStyle.textContent="\\n.ofoq-branch-card{cursor:pointer;display:block!important;transition:border-color .2s,transform .2s}.ofoq-branch-card[open]{border-color:#79dfd2;box-shadow:0 10px 26px #0004}.ofoq-branch-summary{list-style:none;display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;cursor:pointer}.ofoq-branch-summary::-webkit-details-marker{display:none}.ofoq-branch-summary .ofoq-knowledge-number{grid-column:1/-1}.ofoq-branch-summary strong{display:block}.ofoq-branch-summary small{grid-column:1}.ofoq-branch-chevron{grid-column:2;grid-row:2/4;color:#91eee0;font-size:22px;font-weight:800}.ofoq-branch-content{padding-top:12px;margin-top:12px;border-top:1px solid #39546b}.ofoq-branch-content p,.ofoq-branch-content li{color:#d0dce8;line-height:1.85}.ofoq-branch-content ul{padding-inline-start:22px}.ofoq-branch-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}.ofoq-branch-actions .btn{font-size:12px;padding:9px 12px}\\n";document.head.appendChild(branchStyle);}
   const profile=ofoqSectionProfile(sec);
   const hero=document.createElement('section');hero.className='ofoq-section-hero';
   hero.style.backgroundImage='linear-gradient(90deg,rgba(5,13,25,.94),rgba(5,13,25,.36)),url("https://images.unsplash.com/'+profile.image+'?auto=format&fit=crop&w=1500&q=85")';
@@ -1077,12 +1077,24 @@ function addOfoqKnowledgeStudio(sec,toolPane,panes,tabs,makeTab){
   const intro=document.createElement('p');intro.className='bw-small';intro.textContent='مسارات معرفية تمهيدية تساعدك على استكشاف المجال. راجع المصادر الرسمية عند التعامل مع معلومات متغيرة أو قرارات متخصصة.';knowledge.appendChild(intro);
   const grid=document.createElement('div');grid.className='ofoq-knowledge-grid';
   profile.topics.forEach(([title,sub,body],i)=>{
-    const card=document.createElement('article');card.className='ofoq-knowledge-card';
-    const number=document.createElement('span');number.className='ofoq-knowledge-number';number.textContent=String(i+1).padStart(2,'0');
+    const card=document.createElement('details');card.className='ofoq-knowledge-card ofoq-branch-card';
+    const summary=document.createElement('summary');summary.className='ofoq-branch-summary';
+    const number=document.createElement('span');number.className='ofoq-knowledge-number';number.textContent='تفرع '+String(i+1).padStart(2,'0');
     const strong=document.createElement('strong');strong.textContent=title;
     const small=document.createElement('small');small.textContent=sub;
-    const detail=document.createElement('p');detail.textContent=body;
-    card.append(number,strong,small,detail);grid.appendChild(card);
+    summary.append(number,strong,small,document.createElement('span'));summary.lastChild.className='ofoq-branch-chevron';summary.lastChild.textContent='＋';
+    const detail=document.createElement('div');detail.className='ofoq-branch-content';
+    const explanation=document.createElement('p');explanation.textContent=body;
+    const steps=document.createElement('ul');['تعرّف إلى المفاهيم الأساسية لهذا الموضوع','راجع مثالاً أو مصدراً موثوقاً وحديثاً','طبّق ما تعلمته وسجّل النتيجة'].forEach(step=>{const li=document.createElement('li');li.textContent=step;steps.appendChild(li);});
+    const actions=document.createElement('div');actions.className='ofoq-branch-actions';
+    const plan=document.createElement('button');plan.type='button';plan.className='btn';plan.textContent='أنشئ خطة لهذا التفرع';
+    const copy=document.createElement('button');copy.type='button';copy.className='btn secondary';copy.textContent='نسخ ملخص التفرع';
+    const status=document.createElement('span');status.className='bw-small';
+    plan.addEventListener('click',()=>{const notes=toolPane.querySelector('.bw-notes');if(notes){notes.value='خطة تفرع: '+title+'\\n'+body+'\\n\\n1. '+steps.children[0].textContent+'\\n2. '+steps.children[1].textContent+'\\n3. '+steps.children[2].textContent;notes.dispatchEvent(new Event('input',{bubbles:true}));status.textContent='جهزنا الخطة؛ افتح تبويب ملاحظاتي لتعديلها وحفظها.';}});
+    copy.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(title+'\\n'+sub+'\\n'+body);status.textContent='تم نسخ ملخص هذا التفرع.';}catch(e){status.textContent='تعذر النسخ التلقائي على هذا المتصفح.';}});
+    actions.append(plan,copy,status);detail.append(explanation,steps,actions);card.append(summary,detail);
+    summary.addEventListener('click',()=>{setTimeout(()=>{summary.lastChild.textContent=card.open?'−':'＋';},0);});
+    grid.appendChild(card);
   });
   knowledge.appendChild(grid);
   const refs=document.createElement('div');refs.className='ofoq-reference-note';refs.textContent='قاعدة التحقق: المعلومات العامة للتثقيف، أما الأسعار والقوانين والتأشيرات والأخبار والبيانات الصحية فتحتاج مراجعة المصدر المختص وتاريخ التحديث.';knowledge.appendChild(refs);
