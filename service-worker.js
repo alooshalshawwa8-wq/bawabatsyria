@@ -1,4 +1,4 @@
-const CACHE_NAME = "bawabatsyria-shell-v12";
+const CACHE_NAME = "bawabatsyria-shell-v13";
 const APP_FILES = ["./", "./index.html", "./manifest.json"];
 
 self.addEventListener("install", event => {
