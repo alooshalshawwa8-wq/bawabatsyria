@@ -117,10 +117,29 @@ header{background:#081727eF;border-bottom:1px solid #31536a;box-shadow:0 8px 35p
 .ofoq-knowledge-card p{font-size:13px;line-height:1.85;color:#c5d4df;margin:0}
 .ofoq-free-note{display:inline-flex;align-items:center;gap:7px;border:1px solid #347b78;background:#092c32;color:#a4f3e7;border-radius:999px;padding:7px 12px;font-size:12px;margin-top:12px}
 @media(max-width:600px){.tile{min-height:235px;padding-top:122px}.tile-cover{height:106px}.ofoq-knowledge{padding:15px}}
+/* OFOQ cinematic photo experience */
+#bawaba-welcome{background:#061321;isolation:isolate}
+.welcome-photo-sequence{position:absolute;inset:0;z-index:-2;overflow:hidden;background:#061321}
+.welcome-photo-sequence::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,#04101bdc 0%,#061a2c99 48%,#061321c9 100%),linear-gradient(0deg,#061321bb,transparent 70%)}
+.welcome-photo-sequence img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;filter:saturate(1.18) contrast(1.08);animation:welcomePhotoSequence 3s ease-in-out 1 both}
+.welcome-photo-sequence img:nth-child(1){animation-delay:0s}
+.welcome-photo-sequence img:nth-child(2){animation-delay:0s;animation-name:welcomePhotoSecond}
+.welcome-photo-sequence img:nth-child(3){animation-delay:0s;animation-name:welcomePhotoThird}
+@keyframes welcomePhotoSequence{0%,3%{opacity:0;transform:scale(1.1)}8%,31%{opacity:1;transform:scale(1.02)}36%,100%{opacity:0;transform:scale(1)}}
+@keyframes welcomePhotoSecond{0%,32%{opacity:0;transform:scale(1.12)}38%,64%{opacity:1;transform:scale(1.03)}69%,100%{opacity:0;transform:scale(1)}}
+@keyframes welcomePhotoThird{0%,65%{opacity:0;transform:scale(1.12)}71%,94%{opacity:1;transform:scale(1.02)}100%{opacity:0;transform:scale(1)}}
+.welcome-stars{z-index:-1;opacity:.65}
+.welcome-art{opacity:.12}
+.welcome-content{animation:welcomeRise .65s both}
+.section-hero{background-size:cover;background-repeat:no-repeat;animation:sectionPhotoDrift 18s ease-in-out infinite alternate;will-change:background-position}
+@keyframes sectionPhotoDrift{0%{background-position:48% 50%}100%{background-position:56% 44%}}
+.tile-cover{transition:transform 1.2s cubic-bezier(.2,.7,.2,1),filter 1.2s}
+.tile:hover .tile-cover,.tile:focus-visible .tile-cover{transform:scale(1.09);filter:saturate(1.2) brightness(1.08)}
+@media(prefers-reduced-motion:reduce){.welcome-photo-sequence img,.section-hero{animation:none!important}.welcome-photo-sequence img:first-child{opacity:1}.tile-cover{transition:none!important}}
 </style>
 </head>
 <body>
-<section id="bawaba-welcome" role="dialog" aria-modal="true" aria-label="مرحباً بك في أُفُق"><div class="welcome-stars"></div><div class="welcome-content">
+<section id="bawaba-welcome" role="dialog" aria-modal="true" aria-label="مرحباً بك في أُفُق"><div class="welcome-photo-sequence" aria-hidden="true"><img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=2200&q=90" alt=""><img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=2200&q=90" alt=""><img src="https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=2200&q=90" alt=""></div><div class="welcome-stars"></div><div class="welcome-content">
 <div class="welcome-kicker">أهلاً وسهلاً فيك</div><h1 class="welcome-title">أُفُق</h1><p class="welcome-subtitle">موسوعة ومنصة عالمية للمعرفة والأدوات والإبداع</p>
 <div class="welcome-art" aria-hidden="true"><svg viewBox="0 0 620 280">
 <defs><linearGradient id="portalGold" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#ffe8a2"/><stop offset="1" stop-color="#d48a2e"/></linearGradient><linearGradient id="portalBlue" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#5d91c5" stop-opacity=".8"/><stop offset="1" stop-color="#20385c" stop-opacity=".12"/></linearGradient></defs>
@@ -1278,7 +1297,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
 })();
 </script>
 
-<script>(function(){const p=document.getElementById('bawaba-welcome');if(!p)return;let closed=false,t;function close(){if(closed)return;closed=true;clearTimeout(t);p.classList.add('is-leaving');setTimeout(()=>p.remove(),700)}document.getElementById('bawaba-welcome-enter').addEventListener('click',close);document.getElementById('bawaba-welcome-skip').addEventListener('click',close);t=setTimeout(close,6500);document.addEventListener('keydown',e=>{if(e.key==='Escape')close()})})();</script>
+<script>(function(){const p=document.getElementById('bawaba-welcome');if(!p)return;let closed=false,t;function close(){if(closed)return;closed=true;clearTimeout(t);p.classList.add('is-leaving');setTimeout(()=>p.remove(),700)}document.getElementById('bawaba-welcome-enter').addEventListener('click',close);document.getElementById('bawaba-welcome-skip').addEventListener('click',close);t=setTimeout(close,3000);document.addEventListener('keydown',e=>{if(e.key==='Escape')close()})})();</script>
 
 <script>
 /* OFOQ knowledge, free-access and visual catalogue layer */
