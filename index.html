@@ -1115,7 +1115,7 @@ function renderSectionWorkspace(sec,tool){
   const title=document.createElement('h3');title.textContent='مساحة العمل الاحترافية · '+sec.title;
   const tag=document.createElement('span');tag.className='bw-small';tag.textContent='أدوات محلية قابلة للحفظ';head.append(title,tag);shell.append(style,head);
   const tabs=document.createElement('div');tabs.className='bw-tabs';const panes=document.createElement('div');
-  const makeTab=(id,label)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.pane=id;b.addEventListener('click',()=>{tabs.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));panes.querySelectorAll('.bw-pane').forEach(x=>x.classList.toggle('active',x.dataset.pane===id));});tabs.appendChild(b);};
+  const makeTab=(id,label)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.pane=id;if(!tabs.children.length)b.classList.add('active');b.addEventListener('click',()=>{tabs.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));panes.querySelectorAll('.bw-pane').forEach(x=>x.classList.toggle('active',x.dataset.pane===id));});tabs.appendChild(b);};
   const toolPane=document.createElement('section');toolPane.className='bw-pane active';toolPane.dataset.pane='tools';original.forEach(n=>toolPane.appendChild(n));
   const tasksPane=document.createElement('section');tasksPane.className='bw-pane';tasksPane.dataset.pane='tasks';
   const notesPane=document.createElement('section');notesPane.className='bw-pane';notesPane.dataset.pane='notes';
@@ -2113,7 +2113,9 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
         if(!meta){meta=document.createElement('span');meta.className='ofoq-featured-meta';tile.insertBefore(meta,heading);}
         meta.textContent=lead.label;
       }else if(!cover.style.backgroundImage){
-        cover.style.backgroundImage='url("'+fallback+'")';
+        const profile=typeof ofoqSectionProfile==='function'?ofoqSectionProfile(section):null;
+        const image=profile&&profile.image?profile.image:null;
+        cover.style.backgroundImage=image?'url("https://images.unsplash.com/'+image+'?auto=format&fit=crop&w=1200&q=85")':'url("'+fallback+'")';
       }
     });
   }
