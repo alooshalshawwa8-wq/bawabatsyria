@@ -1,12 +1,57 @@
-/* Cinematic page transition and dedicated football workspace */
-#sectionsGrid{transition:opacity .35s ease,transform .35s ease}
-body.section-mode #detailPanel{animation:ofoqPageEnter .55s cubic-bezier(.2,.75,.2,1) both}
-body.section-mode main>.section-head{transition:opacity .25s ease}
-@keyframes ofoqPageEnter{from{opacity:0;transform:translateY(18px);filter:blur(5px)}to{opacity:1;transform:none;filter:blur(0)}}
-body.section-mode #detailPanel.football-detail-mode{background:transparent!important;box-shadow:none!important;padding:0!important}
-body.section-mode #detailPanel.football-detail-mode>.section-hero{display:none}
-body.section-mode #detailPanel.football-detail-mode>#backBtn{margin:0 0 8px}
-@media(prefers-reduced-motion:reduce){body.section-mode #detailPanel{animation:none}}
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#071321">
+<meta name="description" content="أُفُق OFOQ منصة عربية عالمية تجمع الموسوعات والمعرفة والعلوم والتقنية والذكاء الاصطناعي والتعلم والأعمال والأدوات الرقمية.">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="author" content="OFOQ">
+<meta name="keywords" content="موسوعة عالمية, معرفة, تعليم, تقنية, ذكاء اصطناعي, علوم, سفر, أعمال, أدوات رقمية">
+<meta property="og:type" content="website">
+<meta property="og:title" content="أُفُق | OFOQ — عالم من المعرفة في مكان واحد">
+<meta property="og:description" content="اكتشف موسوعات وأدوات ومعارف العالم في منصة رقمية عربية واحدة.">
+<meta property="og:url" content="https://alooshalshawwa8-wq.github.io/bawabatsyria/">
+<meta property="og:image" content="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=85">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://alooshalshawwa8-wq.github.io/bawabatsyria/">
+<link rel="preconnect" href="https://images.unsplash.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="icon" type="image/svg+xml" href="./ofoq-icon.svg">
+<link rel="manifest" href="./manifest.json">
+<title>أُفُق | OFOQ — عالم من المعرفة في مكان واحد</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1222;--panel:#121e34;--panel2:#192944;--gold:#e8b44d;--gold2:#ffda83;--muted:#a8b4c8;--line:#2a3a55;--white:#f7f8fb}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#182a48 0,#0b1222 55%);color:var(--white);font-family:Tahoma,"Segoe UI",sans-serif;min-height:100vh}
+header{position:sticky;top:0;z-index:5;background:#0c1629ed;backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:14px max(18px,calc((100% - 1180px)/2));display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:12px}.mark{width:44px;height:44px;border:1px solid var(--gold);border-radius:14px;display:grid;place-items:center;color:var(--gold2);font-size:24px}.brand strong{display:block;color:var(--gold2);font-size:19px}.brand small{color:var(--muted)}
+button,input,textarea{font:inherit}button{cursor:pointer}.btn{border:1px solid var(--gold);background:linear-gradient(135deg,#d89b31,#f0c96f);color:#172033;padding:10px 16px;border-radius:10px;font-weight:700}.btn.secondary{background:transparent;color:var(--gold2)}
+main{max-width:1180px;margin:auto;padding:28px 18px 60px}.hero{padding:34px 26px;border:1px solid #6f5a32;border-radius:22px;background:linear-gradient(120deg,#172944,#101a30 65%,#30291d);box-shadow:0 18px 55px #0004}.eyebrow{color:var(--gold2);font-size:13px;letter-spacing:.4px}.hero h1{font-size:clamp(26px,5vw,42px);margin:12px 0}.hero p{color:#c1ccdc;line-height:1.9;max-width:760px;margin:0}.searchrow{display:flex;gap:10px;margin-top:22px}.searchrow input{flex:1;min-width:0;background:#0b1527;border:1px solid var(--line);border-radius:11px;padding:13px;color:white}
+.stats{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px;color:var(--muted);font-size:13px}.stats span{background:#0c1729aa;border:1px solid var(--line);padding:7px 11px;border-radius:30px}
+.section-head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin:30px 0 14px}.section-head h2{margin:0;color:var(--gold2)}.section-head p{margin:5px 0 0;color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:13px}.tile{border:1px solid var(--line);background:linear-gradient(145deg,#15233b,#101a2d);border-radius:15px;padding:17px;text-align:right;color:inherit;min-height:142px;transition:.18s}.tile:hover,.tile:focus-visible{border-color:var(--gold);transform:translateY(-2px);outline:none}.tile .ico{font-size:25px}.tile h3{font-size:16px;color:var(--gold2);margin:9px 0 6px}.tile p{font-size:12px;color:var(--muted);line-height:1.7;margin:0}
+.panel{display:none;margin-top:24px;border:1px solid var(--gold);background:var(--panel);border-radius:18px;padding:22px}.panel.open{display:block}.panel h2{color:var(--gold2);margin:0 0 8px}.panel p{color:#c2ccda;line-height:1.9}.panel-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}.notice{border-right:3px solid var(--gold);padding:10px 13px;background:#0c1729;border-radius:8px;color:#cbd5e1;line-height:1.8;margin-top:14px}
+.calc{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:15px}.calc label{font-size:12px;color:var(--muted)}.calc input,.calc select{display:block;width:100%;margin-top:6px;background:#0b1527;border:1px solid var(--line);padding:11px;border-radius:9px;color:white}.result{font-size:22px;color:var(--gold2);margin-top:14px;word-break:break-word}
+.empty{grid-column:1/-1;padding:24px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
+.membership-card{border:1px solid var(--line);background:linear-gradient(145deg,#15233b,#101a2d);border-radius:15px;padding:17px;display:flex;flex-direction:column;gap:10px}.membership-card h3{color:var(--gold2);margin:0}.membership-card p{font-size:13px;margin:0}.membership-card ul{padding-right:19px;color:#c2ccda;font-size:13px;line-height:1.9;margin:0}.membership-card button:disabled{opacity:.55;cursor:not-allowed}.panel.open{display:block}footer{border-top:1px solid var(--line);padding:20px;text-align:center;color:var(--muted);font-size:12px;line-height:1.8}
+@media(max-width:600px){header{padding:11px 14px}.brand strong{font-size:16px}.brand small{font-size:11px}.hero{padding:24px 17px}.searchrow{flex-direction:column}.searchrow .btn{width:100%}.section-head{align-items:start;flex-direction:column}}
+
+.ai-helper{margin-top:22px;padding:18px;border:1px solid #526b8e;border-radius:14px;background:linear-gradient(145deg,#142642,#0e192b)}.ai-helper h3,.ai-catalog h3{color:var(--gold2);margin:0 0 8px}.ai-helper p,.ai-catalog p{font-size:13px;color:#c2ccda;line-height:1.8}.ai-helper textarea{display:block;width:100%;min-height:120px;margin-top:8px;background:#0b1527;border:1px solid var(--line);border-radius:9px;padding:12px;color:white;line-height:1.8}.ai-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.ai-links a{display:inline-flex;align-items:center;border:1px solid #405879;border-radius:9px;padding:8px 11px;color:#e8d29b;text-decoration:none;font-size:13px}.ai-links a:hover{border-color:var(--gold);background:#1b2d49}.ai-catalog{margin-top:18px;padding:16px;border:1px solid var(--line);border-radius:12px;background:#0d192b}.ai-catalog-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.ai-catalog-card{border:1px solid var(--line);border-radius:10px;padding:12px;background:#14233a}.ai-catalog-card strong{display:block;color:var(--gold2);margin-bottom:6px}.ai-catalog-card a{display:block;color:#d7e5fa;text-decoration:none;font-size:13px;padding:4px 0}.ai-catalog-card a:hover{text-decoration:underline}.ai-tag{font-size:11px;color:#aebed2}
+#bawaba-welcome{position:fixed;inset:0;z-index:10050;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at 50% 42%,#294b70,#101c35 52%,#080e1b);overflow:hidden;transition:opacity .65s,visibility .65s}
+#bawaba-welcome.is-leaving{opacity:0;visibility:hidden;pointer-events:none}
+.welcome-stars{position:absolute;inset:-20%;background-image:radial-gradient(2px 2px at 15% 25%,#fff 98%,transparent),radial-gradient(2px 2px at 72% 18%,#ffe39a 98%,transparent),radial-gradient(1px 1px at 42% 70%,#fff 98%,transparent),radial-gradient(2px 2px at 88% 62%,#fff 98%,transparent);background-size:270px 230px;animation:welcomeStarDrift 18s linear infinite}
+.welcome-content{position:relative;z-index:2;width:min(700px,100%);text-align:center;animation:welcomeRise 1s both}
+.welcome-kicker{color:#ffdf91;letter-spacing:3px;font-size:12px}.welcome-title{font-size:clamp(34px,8vw,64px);font-weight:900;color:#fff4d8;text-shadow:0 5px 35px #e5aa4b66;margin:8px 0}.welcome-subtitle{color:#d6e3f4;font-size:clamp(14px,3vw,18px);line-height:1.8;margin:0}
+.welcome-art{height:clamp(190px,37vw,290px);margin:8px auto;max-width:620px}.welcome-art svg{height:100%;width:100%;overflow:visible}
+.welcome-portal{transform-origin:50% 85%;animation:portalPulse 3s infinite}.welcome-mascot{transform-origin:50% 85%;animation:welcomeBounce 2s infinite}.welcome-mascot-eye{transform-box:fill-box;transform-origin:center;animation:welcomeBlink 4s infinite}.welcome-cloud{animation:cloudDrift 8s ease-in-out infinite alternate}
+.welcome-enter{border:1px solid #ffe3a0;border-radius:999px;padding:13px 30px;background:linear-gradient(135deg,#d99b36,#ffe08a);color:#17233a;font-weight:900;font-size:15px;box-shadow:0 8px 32px #e4aa4a55;margin-top:12px}.welcome-skip{display:block;margin:10px auto 0;border:0;background:transparent;color:#b9c9dc;font-size:12px;padding:7px 14px}
+.hero{position:relative;overflow:hidden}.hero-scene{position:absolute;left:20px;bottom:5px;width:190px;height:155px;pointer-events:none;opacity:.95}.hero-scene svg{width:100%;height:100%;overflow:visible}.hero-scene .scene-pal{animation:heroPal 2.8s infinite;transform-origin:50% 90%}.hero-scene .scene-spark{animation:sceneSpark 2.4s infinite}.hero-scene .scene-cloud{animation:cloudDrift 9s ease-in-out infinite alternate}
+@keyframes welcomeStarDrift{to{transform:translateY(35px) rotate(4deg)}}@keyframes welcomeRise{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}@keyframes portalPulse{0%,100%{opacity:.65;transform:scale(.96)}50%{opacity:1;transform:scale(1.04)}}@keyframes welcomeBounce{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-12px) rotate(3deg)}}@keyframes welcomeBlink{0%,44%,48%,100%{transform:scaleY(1)}46%{transform:scaleY(.08)}}@keyframes cloudDrift{from{transform:translateX(-8px)}to{transform:translateX(12px)}}@keyframes heroPal{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-8px) rotate(3deg)}}@keyframes sceneSpark{0%,100%{opacity:.25;transform:scale(.7)}50%{opacity:1;transform:scale(1.25)}}
+@media(max-width:600px){.hero-scene{position:relative;left:auto;bottom:auto;margin:12px auto -12px;width:150px;height:115px}.hero{text-align:center}.hero p{margin-inline:auto}}
+@media(prefers-reduced-motion:reduce){#bawaba-welcome,.welcome-content,.welcome-stars,.welcome-portal,.welcome-mascot,.welcome-mascot-eye,.welcome-cloud,.hero-scene *{animation:none!important;transition:none!important}}
+</style>
+<style>
 body.section-mode main>.hero,body.section-mode main>.section-head,body.section-mode main>#sectionsGrid{display:none!important}
 body.section-mode footer{display:none}
 body.section-mode main{max-width:1320px;padding-top:18px}
@@ -135,7 +180,150 @@ header{background:#081727eF;border-bottom:1px solid #31536a;box-shadow:0 8px 35p
 .section-hero{background-position:center 42%;}
 @media(max-width:700px){#sectionsGrid .tile.ofoq-cinematic-tile .tile-cover{background-position:center 38%;}}
 </style>
+
+<style id="ofoq-recovered-page-styles">
+/* Cinematic page transition and dedicated football workspace */
+#sectionsGrid{transition:opacity .35s ease,transform .35s ease}
+body.section-mode #detailPanel{animation:ofoqPageEnter .55s cubic-bezier(.2,.75,.2,1) both}
+body.section-mode main>.section-head{transition:opacity .25s ease}
+@keyframes ofoqPageEnter{from{opacity:0;transform:translateY(18px);filter:blur(5px)}to{opacity:1;transform:none;filter:blur(0)}}
+body.section-mode #detailPanel.football-detail-mode{background:transparent!important;box-shadow:none!important;padding:0!important}
+body.section-mode #detailPanel.football-detail-mode>.section-hero{display:none}
+body.section-mode #detailPanel.football-detail-mode>#backBtn{margin:0 0 8px}
+@media(prefers-reduced-motion:reduce){body.section-mode #detailPanel{animation:none}}
+body.section-mode main>.hero,body.section-mode main>.section-head,body.section-mode main>#sectionsGrid{display:none!important}
+body.section-mode footer{display:none}
+body.section-mode main{max-width:1320px;padding-top:18px}
+body.section-mode #detailPanel{display:block;margin:0;border:0;background:transparent;padding:0;min-height:72vh}
+.section-hero{position:relative;isolation:isolate;display:flex;align-items:end;min-height:clamp(240px,38vw,410px);margin:16px 0 20px;padding:clamp(22px,5vw,48px);overflow:hidden;border:1px solid #826637;border-radius:22px;background:linear-gradient(120deg,#1a3554,#101a30 65%,#40301c);background-position:center;background-size:cover;box-shadow:0 18px 50px #0005}
+.section-hero-shade{position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,#07101de8 0%,#0b1728c9 48%,#0b172866 100%)}
+.section-hero-copy{max-width:760px}
+.section-hero-kicker{display:inline-block;color:#ffda83;font-size:13px;font-weight:700;margin-bottom:8px}
+.section-hero h2{font-size:clamp(27px,5vw,44px);line-height:1.25;margin:0 0 12px;color:#fff2cf;text-shadow:0 3px 20px #000}
+.section-hero p{font-size:clamp(14px,2vw,17px);line-height:1.9;margin:0;color:#f0f4fa;text-shadow:0 2px 12px #000}
+#detailPanel>.notice,#detailPanel>#specialTool{margin-inline:2px}
+.auto-parts-guide{margin:22px 0;padding:20px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(145deg,#15243a,#0d1728)}
+.auto-parts-guide h3{color:var(--gold2);margin:0 0 7px;font-size:21px}
+.auto-parts-guide>p{color:#c2ccda;line-height:1.8;margin:0 0 15px}
+.auto-parts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:11px}
+.auto-part-card{padding:15px;border:1px solid #344765;border-radius:13px;background:#101d31}
+.auto-part-card strong{display:block;color:#ffe1a0;margin-bottom:6px}
+.auto-part-card span{font-size:13px;color:#c4d0df;line-height:1.8}
+@media(max-width:600px){.section-hero{min-height:270px;padding:22px 18px;border-radius:15px}.section-hero-shade{background:linear-gradient(0deg,#07101df2,#0b172899 75%,#0b172866)}body.section-mode main{padding:12px 12px 36px}}
+
+/* OFOQ global identity refresh */
+:root{--bg:#071321;--panel:#101f32;--panel2:#172b43;--gold:#58d4c5;--gold2:#a4f3e7;--muted:#a9bbcb;--line:#29445b;--white:#f4f8fb}
+body{background:radial-gradient(ellipse at 12% -10%,#1c4961 0,#0b1a2a 42%,#071321 78%);font-family:Tahoma,"Segoe UI",sans-serif}
+header{background:#081727eF;border-bottom:1px solid #31536a;box-shadow:0 8px 35px #0003}
+.brand .mark{border:0;border-radius:15px;background:linear-gradient(145deg,#1e8f91,#5dd9c9);color:#06252d;box-shadow:0 8px 24px #27b9ac44;font-weight:900}
+.brand strong{color:#a4f3e7;letter-spacing:.3px}
+.hero{border:1px solid #467b8b;background:linear-gradient(90deg,#061321ed 0%,#0a2036cb 54%,#0b263a66 100%),url("https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=2000&q=90") center/cover;box-shadow:0 22px 65px #0006}
+.hero h1{color:#f5fffd;text-shadow:0 4px 24px #0008}
+.hero .eyebrow,.section-head h2,.tile h3,.panel h2{color:#a4f3e7}
+.hero-scene{display:none}
+.btn{border:1px solid #74e4d5;background:linear-gradient(135deg,#168f91,#5ad7c8);color:#06272c;box-shadow:0 7px 20px #0a9d9440}
+.btn.secondary{background:#0e2638;color:#a4f3e7;border-color:#3d7180;box-shadow:none}
+.tile{position:relative;overflow:hidden;padding:128px 16px 17px;border:1px solid #294a61;background:linear-gradient(145deg,#122a40,#0b1c2e);border-radius:17px;min-height:250px;box-shadow:0 8px 24px #0002}
+.tile:hover,.tile:focus-visible{border-color:#68d9cb;box-shadow:0 15px 32px #0004;transform:translateY(-4px)}
+.tile-cover{position:absolute;top:0;left:0;right:0;height:112px;background-position:center;background-size:cover;border-bottom:1px solid #ffffff20}
+.tile .ico{font-size:22px;position:relative}
+.tile h3{font-size:16px;position:relative}
+.tile p{font-size:12px;position:relative;color:#c0d0dc}
+.section-hero{border-color:#4d9c9c;box-shadow:0 24px 60px #0007}
+.section-hero-shade{background:linear-gradient(90deg,#061321e8 0%,#071b2bc9 52%,#0b172855 100%)}
+.panel{border-color:#347b82;background:#0d1c2c}
+.notice{border-right-color:#57d4c5;background:#0a1b2b}
+#bawaba-welcome{background:linear-gradient(120deg,#061321df,#08243bd1),url("https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=2000&q=90") center/cover}
+.welcome-art{opacity:.28}
+.welcome-title{color:#d8fff8;text-shadow:0 5px 35px #2bcbbb66}
+.welcome-kicker{color:#a4f3e7}
+.welcome-enter{border-color:#a4f3e7;background:linear-gradient(135deg,#168f91,#8af0df);color:#06272c}
+.welcome-skip{color:#d1e6ef}
+#membershipBtn,#membershipPanel{display:none!important}
+.ofoq-footer{margin-top:40px;padding:28px 18px;border-top:1px solid #31576b;background:#081827;color:#b8cbd8;text-align:center;line-height:1.9}
+.ofoq-footer>strong{color:#a4f3e7;font-size:19px}
+.ofoq-footer p{max-width:850px;margin:8px auto;font-size:13px}
+.ofoq-footer-links{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:12px}
+.ofoq-footer-links a{color:#a4f3e7;text-decoration:none;border-bottom:1px solid #3e777c;padding:3px 2px}
+.ofoq-footer-links a:hover,.ofoq-footer-links a:focus-visible{color:#fff;border-color:#fff}
+.ofoq-knowledge{margin:24px 0;padding:20px;border:1px solid #31576b;border-radius:18px;background:linear-gradient(145deg,#10283b,#0b1b2b)}
+.ofoq-knowledge h3{color:#a4f3e7;margin:0 0 8px;font-size:21px}
+.ofoq-knowledge>p{color:#c4d5e1;line-height:1.9;margin:0 0 14px}
+.ofoq-knowledge-search{width:100%;padding:12px;border:1px solid #365b70;border-radius:10px;background:#071726;color:#fff;margin:0 0 14px}
+.ofoq-knowledge-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:11px}
+.ofoq-knowledge-card{padding:15px;border:1px solid #2c5065;border-radius:13px;background:#0c2032}
+.ofoq-knowledge-card strong{display:block;color:#a4f3e7;margin-bottom:7px}
+.ofoq-knowledge-card p{font-size:13px;line-height:1.85;color:#c5d4df;margin:0}
+.ofoq-free-note{display:inline-flex;align-items:center;gap:7px;border:1px solid #347b78;background:#092c32;color:#a4f3e7;border-radius:999px;padding:7px 12px;font-size:12px;margin-top:12px}
+@media(max-width:600px){.tile{min-height:235px;padding-top:122px}.tile-cover{height:106px}.ofoq-knowledge{padding:15px}}
+/* OFOQ cinematic two-scene welcome */
+#bawaba-welcome{background:#061321;isolation:isolate;padding:0}
+.welcome-photo-sequence{position:absolute;inset:0;z-index:0;overflow:hidden;background:#061321}
+.welcome-photo-sequence::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,#04101b66,#061a2c33 50%,#06132177),linear-gradient(0deg,#06132166,transparent 72%);pointer-events:none}
+.welcome-photo-sequence img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;opacity:0;filter:saturate(1.08) contrast(1.04);will-change:opacity;background:#061321}
+.welcome-photo-sequence img:first-child{animation:ofoqSceneOne 7s ease-in-out forwards}
+.welcome-photo-sequence img:nth-child(2){opacity:0;animation:ofoqSceneTwo 7s ease-in-out forwards;object-position:center}
+@keyframes ofoqSceneOne{0%,4%{opacity:0}10%,38%{opacity:1}53%{opacity:.82}66%,100%{opacity:0}}
+@keyframes ofoqSceneTwo{0%,38%{opacity:0}50%{opacity:.72}64%,92%{opacity:1}100%{opacity:0}}
+.welcome-founder-overlay{position:absolute;z-index:2;inset:auto 18px 12%;text-align:center;opacity:0;animation:ofoqFounderCaption 7s ease-in-out forwards;pointer-events:none}
+.welcome-founder-overlay strong{display:inline-block;padding:12px 26px;border:1px solid #ffe2a0;border-radius:999px;background:#07152599;color:#ffe4aa;font-size:clamp(20px,4vw,34px);text-shadow:0 3px 24px #000;box-shadow:0 0 34px #e6b95c44;backdrop-filter:blur(8px)}
+.welcome-founder-overlay span{display:block;margin-top:8px;color:#f5fbff;font-size:clamp(12px,2vw,17px);text-shadow:0 2px 14px #000}
+@keyframes ofoqFounderCaption{0%,62%{opacity:0;transform:translateY(18px)}74%,94%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-8px)}}
+.welcome-content{z-index:3;align-self:end;width:auto;margin:0 0 18px;animation:none}
+.welcome-content .welcome-kicker,.welcome-content .welcome-title,.welcome-content .welcome-subtitle,.welcome-content .welcome-art,.welcome-content .welcome-enter{display:none!important}
+.welcome-skip{padding:10px 18px;border:1px solid #d7e9f6aa;border-radius:999px;background:#07152588;color:#fff}
+.welcome-stars{z-index:1;opacity:.4}
+.welcome-art{opacity:.12}
+.section-hero{background-size:cover;background-repeat:no-repeat;animation:sectionPhotoDrift 18s ease-in-out infinite alternate;will-change:background-position}
+@keyframes sectionPhotoDrift{0%{background-position:48% 50%}100%{background-position:56% 44%}}
+.tile-cover{transition:transform 1.2s cubic-bezier(.2,.7,.2,1),filter 1.2s}
+.tile:hover .tile-cover,.tile:focus-visible .tile-cover{transform:scale(1.09);filter:saturate(1.2) brightness(1.08)}
+@media(prefers-reduced-motion:reduce){.welcome-photo-sequence img,.welcome-founder-overlay,.section-hero{animation:none!important}.welcome-photo-sequence img:nth-child(2){opacity:.68}.welcome-photo-sequence img:first-child{opacity:.25}.tile-cover{transition:none!important}}
+
+</style>
+
+
+<style id="ofoq-founder-top-style">
+.ofoq-founder-top{max-width:1180px;margin:14px auto 0;padding:13px 18px;display:flex;align-items:center;gap:14px;border:1px solid #397d83;border-radius:17px;background:linear-gradient(110deg,#102c40,#0b1c2e 68%,#123b43);box-shadow:0 10px 28px #0003}
+.ofoq-founder-avatar{width:62px;height:62px;flex:0 0 62px;overflow:hidden;border:2px solid #8be8db;border-radius:50%;background:#153247}.ofoq-founder-avatar img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 35%}
+.ofoq-founder-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}.ofoq-founder-label{font-size:11px;color:#9ceadd}.ofoq-founder-copy strong{font-size:18px;color:#f2fffc}.ofoq-founder-welcome{font-size:12px;color:#c1d4df}
+.ofoq-founder-actions{display:flex;gap:8px;flex-wrap:wrap}.ofoq-founder-actions a{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 12px;border-radius:10px;text-decoration:none;font-size:13px;font-weight:700}.ofoq-founder-facebook{background:#1877f2;color:white}.ofoq-founder-whatsapp{background:#25d366;color:#062b1a}
+@media(max-width:600px){.ofoq-founder-top{margin:10px 12px 0;padding:12px;gap:10px;flex-wrap:wrap}.ofoq-founder-avatar{width:54px;height:54px;flex-basis:54px}.ofoq-founder-copy strong{font-size:16px}.ofoq-founder-welcome{font-size:11px}.ofoq-founder-actions{width:100%;padding-right:64px}.ofoq-founder-actions a{flex:1}}
+</style>
+
+<style id="ofoq-welcome-accessibility">@media(prefers-reduced-motion:reduce){.welcome-photo-sequence img:first-child{opacity:0!important;animation:none!important}.welcome-photo-sequence img:nth-child(2){opacity:1!important;animation:none!important}.welcome-founder-overlay{opacity:1!important;animation:none!important}}</style>
+<style id="ofoq-premium-catalog">
+/* Premium classified catalogue */
+#sectionsGrid.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;align-items:stretch;margin-top:18px}
+#sectionsGrid .catalog-group-heading{grid-column:1/-1;position:relative;display:flex;align-items:center;gap:13px;margin:26px 0 2px;padding:13px 16px 13px 18px;border:1px solid #315d70;border-right:4px solid #62d9ca;border-radius:13px;background:linear-gradient(105deg,#123047eF,#10243a 68%,#17283b);color:#e9fffb;font-size:clamp(16px,2vw,20px);font-weight:800;line-height:1.5;box-shadow:0 8px 24px #0002}
+#sectionsGrid .catalog-group-heading:first-child{margin-top:5px}
+#sectionsGrid .catalog-group-heading:before{content:"";width:9px;height:9px;flex:0 0 9px;border-radius:3px;background:#75e5d5;box-shadow:0 0 14px #75e5d577;transform:rotate(45deg)}
+#sectionsGrid .tile{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:9px;min-height:205px;padding:19px 18px 42px;text-align:right;text-align:start;border:1px solid #294b61;border-radius:19px;background:radial-gradient(circle at 100% 0%,#1d5260aa,transparent 46%),linear-gradient(145deg,#152d43,#0b1a2c 78%);box-shadow:0 10px 26px #0003;overflow:hidden;isolation:isolate;transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease}
+#sectionsGrid .tile:before{content:"";position:absolute;inset:auto -25px -65px auto;width:150px;height:150px;border:1px solid #69dcca22;border-radius:50%;box-shadow:0 0 0 17px #69dcca08,0 0 0 34px #69dcca05;z-index:-1}
+#sectionsGrid .tile:after{content:"استكشف القسم  ←";position:absolute;right:18px;bottom:14px;color:#8de9dc;font-size:11px;font-weight:700;letter-spacing:.1px}
+#sectionsGrid .tile:hover,#sectionsGrid .tile:focus-visible{transform:translateY(-5px);border-color:#72e3d4;box-shadow:0 18px 34px #0006,0 0 0 1px #72e3d433;outline:none}
+#sectionsGrid .tile .ico{display:grid;place-items:center;width:52px;height:52px;margin:0;border:1px solid #5bcdbb55;border-radius:15px;background:linear-gradient(145deg,#1b5360,#122b40);font-size:27px;box-shadow:inset 0 1px #ffffff16,0 8px 18px #0003}
+#sectionsGrid .tile h3{margin:2px 0 0;color:#e9fffb;font-size:16px;line-height:1.55;font-weight:800}
+#sectionsGrid .tile p{margin:0;color:#b6c9d7;font-size:12px;line-height:1.85;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+#sectionsGrid .empty{grid-column:1/-1}
+@media(max-width:900px){#sectionsGrid.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}#sectionsGrid .tile{min-height:195px;padding:16px 15px 40px}}
+@media(max-width:560px){#sectionsGrid.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}#sectionsGrid .catalog-group-heading{margin:20px 0 1px;padding:11px 12px;font-size:15px}#sectionsGrid .tile{min-height:190px;padding:13px 12px 39px;border-radius:15px;gap:7px}#sectionsGrid .tile .ico{width:43px;height:43px;border-radius:12px;font-size:23px}#sectionsGrid .tile h3{font-size:13px;line-height:1.5}#sectionsGrid .tile p{font-size:10.5px;line-height:1.7;-webkit-line-clamp:3}#sectionsGrid .tile:after{right:12px;bottom:12px;font-size:10px}}
+@media(max-width:360px){#sectionsGrid.grid{grid-template-columns:1fr}#sectionsGrid .tile{min-height:160px}}
+@media(prefers-reduced-motion:reduce){#sectionsGrid .tile{transition:none}}
+</style>
+
+<style id="ofoq-editorial-image-upgrade">
+#sectionsGrid .tile.ofoq-cinematic-tile{background:#071827;border-color:#31586c;}
+#sectionsGrid .tile.ofoq-cinematic-tile .tile-cover{background-size:cover;background-position:center 42%;filter:saturate(1.16) contrast(1.08);}
+#sectionsGrid .tile.ofoq-cinematic-tile::before{background:linear-gradient(0deg,#061321 0%,#061321ed 18%,#061321a8 55%,#06132112 100%),linear-gradient(90deg,#06132144,#06132100 75%);}
+#sectionsGrid .tile.ofoq-cinematic-tile h3{letter-spacing:.05px;text-wrap:balance;}
+#sectionsGrid .tile.ofoq-cinematic-tile p{max-width:58ch;}
+.section-hero{background-position:center 42%;}
+@media(max-width:700px){#sectionsGrid .tile.ofoq-cinematic-tile .tile-cover{background-position:center 38%;}}
+</style>
+
 </head>
+
 <body>
 <section id="bawaba-welcome" role="dialog" aria-modal="true" aria-label="الافتتاحية السينمائية ثم صورة المؤسس"><div class="welcome-photo-sequence" aria-hidden="true"><img src="./assets/file_00000000dce882129102a05013969410.png" alt="الصورة الترحيبية الأولى"><img src="./assets/file_000000008668821282987c991b233d13.png" alt="الصورة الترحيبية الثانية"></div><div class="welcome-stars"></div><div class="welcome-founder-overlay"><strong>❤️Aloosh alshawwa ❤️</strong><span>مؤسس وصاحب البوابة — أهلاً بكم في عالم المعرفة والإبداع</span></div><div class="welcome-content"><button class="welcome-skip" id="bawaba-welcome-skip" type="button">تخطي المقدمة</button></div></section>
 <header><div class="brand"><div class="mark">✦</div><div><strong>أُفُق | OFOQ</strong><small>الموسوعة والخدمات الرقمية</small></div></div><div style="display:flex;gap:8px;align-items:center"><button class="btn secondary" id="membershipBtn">العضوية والمحفظة</button><button class="btn secondary" id="homeBtn" type="button" aria-label="العودة إلى الواجهة الرئيسية">الرئيسية</button></div></header>
