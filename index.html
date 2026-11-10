@@ -425,7 +425,7 @@ function renderFootballModule(tool){
   const matchDate=$('fbMatchDate');
   if(matchDate)matchDate.value=new Date().toISOString().slice(0,10);
   footballRequest('status').then(data=>{
-    if(providerStatus)providerStatus.textContent=data.configured?'متصل بمزوّد API-Football. البيانات الفعلية ستظهر عند طلب المباريات أو الجداول.':'واجهة الربط جاهزة، وبقي إضافة مفتاح API_FOOTBALL_KEY إلى أسرار Supabase لتصل البيانات الحقيقية.';
+    if(providerStatus)providerStatus.textContent=data.configured?'متصل بمزوّد API-Football. البيانات الفعلية ستظهر عند طلب المباريات أو الجداول.':'مصدر النتائج المباشرة غير موصول حالياً؛ يمكنك استخدام موسوعة كرة القدم والأدلة المتاحة دون عرض بيانات غير مؤكدة.';
   }).catch(()=>{if(providerStatus)providerStatus.textContent='تعذر التحقق من حالة مزود البيانات. حاول تحديث الصفحة لاحقاً.';});
   async function loadFixtures(mode){
     if(!matchStatus||!matchesList)return;
@@ -895,13 +895,6 @@ function appendAutoPartsGuide(tool){
 }
 async function openSection(sec){
 activateSectionPage(sec);
-const vipSections=[];
-if(vipSections.includes(sec.id)){
-const token=await refreshMembershipSession(),tool=document.getElementById('specialTool');
-if(!membershipApi){
-document.getElementById('detailNotice').textContent='تعذر الاتصال بخدمة التحقق من العضوية؛ أوقفنا فتح قسم VIP حمايةً لصلاحياتك.';
-tool.replaceChildren();panel.classList.add('open');panel.scrollIntoView({behavior:'smooth',block:'start'});return;
-}
 document.getElementById('detailTitle').textContent=sec.title;
 document.getElementById('detailDesc').textContent=sec.desc;
 if(!token){
@@ -1285,7 +1278,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
     }catch(error){
       const fallback=localGuide(q);
       addMessage(fallback,'assistant');
-      if(!window.__bawabaAssistantNoticeShown){window.__bawabaAssistantNoticeShown=true;addMessage('ملاحظة صغيرة: عم اشتغل حالياً بوضع الإرشاد التجريبي. لتفعيل الحوار الذكي المفتوح لازم نضيف مفتاح Gemini الآمن لإعدادات الخادم.','assistant');}
+      if(!window.__bawabaAssistantNoticeShown){window.__bawabaAssistantNoticeShown=true;addMessage('ملاحظة صغيرة: عم اشتغل حالياً بوضع الإرشاد التجريبي. المساعد يعمل حالياً بوضع الإرشاد الأساسي؛ بعض الإجابات الذكية المتقدمة غير متاحة مؤقتاً.','assistant');}
     }finally{send.disabled=false;send.textContent='إرسال';input.focus();}
   }
   launcher.addEventListener('click',openChat);close.addEventListener('click',closeChat);send.addEventListener('click',ask);
