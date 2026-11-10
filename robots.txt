@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://alooshalshawwa8-wq.github.io/bawabatsyria/sitemap.xml
