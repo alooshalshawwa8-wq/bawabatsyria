@@ -37,6 +37,27 @@ main{max-width:1180px;margin:auto;padding:28px 18px 60px}.hero{padding:34px 26px
 @media(max-width:600px){.hero-scene{position:relative;left:auto;bottom:auto;margin:12px auto -12px;width:150px;height:115px}.hero{text-align:center}.hero p{margin-inline:auto}}
 @media(prefers-reduced-motion:reduce){#bawaba-welcome,.welcome-content,.welcome-stars,.welcome-portal,.welcome-mascot,.welcome-mascot-eye,.welcome-cloud,.hero-scene *{animation:none!important;transition:none!important}}
 </style>
+<style>
+body.section-mode main>.hero,body.section-mode main>.section-head,body.section-mode main>#sectionsGrid{display:none!important}
+body.section-mode footer{display:none}
+body.section-mode main{max-width:1320px;padding-top:18px}
+body.section-mode #detailPanel{display:block;margin:0;border:0;background:transparent;padding:0;min-height:72vh}
+.section-hero{position:relative;isolation:isolate;display:flex;align-items:end;min-height:clamp(240px,38vw,410px);margin:16px 0 20px;padding:clamp(22px,5vw,48px);overflow:hidden;border:1px solid #826637;border-radius:22px;background:linear-gradient(120deg,#1a3554,#101a30 65%,#40301c);background-position:center;background-size:cover;box-shadow:0 18px 50px #0005}
+.section-hero-shade{position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,#07101de8 0%,#0b1728c9 48%,#0b172866 100%)}
+.section-hero-copy{max-width:760px}
+.section-hero-kicker{display:inline-block;color:#ffda83;font-size:13px;font-weight:700;margin-bottom:8px}
+.section-hero h2{font-size:clamp(27px,5vw,44px);line-height:1.25;margin:0 0 12px;color:#fff2cf;text-shadow:0 3px 20px #000}
+.section-hero p{font-size:clamp(14px,2vw,17px);line-height:1.9;margin:0;color:#f0f4fa;text-shadow:0 2px 12px #000}
+#detailPanel>.notice,#detailPanel>#specialTool{margin-inline:2px}
+.auto-parts-guide{margin:22px 0;padding:20px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(145deg,#15243a,#0d1728)}
+.auto-parts-guide h3{color:var(--gold2);margin:0 0 7px;font-size:21px}
+.auto-parts-guide>p{color:#c2ccda;line-height:1.8;margin:0 0 15px}
+.auto-parts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:11px}
+.auto-part-card{padding:15px;border:1px solid #344765;border-radius:13px;background:#101d31}
+.auto-part-card strong{display:block;color:#ffe1a0;margin-bottom:6px}
+.auto-part-card span{font-size:13px;color:#c4d0df;line-height:1.8}
+@media(max-width:600px){.section-hero{min-height:270px;padding:22px 18px;border-radius:15px}.section-hero-shade{background:linear-gradient(0deg,#07101df2,#0b172899 75%,#0b172866)}body.section-mode main{padding:12px 12px 36px}}
+</style>
 </head>
 <body>
 <section id="bawaba-welcome" role="dialog" aria-modal="true" aria-label="مرحباً بك في بوابة سورية"><div class="welcome-stars"></div><div class="welcome-content">
@@ -80,7 +101,7 @@ main{max-width:1180px;margin:auto;padding:28px 18px 60px}.hero{padding:34px 26px
 </section>
 <div class="section-head"><div><h2>استكشف الأقسام</h2><p id="countLabel">جميع الخدمات والأدلة</p></div></div>
 <section class="grid" id="sectionsGrid" aria-live="polite"></section>
-<section class="panel" id="detailPanel" aria-live="polite"><button class="btn secondary" id="backBtn">← العودة للأقسام</button><h2 id="detailTitle"></h2><p id="detailDesc"></p><div class="notice" id="detailNotice">هذا القسم جزء من دليل البوابة. ستُضاف بياناته ومصادره المتخصصة بعد التحقق منها، ولن نعرض أسعاراً أو معلومات مباشرة غير موثقة.</div><div id="specialTool"></div></section>
+<section class="panel" id="detailPanel" aria-live="polite"><button class="btn secondary" id="backBtn">← العودة للأقسام</button><div class="section-hero" id="sectionHero"><div class="section-hero-shade"></div><div class="section-hero-copy"><span class="section-hero-kicker">اكتشف عالم القسم</span><h2 id="detailTitle"></h2><p id="detailDesc"></p></div></div><div class="notice" id="detailNotice">هذا القسم جزء من دليل البوابة. ستُضاف بياناته ومصادره المتخصصة بعد التحقق منها، ولن نعرض أسعاراً أو معلومات مباشرة غير موثقة.</div><div id="specialTool"></div></section>
 </main>
 <footer>بوابة سورية الوطنية · نسخة تطويرية أولية<br>المعلومات الإرشادية لا تغني عن مراجعة الجهات الرسمية أو المختصين.</footer>
 <script>
@@ -733,7 +754,41 @@ function renderPremiumCatalogModule(sec,tool){
   }
 }
 
+function activateSectionPage(sec){
+  document.body.classList.add('section-mode');
+  const hero=document.getElementById('sectionHero');
+  const visuals={
+    auto_moto_gallery:{image:'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1800&q=90',kicker:'السيارات والدراجات وقطع الغيار'},
+    tech_devices:{image:'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1800&q=90',kicker:'أحدث التقنيات والأجهزة'},
+    luxury_villas:{image:'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1800&q=90',kicker:'العمارة والفخامة والتصميم'},
+    sports_radar:{image:'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1800&q=90',kicker:'عالم الرياضة والبطولات'}
+  };
+  const visual=visuals[sec.id];
+  hero.style.backgroundImage=visual?'linear-gradient(90deg,#07101d99,#07101d33),url("'+visual.image+'")':'linear-gradient(120deg,#1b3555,#101a30 65%,#40301c)';
+  hero.querySelector('.section-hero-kicker').textContent=visual?visual.kicker:(sec.icon+'  اكتشف عالم القسم');
+  document.getElementById('detailTitle').textContent=sec.title;
+  document.getElementById('detailDesc').textContent=sec.desc;
+}
+function appendAutoPartsGuide(tool){
+  const guide=document.createElement('section');guide.className='auto-parts-guide';
+  const title=document.createElement('h3');title.textContent='دليل قطع السيارات ومكوّناتها';
+  const intro=document.createElement('p');intro.textContent='تعرّف إلى أهم الأنظمة والقطع ووظيفة كل منها قبل الشراء أو الصيانة. اختيار القطعة الصحيحة يعتمد على الشركة والطراز وسنة الصنع ورقم الهيكل.';
+  const grid=document.createElement('div');grid.className='auto-parts-grid';
+  const parts=[
+    ['المحرك ونظام التبريد','المحرك، الرديتر، مضخة الماء، الثرموستات والخراطيم؛ مسؤولة عن توليد الحركة وضبط الحرارة.'],
+    ['الفرامل','الأقراص، الفحمات، الكليبر، سائل الفرامل وحساسات ABS؛ افحصها دورياً لدى فني مختص.'],
+    ['الإطارات والعجلات','الإطارات، الجنوط، صمامات الهواء وحساسات الضغط؛ طابق المقاس ومؤشر الحمولة والسرعة.'],
+    ['التعليق والتوجيه','المساعدات، النوابض، المقصات، الجلب، علبة الدركسيون وأذرعة التوجيه.'],
+    ['الكهرباء والبطارية','البطارية، الدينامو، بادئ الحركة، الفيوزات والحساسات ووحدات التحكم.'],
+    ['الفلاتر والزيوت','فلتر الزيت والهواء والوقود والمكيّف، مع زيوت وسوائل مطابقة لمواصفات الشركة.'],
+    ['ناقل الحركة والدفع','القير، القابض، عمود النقل، الدفرنس وأنصاف المحاور؛ تختلف القطع بين الدفع الأمامي والخلفي والرباعي.'],
+    ['الهيكل والإضاءة','الصدامات، المرايا، الزجاج، المصابيح، الشبك وأجزاء الهيكل الخارجية.']
+  ];
+  parts.forEach(item=>{const card=document.createElement('article');card.className='auto-part-card';const name=document.createElement('strong');name.textContent=item[0];const desc=document.createElement('span');desc.textContent=item[1];card.append(name,desc);grid.appendChild(card);});
+  guide.append(title,intro,grid);tool.appendChild(guide);
+}
 async function openSection(sec){
+activateSectionPage(sec);
 const vipSections=['engineer_vip','marketing_vip','video_factory_vip','freelance_vip','accounting_vip'];
 if(vipSections.includes(sec.id)){
 const token=await refreshMembershipSession(),tool=document.getElementById('specialTool');
@@ -787,7 +842,7 @@ copy.disabled=false;
 copy.onclick=async()=>{try{await navigator.clipboard.writeText(output.value);message.textContent='تم نسخ الإعلان.';}catch(e){output.focus();output.select();message.textContent='تعذّر النسخ التلقائي؛ حدّد النص وانسخه يدوياً.';}};
 }
 
-else if(sec.id==='auto_moto_gallery'){renderPremiumCatalogModule(sec,tool);}
+else if(sec.id==='auto_moto_gallery'){renderPremiumCatalogModule(sec,tool);appendAutoPartsGuide(tool);}
 else if(sec.id==='tech_devices'){renderPremiumCatalogModule(sec,tool);}
 else if(sec.id==='luxury_villas'){renderPremiumCatalogModule(sec,tool);}
 else if(renderUtilityModule(sec,tool)){}
@@ -918,7 +973,7 @@ renderSectionWorkspace(sec,tool);
 syrianizeSectionInterface(tool);
 appendFreeAIHelper(sec,tool);
 panel.classList.add('open');panel.scrollIntoView({behavior:'smooth',block:'start'});}
-function showHome(){panel.classList.remove('open');document.getElementById('searchInput').focus({preventScroll:true});}
+function showHome(){document.body.classList.remove('section-mode');panel.classList.remove('open');document.getElementById('searchInput').focus({preventScroll:true});}
 function doSearch(){const q=document.getElementById('searchInput').value.trim().toLocaleLowerCase('ar');if(!q){render(sections);return;}const titleMatches=sections.filter(s=>s.title.toLocaleLowerCase('ar').includes(q));render(titleMatches.length?titleMatches:sections.filter(s=>s.desc.toLocaleLowerCase('ar').includes(q)));}
 document.getElementById('searchBtn').addEventListener('click',doSearch);document.getElementById('searchInput').addEventListener('input',doSearch);document.getElementById('homeBtn').addEventListener('click',showHome);document.getElementById('backBtn').addEventListener('click',showHome);
 const membershipPanel=document.getElementById('membershipPanel');
@@ -991,7 +1046,7 @@ document.getElementById('membershipSignup').addEventListener('click',()=>members
 document.getElementById('membershipLogout').addEventListener('click',()=>{clearMembershipSession();membershipAuthStatusReset();loadMembership();});
 function membershipAuthStatusReset(){document.getElementById('membershipAuthStatus').textContent='تم تسجيل الخروج من هذه الجلسة.';}
 function membershipNode(tag,text,className){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;}
-function openMembership(){panel.classList.remove('open');membershipPanel.classList.add('open');membershipPanel.scrollIntoView({behavior:'smooth',block:'start'});loadMembership();}
+function openMembership(){document.body.classList.remove('section-mode');panel.classList.remove('open');membershipPanel.classList.add('open');membershipPanel.scrollIntoView({behavior:'smooth',block:'start'});loadMembership();}
 async function loadMembership(){
 await refreshMembershipSession();
 membershipPlans.replaceChildren();
