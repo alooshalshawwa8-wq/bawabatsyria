@@ -101,6 +101,12 @@ header{background:#081727eF;border-bottom:1px solid #31536a;box-shadow:0 8px 35p
 .welcome-enter{border-color:#a4f3e7;background:linear-gradient(135deg,#168f91,#8af0df);color:#06272c}
 .welcome-skip{color:#d1e6ef}
 #membershipBtn,#membershipPanel{display:none!important}
+.ofoq-footer{margin-top:40px;padding:28px 18px;border-top:1px solid #31576b;background:#081827;color:#b8cbd8;text-align:center;line-height:1.9}
+.ofoq-footer>strong{color:#a4f3e7;font-size:19px}
+.ofoq-footer p{max-width:850px;margin:8px auto;font-size:13px}
+.ofoq-footer-links{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:12px}
+.ofoq-footer-links a{color:#a4f3e7;text-decoration:none;border-bottom:1px solid #3e777c;padding:3px 2px}
+.ofoq-footer-links a:hover,.ofoq-footer-links a:focus-visible{color:#fff;border-color:#fff}
 .ofoq-knowledge{margin:24px 0;padding:20px;border:1px solid #31576b;border-radius:18px;background:linear-gradient(145deg,#10283b,#0b1b2b)}
 .ofoq-knowledge h3{color:#a4f3e7;margin:0 0 8px;font-size:21px}
 .ofoq-knowledge>p{color:#c4d5e1;line-height:1.9;margin:0 0 14px}
@@ -157,7 +163,15 @@ header{background:#081727eF;border-bottom:1px solid #31536a;box-shadow:0 8px 35p
 <section class="grid" id="sectionsGrid" aria-live="polite"></section>
 <section class="panel" id="detailPanel" aria-live="polite"><button class="btn secondary" id="backBtn">← العودة للأقسام</button><div class="section-hero" id="sectionHero"><div class="section-hero-shade"></div><div class="section-hero-copy"><span class="section-hero-kicker">اكتشف عالم القسم</span><h2 id="detailTitle"></h2><p id="detailDesc"></p></div></div><div class="notice" id="detailNotice">هذا القسم جزء من دليل البوابة. ستُضاف بياناته ومصادره المتخصصة بعد التحقق منها، ولن نعرض أسعاراً أو معلومات مباشرة غير موثقة.</div><div id="specialTool"></div></section>
 </main>
-<footer>أُفُق | OFOQ · منصة معرفة وخدمات رقمية متعددة المجالات<br>المعلومات الإرشادية لا تغني عن مراجعة الجهات الرسمية أو المختصين.</footer>
+<footer class="ofoq-footer">
+  <strong>أُفُق | OFOQ</strong> · عالم من المعرفة في مكان واحد
+  <p>المحتوى للتثقيف والمعلومات العامة، ولا يُعد بديلاً عن الجهات الرسمية أو المختصين. جميع أقسام المنصة متاحة مجاناً حالياً، ولا تُجرى عمليات دفع أو اشتراك.</p>
+  <nav aria-label="روابط المنصة" class="ofoq-footer-links">
+    <a href="#privacy_center" data-open-section="privacy_center">الخصوصية</a>
+    <a href="#terms_of_use" data-open-section="terms_of_use">شروط الاستخدام</a>
+    <a href="#accessibility_center" data-open-section="accessibility_center">إمكانية الوصول</a>
+  </nav>
+</footer>
 <script>
 window.BAWABA_SUPABASE_URL = "https://elzquyehghuxhswogsch.supabase.co";
 window.BAWABA_SUPABASE_ANON_KEY = "sb_publishable_dX9q10Gk28xV97-5TTAi_g_irG2G96D";
@@ -1346,6 +1360,12 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
   if(typeof oldOpen==='function'){window.openSection=async function(sec){await oldOpen(sec);addKnowledge(sec);};}
   const hero=document.querySelector('.hero');if(hero&&!hero.querySelector('.ofoq-free-note')){const note=document.createElement('div');note.className='ofoq-free-note';note.textContent='✦ جميع الأقسام والأدوات المفتوحة مجانية حالياً';hero.appendChild(note);}
   decorateTiles();
+  document.querySelectorAll('[data-open-section]').forEach(link=>link.addEventListener('click',event=>{
+    event.preventDefault();
+    const id=link.getAttribute('data-open-section');
+    const section=(window.BAWABA_SECTIONS||[]).find(item=>item.id===id);
+    if(section&&typeof window.openSection==='function')window.openSection(section);
+  }));
   const welcome=document.querySelector('.welcome-title');if(welcome)welcome.textContent='أُفُق | OFOQ';
   const kicker=document.querySelector('.welcome-kicker');if(kicker)kicker.textContent='عالم من المعرفة… بلا حدود';
   const enter=document.getElementById('bawaba-welcome-enter');if(enter)enter.textContent='ابدأ رحلتك في أُفُق ✨';
