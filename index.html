@@ -1286,18 +1286,40 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
 (function(){
   const launcher=document.getElementById('bawaba-assistant-launcher'),windowBox=document.getElementById('bawaba-assistant-window'),close=document.getElementById('bawaba-chat-close'),messages=document.getElementById('bawaba-chat-messages'),input=document.getElementById('bawaba-chat-input'),send=document.getElementById('bawaba-chat-send'),quick=document.getElementById('bawaba-chat-quick');
   if(!launcher||!windowBox)return;
-  const HISTORY_KEY='ofoq_nibras_chat_v1';
-  function loadHistory(){
+  const HISTORY_KEY='ofoq_nibras_chat_v2';
+  const HISTORY_TTL=12*60*60*1000;
+  function readStoredHistory(){
     try{
-      const saved=JSON.parse(sessionStorage.getItem(HISTORY_KEY)||'[]');
-      if(!Array.isArray(saved))return [];
-      return saved.filter(item=>item&&['user','assistant'].includes(item.role)&&typeof item.content==='string')
-        .map(item=>({role:item.role,content:item.content.slice(0,2000)})).slice(-20);
-    }catch(_){return [];}
+      const raw=localStorage.getItem(HISTORY_KEY);
+      if(raw){
+        const parsed=JSON.parse(raw);
+        if(parsed&&Date.now()-Number(parsed.updatedAt||0)<HISTORY_TTL&&Array.isArray(parsed.messages))
+          return parsed.messages;
+      }
+    }catch(_){}
+    try{
+      const old=JSON.parse(sessionStorage.getItem('ofoq_nibras_chat_v1')||'[]');
+      if(Array.isArray(old))return old;
+    }catch(_){}
+    return [];
   }
+  function cleanHistory(items){
+    return items.filter(item=>item&&['user','assistant'].includes(item.role)&&typeof item.content==='string')
+      .map(item=>({role:item.role,content:item.content.slice(0,2000)})).slice(-20);
+  }
+  function loadHistory(){return cleanHistory(readStoredHistory());}
   const history=loadHistory();
   function persistHistory(){
-    try{sessionStorage.setItem(HISTORY_KEY,JSON.stringify(history.slice(-20)));}catch(_){}
+    const record=JSON.stringify({updatedAt:Date.now(),messages:cleanHistory(history)});
+    try{localStorage.setItem(HISTORY_KEY,record);}catch(_){}
+    try{sessionStorage.setItem(HISTORY_KEY,record);}catch(_){}
+  }
+  function refreshHistory(){
+    const latest=loadHistory();
+    if(latest.length>history.length){
+      history.splice(0,history.length,...latest);
+      if(!messages.childElementCount)history.forEach(item=>addMessage(item.content,item.role));
+    }
   }
   function remember(role,content){
     history.push({role,content:String(content).slice(0,2000)});
@@ -1327,7 +1349,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
   }
   async function ask(){
     const q=input.value.trim();if(!q||send.disabled)return;
-    input.value='';quick.style.display='none';addMessage(q,'user');remember('user',q);send.disabled=true;send.textContent='…';
+    refreshHistory();input.value='';quick.style.display='none';addMessage(q,'user');remember('user',q);send.disabled=true;send.textContent='…';
     try{
       const response=await fetch('https://elzquyehghuxhswogsch.supabase.co/functions/v1/site-assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history.slice(-12)})});
       const data=await response.json().catch(()=>({}));
