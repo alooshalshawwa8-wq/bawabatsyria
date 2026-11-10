@@ -2131,4 +2131,164 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
   window.addEventListener('pageshow',decorateAllCards);
 })();
 </script>
+
+<style id="ofoq-universal-explorer-style">
+#detailPanel{opacity:1;transform:translateY(0);transition:opacity .42s ease,transform .42s ease}
+body.ofoq-transitioning #detailPanel{opacity:0;transform:translateY(12px)}
+body.ofoq-entered #detailPanel{animation:ofoqSectionIn .62s cubic-bezier(.2,.7,.2,1) both}
+@keyframes ofoqSectionIn{from{opacity:0;transform:translateY(18px);filter:blur(5px)}to{opacity:1;transform:none;filter:none}}
+.ofoq-explorer{margin:28px 0 10px;padding:clamp(15px,3vw,26px);border:1px solid #376778;border-radius:22px;background:linear-gradient(145deg,#10283b,#0a1929 70%);box-shadow:0 18px 48px #0004}
+.ofoq-explorer-head{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.ofoq-explorer-kicker{color:#82e5d8;font-size:11px;font-weight:800;letter-spacing:1px}
+.ofoq-explorer h3{color:#c4fff4;font-size:clamp(20px,3vw,28px);margin:6px 0}
+.ofoq-explorer p{color:#b8cbd8;line-height:1.8;margin:5px 0}
+.ofoq-explorer-tools{display:flex;gap:9px;flex-wrap:wrap;margin:15px 0}
+.ofoq-explorer-tools input{flex:1;min-width:180px;background:#071727;border:1px solid #34556b;border-radius:11px;padding:12px;color:#fff}
+.ofoq-explorer-tools button,.ofoq-topic-actions button,.ofoq-explorer-tabs button{border:1px solid #477b83;background:#102b3e;color:#c9fff4;border-radius:10px;padding:9px 13px;font-weight:700}
+.ofoq-explorer-tabs{display:flex;gap:8px;overflow:auto;padding:4px 0 12px;scrollbar-width:thin}
+.ofoq-explorer-tabs button{white-space:nowrap;font-size:12px}
+.ofoq-explorer-tabs button.active{background:#5bd4c5;color:#08232b;border-color:#8bf4e6}
+.ofoq-topic-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:13px}
+.ofoq-topic-card{position:relative;overflow:hidden;min-height:235px;border:1px solid #36566b;border-radius:16px;background:#0a1b2c;cursor:pointer;transition:transform .28s,border-color .28s,box-shadow .28s}
+.ofoq-topic-card:hover,.ofoq-topic-card:focus-visible{transform:translateY(-4px);border-color:#80e7d9;box-shadow:0 15px 30px #0005;outline:none}
+.ofoq-topic-card img{display:block;width:100%;height:145px;object-fit:cover;transition:transform .45s}
+.ofoq-topic-card:hover img{transform:scale(1.055)}
+.ofoq-topic-card-body{padding:12px}
+.ofoq-topic-card strong{display:block;color:#d4fff7;font-size:15px;line-height:1.6}
+.ofoq-topic-card small{display:block;color:#a9c2d0;line-height:1.7;margin-top:5px}
+.ofoq-topic-detail{display:none;margin-top:13px;padding:16px;border:1px solid #477b83;border-radius:14px;background:#071827}
+.ofoq-topic-detail.open{display:block;animation:ofoqSectionIn .3s ease both}
+.ofoq-topic-detail h4{color:#bffff3;margin:0 0 7px;font-size:18px}
+.ofoq-topic-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.ofoq-topic-actions button.primary{background:#54cbbb;color:#07232b}
+.ofoq-gallery{margin-top:28px}
+.ofoq-gallery-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.ofoq-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:9px;margin-top:12px}
+.ofoq-gallery-item{position:relative;overflow:hidden;border-radius:12px;border:1px solid #35556b;background:#071727;aspect-ratio:4/3}
+.ofoq-gallery-item img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s}
+.ofoq-gallery-item:hover img{transform:scale(1.08)}
+.ofoq-gallery-item figcaption{position:absolute;inset:auto 0 0;padding:18px 8px 7px;background:linear-gradient(transparent,#061321e8);color:#e7fffa;font-size:11px}
+.ofoq-explorer-bottom{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:13px;margin-top:22px}
+.ofoq-mini-tool{padding:15px;border:1px solid #35556b;border-radius:14px;background:#0b1c2d}
+.ofoq-mini-tool h4{color:#c4fff4;margin:0 0 8px}
+.ofoq-mini-tool textarea,.ofoq-mini-tool input{width:100%;padding:10px;border-radius:9px;border:1px solid #34556b;background:#061625;color:#fff;margin:6px 0}
+.ofoq-mini-tool button{border:1px solid #69d9ca;background:#164b51;color:#eafffc;border-radius:9px;padding:9px 12px;margin:5px 0}
+.ofoq-mini-status{font-size:12px;color:#a8e8dc;min-height:20px}
+.ofoq-image-count{color:#9ddbd4;font-size:12px}
+@media(max-width:600px){.ofoq-explorer{border-radius:15px}.ofoq-topic-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.ofoq-topic-card{min-height:205px}.ofoq-topic-card img{height:112px}.ofoq-topic-card-body{padding:9px}.ofoq-topic-card strong{font-size:13px}.ofoq-gallery-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.ofoq-gallery-item{border-radius:8px}}
+@media(prefers-reduced-motion:reduce){#detailPanel,.ofoq-topic-card,.ofoq-topic-card img,.ofoq-gallery-item img{transition:none!important;animation:none!important}}
+</style>
+
+<script id="ofoq-universal-explorer">
+(function(){
+'use strict';
+const photoSets={
+football:['photo-1522778119026-d647f0596c20','photo-1574629810360-7efbbe195018','photo-1508098682722-e99c43a406b2','photo-1517466787929-bc90951d0974','photo-1521412644187-c49fa049e84d','photo-1518604666860-9ed391f76460','photo-1579952363873-27f3bade9f55','photo-1551958219-acbc608c6377','photo-1517466787929-bc90951d0974','photo-1522778119026-d647f0596c20','photo-1574629810360-7efbbe195018','photo-1508098682722-e99c43a406b2'],
+finance:['photo-1611974789855-9c2a0a7236a3','photo-1642790106117-e829e14a795f','photo-1460925895917-afdab827c52f','photo-1559526324-4b87b5e36e44','photo-1563013544-824ae1b704d3','photo-1554224155-6726b3ff858f','photo-1639762681485-074b7f938ba0','photo-1640340434855-6084b1f4901d','photo-1611974789855-9c2a0a7236a3','photo-1642790106117-e829e14a795f','photo-1460925895917-afdab827c52f','photo-1559526324-4b87b5e36e44'],
+tech:['photo-1677442136019-21780ecad995','photo-1518770660439-4636190af475','photo-1519389950473-47ba0277781c','photo-1516321318423-f06f85e504b3','photo-1517336714731-489689fd1ca8','photo-1511707171634-5f897ff02aa9','photo-1498050108023-c5249f4df085','photo-1485827404703-89b55fcc595e','photo-1677442136019-21780ecad995','photo-1518770660439-4636190af475','photo-1519389950473-47ba0277781c','photo-1516321318423-f06f85e504b3'],
+social:['photo-1611262588024-d12430b98920','photo-1611162617474-5b21e879e113','photo-1611162616305-c69b3fa7fbe0','photo-1611162616475-46b635cb6868','photo-1611926653458-09294b3142bf','photo-1611162618071-b39a2ec055fb','photo-1611262588024-d12430b98920','photo-1611162617474-5b21e879e113','photo-1611162616305-c69b3fa7fbe0','photo-1611162616475-46b635cb6868','photo-1611926653458-09294b3142bf','photo-1611162618071-b39a2ec055fb'],
+auto:['photo-1503376780353-7e6692767b70','photo-1492144534655-ae79c964c9d7','photo-1552519507-da3b142c6e3d','photo-1549317661-bd32c8ce0db2','photo-1503376780353-7e6692767b70','photo-1558981806-ec527fa84c39','photo-1492144534655-ae79c964c9d7','photo-1552519507-da3b142c6e3d','photo-1549317661-bd32c8ce0db2','photo-1503376780353-7e6692767b70','photo-1558981806-ec527fa84c39','photo-1492144534655-ae79c964c9d7'],
+travel:['photo-1464822759023-fed622ff2c3b','photo-1476514525535-07fb3b4ae5f1','photo-1500530855697-b586d89ba3ee','photo-1488646953014-85cb44e25828','photo-1501785888041-af3ef285b470','photo-1516483638261-f4dbaf036963','photo-1464822759023-fed622ff2c3b','photo-1476514525535-07fb3b4ae5f1','photo-1500530855697-b586d89ba3ee','photo-1488646953014-85cb44e25828','photo-1501785888041-af3ef285b470','photo-1516483638261-f4dbaf036963'],
+food:['photo-1547592180-85f173990554','photo-1504674900247-0877df9cc836','photo-1540189549336-e6e99c3679fe','photo-1565299624946-b28f40a0ae38','photo-1555939594-58d7cb561ad1','photo-1490645935967-10de6ba17061','photo-1547592180-85f173990554','photo-1504674900247-0877df9cc836','photo-1540189549336-e6e99c3679fe','photo-1565299624946-b28f40a0ae38','photo-1555939594-58d7cb561ad1','photo-1490645935967-10de6ba17061'],
+learning:['photo-1503676260728-1c00da094a0b','photo-1456513080510-7bf3a84b82f8','photo-1507842217343-583bb7270b66','photo-151 образователь','photo-1524995997946-a1c2e315a42f','photo-1434030216411-0b793f4b4173','photo-1503676260728-1c00da094a0b','photo-1456513080510-7bf3a84b82f8','photo-1507842217343-583bb7270b66','photo-1524995997946-a1c2e315a42f','photo-1434030216411-0b793f4b4173','photo-151 образователь'],
+health:['photo-1576091160399-112ba8d25d1d','photo-1579684385127-1ef15d508118','photo-1505751172876-fa1923c5c528','photo-1532938911079-1b06ac7ceec7','photo-1576091160550-2173dba999ef','photo-1519494026892-80bbd2d6fd0d','photo-1576091160399-112ba8d25d1d','photo-1579684385127-1ef15d508118','photo-1505751172876-fa1923c5c528','photo-1532938911079-1b06ac7ceec7','photo-1576091160550-2173dba999ef','photo-1519494026892-80bbd2d6fd0d'],
+nature:['photo-1470071459604-3b5ec3a7fe05','photo-1501004318641-b39e6451bec6','photo-1500382017468-9049fed747ef','photo-1441974231531-c6227db76b6e','photo-1472396961693-142e6e269027','photo-1470252649378-9c29740c9fa8','photo-1470071459604-3b5ec3a7fe05','photo-1501004318641-b39e6451bec6','photo-1500382017468-9049fed747ef','photo-1441974231531-c6227db76b6e','photo-1472396961693-142e6e269027','photo-1470252649378-9c29740c9fa8'],
+business:['photo-1497366754035-f200968a6e72','photo-1521737711867-e3b97375f902','photo-1556761175-b413da4baf72','photo-1460925895917-afdab827c52f','photo-1552664730-d307ca884978','photo-1524758631624-e2822e304c36','photo-1497366754035-f200968a6e72','photo-1521737711867-e3b97375f902','photo-1556761175-b413da4baf72','photo-1460925895917-afdab827c52f','photo-1552664730-d307ca884978','photo-1524758631624-e2822e304c36'],
+culture:['photo-1518998053901-5348d3961a04','photo-1461360370896-922624d12aa1','photo-1513475382585-d06e58bcb0e0','photo-1519682337058-a94d519337bc','photo-1513364776144-60967b0f800f','photo-1518709268805-4e9042af9f23','photo-1518998053901-5348d3961a04','photo-1461360370896-922624d12aa1','photo-1513475382585-d06e58bcb0e0','photo-1519682337058-a94d519337bc','photo-1513364776144-60967b0f800f','photo-1518709268805-4e9042af9f23'],
+general:['photo-1451187580459-43490279c0fa','photo-1481627834876-b7833e8f5570','photo-1497366811353-6870744d04b2','photo-1516321318423-f06f85e504b3','photo-1500530855697-b586d89ba3ee','photo-1518770660439-4636190af475','photo-1451187580459-43490279c0fa','photo-1481627834876-b7833e8f5570','photo-1497366811353-6870744d04b2','photo-1516321318423-f06f85e504b3','photo-1500530855697-b586d89ba3ee','photo-1518770660439-4636190af475']
+};
+const topicSets={
+sports_radar:['المباريات والنتائج','البطولات والدوريات','الأندية والمنتخبات','اللاعبون وكشاف المواهب','التحليل التكتيكي','الإحصائيات والأرقام','أكاديمية المهارات','توقعات المشجعين'],
+trading_academy:['أساسيات الأسواق','التحليل الفني','الشموع والمؤشرات','إدارة المخاطر','العملات الرقمية','الذهب والسلع','محاكي المحفظة','دفتر الصفقات'],
+ai_lab:['نماذج الذكاء الاصطناعي','توليد الصور والفيديو','مساعدات الكتابة','البرمجة الذكية','هندسة الأوامر','مقارنة الأدوات','أتمتة الأعمال','الاستخدام المسؤول'],
+social_media_hub:['فيسبوك ومجتمعاته','إنستغرام والريلز','تيك توك والفيديو القصير','يوتيوب والقنوات','واتساب للأعمال','تيليغرام والقنوات','منصة X','استوديو خطة المحتوى'],
+auto_moto_gallery:['السيارات الرياضية','السيارات العائلية','السيارات الكهربائية','سيارات الدفع الرباعي','الدراجات النارية','المحركات والأداء','التصميم والداخلية','المقارنة والمواصفات'],
+tech_devices:['الهواتف الذكية','الحواسيب المحمولة','المعالجات والشرائح','الشاشات والتقنيات','الكاميرات والتصوير','الأجهزة القابلة للارتداء','الملحقات الذكية','مقارنة المواصفات'],
+science_space:['الفيزياء والطاقة','الكيمياء والتفاعلات','الأحياء والحياة','الفلك والنجوم','الكواكب والاستكشاف','الفضاء والتقنيات','تجارب علمية آمنة','أسئلة واختبارات'],
+zodiac_world:['الأبراج اليومية','التوافق العاطفي','قراءة رمزية للفنجان','بطاقات التاروت الترفيهية','اختبارات الشخصية','رسالة اليوم','رقم الحظ الترفيهي','ألعاب اجتماعية'],
+ecommerce_studio:['بناء المتجر','كتابة صفحات المنتجات','التسعير والربحية','إدارة الطلبات','تجربة العميل','التسويق والتحويل','الشحن وخدمة العملاء','خطة إطلاق المتجر']
+};
+const groups=[
+{ids:['sports_radar'],key:'football',topics:['المباريات والنتائج','البطولات والدوريات','الأندية والمنتخبات','اللاعبون والمواهب','التحليل التكتيكي','الإحصائيات','أكاديمية المهارات','مجتمع المشجعين']},
+{ids:['trading_academy','prices','personal_finance','accounting_vip','expatriates_invest','trader_market'],key:'finance',topics:['مفاهيم المجال','الأسعار والمؤشرات','التحليل والمقارنة','إدارة المخاطر','الحاسبات العملية','التخطيط والميزانية','السجل والمتابعة','اختبر معلوماتك']},
+{ids:['ai_lab','syria_ai','code_sandbox','security','cash_shield','apps_games','tech_devices','telecom','privacy_center','digital_citizenship'],key:'tech',topics:['الأدوات والمنصات','التقنيات الحديثة','الدليل العملي','المقارنة والاختيار','التجارب والتطبيق','الأمان والخصوصية','المهارات المتقدمة','مختبر التحديات']},
+{ids:['social_media_hub','marketing_vip','video_factory_vip','design_lab','photography_media','creative_studio','ecommerce_studio','syria_marketplace'],key:'social',topics:['المنصات والأدوات','صناعة المحتوى','التصميم والهوية','التسويق والوصول','التحليل والأداء','التخطيط والنشر','الجمهور والمجتمع','استوديو التطبيق']},
+{ids:['auto_moto_gallery','cars_guide','transport'],key:'auto',topics:['الموديلات والفئات','المحركات والأداء','التصميم والداخلية','السلامة والتقنيات','الصيانة والعناية','المقارنة والمواصفات','القيادة والمهارات','دليل الاختيار']},
+{ids:['travel_visa','tourism','global_travel','consular','civil','directory_services'],key:'travel',topics:['الوجهات والمعالم','التخطيط والميزانية','الوثائق والإجراءات','التنقل والمسارات','الإقامة والخدمات','الثقافة المحلية','قوائم التحقق','صانع الرحلات']},
+{ids:['chef','global_cuisine','domestic_economy','family_life'],key:'food',topics:['الوصفات والأطباق','المكونات والبدائل','تقنيات التحضير','التغذية والتوازن','سلامة الغذاء','تخطيط الوجبات','مطبخ العالم','تحديات تفاعلية']},
+{ids:['education','syria_curriculum','no_khosoosie','language_academy','global_languages','books_knowledge','engineer_vip','jobs'],key:'learning',topics:['المناهج والمسارات','الدروس والشروحات','التمارين والاختبارات','المهارات والتطبيق','اللغات والتواصل','القراءة والمراجع','التخطيط والتقدم','اختبر نفسك']},
+{ids:['health','fitness_coach','fitness_wellness','mirror','birds_pets'],key:'health',topics:['المعرفة الأساسية','العادات اليومية','الأدوات والمتابعة','الوقاية والسلامة','الأسئلة الشائعة','خطط عملية','مصادر موثوقة','اختبار معرفي']},
+{ids:['agriculture','fertilizers','environment_climate','sustainable_living','energy','water'],key:'nature',topics:['الأنظمة والموارد','الزراعة والإنتاج','الطاقة والاستدامة','المناخ والبيئة','الأدوات والحسابات','الممارسات العملية','الحلول والابتكار','اختبر معلوماتك']},
+{ids:['business','startup_lab','freelance_vip','jobs','directory_services','events_calendar'],key:'business',topics:['تأسيس وإدارة','التخطيط والاستراتيجية','التسويق والمبيعات','التمويل والتكاليف','المهارات والموارد','الأدوات والقوالب','قياس الأداء','مختبر الأعمال']},
+{ids:['culture','heritage','nostalgia_archive','zodiac_world','gaming_arena','sports_radar'],key:'culture',topics:['الموسوعة والمعرفة','الفنون والإبداع','الشخصيات والأعمال','الفعاليات والمجتمع','المعارض والمجموعات','الألعاب والتحديات','قصص واكتشافات','اختبر ذاكرتك']}
+];
+function groupFor(sec){return groups.find(g=>g.ids.includes(sec.id))||{key:'general',topics:['مدخل إلى المجال','المفاهيم الأساسية','الأدوات والموارد','الدليل خطوة بخطوة','المقارنة والاختيار','التطبيق العملي','الأسئلة الشائعة','اختبر معلوماتك']};}
+function photosFor(sec){return photoSets[groupFor(sec).key]||photoSets.general;}
+function el(tag,cls,txt){const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n;}
+function mount(sec){
+ const host=document.getElementById('specialTool');if(!host||host.querySelector('.ofoq-explorer'))return;
+ const group=groupFor(sec),topics=topicSets[sec.id]||group.topics,photos=photosFor(sec),root=el('section','ofoq-explorer');root.dataset.section=sec.id;
+ const head=el('div','ofoq-explorer-head'),intro=el('div');intro.append(el('span','ofoq-explorer-kicker','OFOQ INTERACTIVE WORLDS'),el('h3','', 'اكتشف '+sec.title),el('p','', 'مساحة تفاعلية تجمع المحاور والصور والتجارب العملية في واجهة واحدة. اختر موضوعاً لتفتح تفاصيله وتبدأ الاستكشاف.'));
+ const counter=el('span','ofoq-image-count','معرض بصري · 12 صورة');head.append(intro,counter);
+ const tools=el('div','ofoq-explorer-tools'),search=el('input');search.type='search';search.placeholder='ابحث عن موضوع أو أداة داخل هذا القسم…';search.setAttribute('aria-label','البحث داخل القسم');const fav=el('button','','★ المفضلة');fav.type='button';tools.append(search,fav);
+ const tabs=el('div','ofoq-explorer-tabs'),all=el('button','active','كل الموضوعات');all.type='button';tabs.appendChild(all);
+ const grid=el('div','ofoq-topic-grid'),detail=el('section','ofoq-topic-detail');detail.setAttribute('aria-live','polite');let active='all',query='',favoriteOnly=false;
+ const cards=[];
+ topics.forEach((topic,i)=>{
+   const card=el('article','ofoq-topic-card');card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label','استكشف '+topic);
+   const image=el('img');image.loading='lazy';image.decoding='async';image.alt=topic+' - '+sec.title;image.src='https://images.unsplash.com/'+photos[i%photos.length]+'?auto=format&fit=crop&w=760&q=78';
+   const body=el('div','ofoq-topic-card-body');body.append(el('strong','',topic),el('small','','افتح الدليل والتجربة التفاعلية'));card.append(image,body);
+   const item={card,topic,index:i};cards.push(item);
+   const open=()=>showDetail(topic,i);
+   card.addEventListener('click',open);card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
+   grid.appendChild(card);
+   const tab=el('button','',topic);tab.type='button';tab.addEventListener('click',()=>{active=topic;tabs.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===tab));filter();});tabs.appendChild(tab);
+ });
+ function showDetail(topic,i){
+   detail.innerHTML='';detail.classList.add('open');
+   detail.append(el('h4','',topic+' · '+sec.title),el('p','', 'استكشف '+topic+' ضمن '+sec.title+'. ابدأ بالتعرف إلى الأساسيات، ثم قارن الخيارات وطبّق ما تعلمته باستخدام الأدوات والأنشطة أدناه. راجع المصادر الأصلية عند التعامل مع معلومات متغيرة أو قرارات متخصصة.'));
+   const actions=el('div','ofoq-topic-actions'),save=el('button','primary','☆ أضف للمفضلة'),plan=el('button','','أنشئ خطة لهذا الموضوع'),quiz=el('button','','تحدي سريع');
+   const key='ofoq-favorites-v1';const readFav=()=>{try{return JSON.parse(localStorage.getItem(key)||'[]')}catch(e){return []}};
+   const id=sec.id+'::'+topic;save.textContent=readFav().includes(id)?'★ محفوظ بالمفضلة':'☆ أضف للمفضلة';
+   save.addEventListener('click',()=>{let a=readFav();a=a.includes(id)?a.filter(x=>x!==id):a.concat(id);try{localStorage.setItem(key,JSON.stringify(a));save.textContent=a.includes(id)?'★ محفوظ بالمفضلة':'☆ أضف للمفضلة';}catch(e){save.textContent='تعذر الحفظ على هذا الجهاز';}});
+   plan.addEventListener('click',()=>{const box=root.querySelector('#ofoq-plan-output');box.value='خطة استكشاف: '+topic+'\n1. تعرّف إلى المفاهيم الأساسية\n2. اجمع ثلاثة مصادر موثوقة\n3. قارن الخيارات أو الأمثلة\n4. نفّذ تطبيقاً عملياً صغيراً\n5. راجع النتيجة وسجّل ما تعلمته';box.focus();});
+   quiz.addEventListener('click',()=>{const result=detail.querySelector('.ofoq-mini-status');result.textContent='تحدي '+(i+1)+': اكتب أهم ثلاث نقاط تعلمتها عن «'+topic+'» ثم قارنها بمصدر موثوق.';});
+   actions.append(save,plan,quiz);detail.appendChild(actions);detail.append(el('div','ofoq-mini-status',''));
+   detail.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});
+ }
+ function filter(){cards.forEach(({card,topic})=>{const match=(!query||topic.toLocaleLowerCase('ar').includes(query))&&(active==='all'||active===topic)&&(!favoriteOnly||readFavorite().includes(sec.id+'::'+topic));card.hidden=!match;});}
+ function readFavorite(){try{return JSON.parse(localStorage.getItem('ofoq-favorites-v1')||'[]')}catch(e){return []}}
+ all.addEventListener('click',()=>{active='all';tabs.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===all));filter();});
+ search.addEventListener('input',()=>{query=search.value.trim().toLocaleLowerCase('ar');filter();});
+ fav.addEventListener('click',()=>{favoriteOnly=!favoriteOnly;fav.textContent=favoriteOnly?'عرض كل الموضوعات':'★ المفضلة';filter();});
+ const gallery=el('section','ofoq-gallery'),gh=el('div','ofoq-gallery-head');gh.append(el('h3','', 'معرض الصور والاستكشاف البصري'),el('span','ofoq-image-count','صور مختارة مرتبطة بالمجال'));const galleryGrid=el('div','ofoq-gallery-grid');
+ for(let i=0;i<12;i++){const figure=el('figure','ofoq-gallery-item'),img=el('img');img.loading='lazy';img.decoding='async';img.alt='صورة '+(i+1)+' ضمن '+sec.title;img.src='https://images.unsplash.com/'+photos[(i+topics.length)%photos.length]+'?auto=format&fit=crop&w=600&q=72';figure.append(img,el('figcaption','',sec.title+' · مشهد '+(i+1)));galleryGrid.appendChild(figure);}
+ gallery.append(gh,galleryGrid);
+ const bottom=el('div','ofoq-explorer-bottom'),planner=el('section','ofoq-mini-tool');planner.append(el('h4','','مخطط التعلّم أو العمل'),el('p','','دوّن هدفك وخطواتك واحفظها على جهازك.' ));
+ const goal=el('input');goal.placeholder='ما الذي تريد إنجازه؟';const notes=el('textarea');notes.rows=4;notes.placeholder='اكتب خطواتك وملاحظاتك…';const saveNotes=el('button','','حفظ خطتي'),status=el('div','ofoq-mini-status','الحفظ محلي على هذا المتصفح.');
+ const noteKey='ofoq-notes-'+sec.id;try{const saved=JSON.parse(localStorage.getItem(noteKey)||'{}');goal.value=saved.goal||'';notes.value=saved.notes||'';}catch(e){}
+ saveNotes.addEventListener('click',()=>{try{localStorage.setItem(noteKey,JSON.stringify({goal:goal.value,notes:notes.value,updatedAt:new Date().toISOString()}));status.textContent='تم حفظ خطتك على هذا الجهاز.';}catch(e){status.textContent='تعذر الحفظ؛ انسخ ملاحظاتك للاحتفاظ بها.';}});
+ planner.append(goal,notes,saveNotes,status);
+ const challenge=el('section','ofoq-mini-tool');challenge.append(el('h4','','نشاط تفاعلي سريع'),el('p','','اختر موضوعاً من البطاقات، ثم أنشئ خطة مصغرة أو استخدم التحدي لقياس ما تعلمته.' ));
+ const random=el('button','','اقترح موضوعاً عشوائياً'),randomOut=el('div','ofoq-mini-status','');random.addEventListener('click',()=>{const t=topics[Math.floor(Math.random()*topics.length)];randomOut.textContent='موضوعك الآن: '+t;showDetail(t,topics.indexOf(t));});
+ challenge.append(random,randomOut);bottom.append(planner,challenge);
+ root.append(head,tools,tabs,grid,detail,gallery,bottom);host.appendChild(root);
+}
+const originalOpen=window.openSection;
+if(typeof originalOpen==='function'&&!originalOpen.__ofoqExplorerWrapped){
+ const wrapped=async function(sec){
+   document.body.classList.remove('ofoq-entered');document.body.classList.add('ofoq-transitioning');
+   await new Promise(resolve=>setTimeout(resolve,160));
+   try{await originalOpen(sec);mount(sec);}
+   finally{document.body.classList.remove('ofoq-transitioning');void document.body.offsetWidth;document.body.classList.add('ofoq-entered');}
+ };
+ wrapped.__ofoqExplorerWrapped=true;window.openSection=wrapped;
+}
+const oldHome=window.showHome;
+if(typeof oldHome==='function'&&!oldHome.__ofoqFadeWrapped){
+ const home=function(){document.body.classList.remove('ofoq-entered');document.body.classList.add('ofoq-transitioning');setTimeout(()=>{oldHome();document.body.classList.remove('ofoq-transitioning');},180);};
+ home.__ofoqFadeWrapped=true;window.showHome=home;
+}
+})();
+</script>
 </body></html>
