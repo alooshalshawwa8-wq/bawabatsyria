@@ -1547,18 +1547,18 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
   transition:transform .38s cubic-bezier(.2,.7,.2,1),border-color .3s,box-shadow .3s;
 }
 #sectionsGrid .tile.ofoq-cinematic-tile .tile-cover{
-  position:absolute;inset:0;z-index:-2;height:auto;
+  position:absolute;inset:0;z-index:0;height:auto;
   background-size:cover;background-position:center;
   opacity:1!important;transform:scale(1.001);
   filter:saturate(1.13) contrast(1.08);
   transition:transform .65s cubic-bezier(.2,.7,.2,1),filter .4s;
 }
 #sectionsGrid .tile.ofoq-cinematic-tile::before{
-  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
   background:linear-gradient(0deg,#061321 0%,#061321ed 13%,#061321a8 48%,#06132120 100%),
              linear-gradient(90deg,#06132155,#06132108 78%);
 }
-#sectionsGrid .tile.ofoq-cinematic-tile>*:not(.tile-cover){position:relative;z-index:1}
+#sectionsGrid .tile.ofoq-cinematic-tile>*:not(.tile-cover){position:relative;z-index:2}
 #sectionsGrid .tile.ofoq-cinematic-tile .ico{
   display:inline-flex;align-items:center;justify-content:center;
   width:39px;height:39px;margin:0 0 8px;border-radius:12px;
