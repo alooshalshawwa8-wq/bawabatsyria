@@ -283,7 +283,7 @@ const sections = [
     { id: 'agriculture', title: 'الزراعة والإنتاج الحيواني', icon: '🌾', desc: 'المهندس الزراعي لخدمة المحاصيل والوقاية من الآفات وطرق التربية المنزلية والإنتاجية' },
     { id: 'fertilizers', title: 'دليل الأسمدة والتغذية الزراعية', icon: '🧪', desc: 'حاسبة كميات التسميد الكيماوي والعضوي للدونم وصناعة الكومبوست الطبيعي من بقايا المنزل' },
     { id: 'birds_pets', title: 'عالم الطيور والحيوانات الأليفة', icon: '🦜', desc: 'العناية بالطيور والكناري والداجن، جداول التغذية وتشخيص الأمراض البيطرية الشائعة وعزلها' },
-    { id: 'sports_radar', title: 'مركز كرة القدم والبطولات العالمية', icon: '⚽', desc: 'تابع البطولات والفرق المفضلة، واستعد لمركز النتائج والمواعيد والإحصائيات والتنبيهات والتحليل الكروي' },
+    { id: 'sports_radar', title: 'أُفُق FOOTBALL | مركز كرة القدم العالمي', icon: '⚽', desc: 'مركز كروي تفاعلي للمباريات والبطولات والأندية والمنتخبات السورية والعربية والعالمية، مع التحليل والتكتيك وكشاف المواهب وتوقعات المشجعين وأكاديمية كرة القدم' },
     { id: 'zodiac_world', title: 'عالم الأبراج والترفيه والاختبارات', icon: '🔮', desc: 'الأبراج اليومية والتوافق العاطفي وقراءة الفنجان وتاروت تفاعلي واختبارات الشخصية ورسائل الكون' },
     { id: 'news', title: 'مرصد الأخبار والمستجدات المحلية', icon: '📰', desc: 'تغطية فخمة وموجزة لآخر الأحداث المحلية وتلخيصها عبر الذكاء الاصطناعي بحيادية تامة' },
     { id: 'expatriates_invest', title: 'بوابة استثمارات المغتربين', icon: '💎', desc: 'أفكار مشاريع استثمارية وإنتاجية مدروسة ومربحة لتنمية المجتمع برؤوس أموال اغترابية' },
@@ -608,6 +608,175 @@ function renderFootballModule(tool){
       status.textContent='جدول '+leagueName+' · موسم '+season+' · المصدر API-Football.';
     }catch(error){status.textContent=error.message||'تعذر تحميل جدول الترتيب.';}
   }
+  // OFOQ Football Studio: local-first interactive tools, clearly separated from provider data.
+  wrap.insertAdjacentHTML('beforeend', `
+    <style>
+      .fb-extra-tabs{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}
+      .fb-extra-pane{display:none;border:1px solid var(--line);border-radius:14px;background:rgba(10,22,39,.72);padding:14px;margin:10px 0}
+      .fb-extra-pane.active{display:block}
+      .fb-form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+      .fb-field{display:grid;gap:6px;color:var(--muted);font-size:13px}
+      .fb-field input,.fb-field select,.fb-field textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:#0b1527;color:#fff}
+      .fb-field textarea{min-height:92px;resize:vertical}
+      .fb-result{margin-top:12px;padding:12px;border:1px solid #8c713d;border-radius:11px;background:#18263a;color:#f4e5c2;line-height:1.9;white-space:pre-wrap}
+      .fb-note{font-size:12px;color:var(--muted);line-height:1.8;margin:8px 0}
+      .fb-bars{display:grid;gap:9px;margin-top:12px}.fb-bar-row{display:grid;grid-template-columns:100px 1fr 30px;align-items:center;gap:8px;font-size:12px}
+      .fb-bar-track{height:10px;border-radius:20px;background:#25364d;overflow:hidden}.fb-bar-fill{height:100%;background:linear-gradient(90deg,#b98b38,#f0cf7d);border-radius:20px}
+      .fb-pitch{position:relative;min-height:280px;border:2px solid #5b9b70;border-radius:12px;background:repeating-linear-gradient(0deg,#1b6845 0,#1b6845 42px,#1e714b 42px,#1e714b 84px);overflow:hidden;margin:12px 0}
+      .fb-pitch:before{content:'';position:absolute;inset:0 50%;border-left:1px solid #c8e3d1}.fb-pitch:after{content:'';position:absolute;width:90px;height:90px;border:1px solid #c8e3d1;border-radius:50%;left:calc(50% - 45px);top:calc(50% - 45px)}
+      .fb-pitch-player{position:absolute;z-index:1;transform:translate(-50%,-50%);background:#f4d27d;color:#172033;border:1px solid #fff;border-radius:18px;padding:5px 8px;font-size:10px;font-weight:800;white-space:nowrap}
+      .fb-timeline{border-right:2px solid #b98b38;margin:12px 8px;padding-right:14px;display:grid;gap:10px}.fb-timeline-item{position:relative;padding:8px 10px;background:#122139;border-radius:8px}.fb-timeline-item:before{content:'';position:absolute;right:-21px;top:13px;width:10px;height:10px;border-radius:50%;background:#e1b65f}
+      @media(max-width:560px){.fb-extra-pane{padding:10px}.fb-bar-row{grid-template-columns:78px 1fr 24px}.fb-pitch{min-height:230px}}
+    </style>
+    <div class="fb-extra-tabs" role="tablist" aria-label="مختبرات أفق الكروية">
+      <button class="fb-tab" type="button" data-extra-tab="scout">🔎 كشاف المواهب</button>
+      <button class="fb-tab" type="button" data-extra-tab="predict">🎯 مختبر التوقعات</button>
+      <button class="fb-tab" type="button" data-extra-tab="tactics">📐 مختبر التكتيك</button>
+      <button class="fb-tab" type="button" data-extra-tab="dna">🧬 البصمة الكروية</button>
+      <button class="fb-tab" type="button" data-extra-tab="moments">🎬 ذاكرة المباراة</button>
+      <button class="fb-tab" type="button" data-extra-tab="passport">🏅 جواز المشجع</button>
+      <button class="fb-tab" type="button" data-extra-tab="academy">🎓 الأكاديمية</button>
+    </div>
+    <section class="fb-extra-pane" data-extra-pane="scout">
+      <h4 class="fb-subhead">أُفُق SCOUT · بطاقة اكتشاف موهبة</h4>
+      <p class="fb-note">أنشئ تقرير كشاف من بيانات تدخلها بنفسك. لا تُعرض أسماء أو أرقام لاعبين غير موثقة على أنها قاعدة بيانات مباشرة.</p>
+      <div class="fb-form-grid">
+        <label class="fb-field">اسم اللاعب<input id="fbScoutName" maxlength="70" placeholder="اسم اللاعب"></label>
+        <label class="fb-field">العمر<input id="fbScoutAge" type="number" min="10" max="60" placeholder="العمر"></label>
+        <label class="fb-field">المركز<select id="fbScoutPosition"><option>مهاجم</option><option>جناح</option><option>وسط هجومي</option><option>وسط دفاعي</option><option>مدافع</option><option>ظهير</option><option>حارس مرمى</option></select></label>
+        <label class="fb-field">النادي / المنتخب<input id="fbScoutClub" maxlength="70" placeholder="الفريق الحالي"></label>
+        <label class="fb-field">المهارة الفنية (1–10)<input id="fbScoutTech" type="number" min="1" max="10" value="7"></label>
+        <label class="fb-field">الرؤية والقرار (1–10)<input id="fbScoutVision" type="number" min="1" max="10" value="7"></label>
+        <label class="fb-field">اللياقة والسرعة (1–10)<input id="fbScoutFit" type="number" min="1" max="10" value="7"></label>
+        <label class="fb-field">الانضباط التكتيكي (1–10)<input id="fbScoutTactic" type="number" min="1" max="10" value="7"></label>
+      </div>
+      <button class="btn" id="fbScoutBuild" type="button" style="margin-top:12px">إنشاء بطاقة الكشاف</button><div id="fbScoutResult" class="fb-result" hidden></div>
+    </section>
+    <section class="fb-extra-pane" data-extra-pane="predict">
+      <h4 class="fb-subhead">أُفُق PREDICT · مختبر سيناريو المباراة</h4>
+      <p class="fb-note">أدخل تقييماتك أنت للفريقين. النتيجة حساب توضيحي مبسط وليست توقعاً احترافياً أو احتمالات سوقية أو ضماناً للنتيجة.</p>
+      <div class="fb-form-grid">
+        <label class="fb-field">الفريق الأول<input id="fbPredA" maxlength="50" placeholder="الفريق الأول"></label>
+        <label class="fb-field">الفريق الثاني<input id="fbPredB" maxlength="50" placeholder="الفريق الثاني"></label>
+        <label class="fb-field">قوة الفريق الأول (1–10)<input id="fbPredRA" type="number" min="1" max="10" value="7"></label>
+        <label class="fb-field">قوة الفريق الثاني (1–10)<input id="fbPredRB" type="number" min="1" max="10" value="7"></label>
+        <label class="fb-field">أفضلية الأرض للفريق الأول<select id="fbPredHome"><option value="1">نعم</option><option value="0">لا / ملعب محايد</option></select></label>
+      </div>
+      <button class="btn" id="fbPredRun" type="button" style="margin-top:12px">حلّل السيناريو</button><div id="fbPredResult" class="fb-result" hidden></div>
+    </section>
+    <section class="fb-extra-pane" data-extra-pane="tactics">
+      <h4 class="fb-subhead">أُفُق TAKTIK · لوحة المدرب</h4>
+      <p class="fb-note">اختر خطة واعرض توزيعاً تكتيكياً مبدئياً، ثم اكتب أسماء لاعبيك لتخصيص التشكيلة.</p>
+      <div class="fb-form-grid">
+        <label class="fb-field">الخطة<select id="fbFormation"><option value="4-3-3">4-3-3</option><option value="4-2-3-1">4-2-3-1</option><option value="4-4-2">4-4-2</option><option value="3-5-2">3-5-2</option><option value="3-4-3">3-4-3</option><option value="5-3-2">5-3-2</option></select></label>
+        <label class="fb-field">أسماء اللاعبين (اسم في كل سطر)<textarea id="fbLineup" placeholder="الحارس&#10;المدافع الأول&#10;..."></textarea></label>
+      </div>
+      <button class="btn" id="fbDrawPitch" type="button" style="margin-top:12px">ارسم التشكيلة</button><div id="fbPitch" class="fb-pitch" aria-label="ملعب تكتيكي"></div>
+    </section>
+    <section class="fb-extra-pane" data-extra-pane="dna">
+      <h4 class="fb-subhead">أُفُق DNA · البصمة الكروية</h4>
+      <p class="fb-note">أنشئ بصمة وصفية لأي فريق عبر تقييمك لعناصر لعبه. هذه أداة تحليل يدوي وليست بيانات أداء رسمية.</p>
+      <label class="fb-field">اسم الفريق<input id="fbDnaName" maxlength="60" placeholder="اسم الفريق"></label>
+      <div class="fb-form-grid">
+        <label class="fb-field">الهجوم (1–10)<input id="fbDnaAttack" type="number" min="1" max="10" value="7"></label>
+        <label class="fb-field">الدفاع (1–10)<input id="fbDnaDefense" type="number" min="1" max="10" value="7"></label>
+        <label class="fb-field">الاستحواذ (1–10)<input id="fbDnaPossession" type="number" min="1" max="10" value="7"></label>
+        <label class="fb-field">التحولات (1–10)<input id="fbDnaTransition" type="number" min="1" max="10" value="7"></label>
+        <label class="fb-field">الضغط (1–10)<input id="fbDnaPress" type="number" min="1" max="10" value="7"></label>
+      </div>
+      <button class="btn" id="fbDnaRun" type="button" style="margin-top:12px">كوّن البصمة</button><div id="fbDnaResult" class="fb-result" hidden></div>
+    </section>
+    <section class="fb-extra-pane" data-extra-pane="moments">
+      <h4 class="fb-subhead">أُفُق MOMENTS · قصة المباراة</h4>
+      <p class="fb-note">حوّل ملاحظاتك إلى خط زمني للمباراة. لا يستورد هذا القسم فيديوهات أو أحداثاً تلقائية.</p>
+      <div class="fb-form-grid">
+        <label class="fb-field">عنوان المباراة<input id="fbMomentTitle" maxlength="100" placeholder="الفريقان والبطولة"></label>
+        <label class="fb-field">الأحداث (حدث في كل سطر)<textarea id="fbMomentEvents" placeholder="12' فرصة خطيرة&#10;35' هدف&#10;78' تبديل مؤثر"></textarea></label>
+      </div>
+      <button class="btn" id="fbMomentBuild" type="button" style="margin-top:12px">أنشئ ذاكرة المباراة</button><div id="fbMomentResult" class="fb-result" hidden></div>
+    </section>
+    <section class="fb-extra-pane" data-extra-pane="passport">
+      <h4 class="fb-subhead">FAN PASSPORT · جواز المشجع</h4>
+      <p class="fb-note">أنشئ بطاقة مشجع تحفظ محلياً على هذا الجهاز فقط. لا تُنشر بياناتك ولا تتم مزامنتها مع مستخدمين آخرين.</p>
+      <div class="fb-form-grid">
+        <label class="fb-field">اسم العرض<input id="fbFanName" maxlength="40" placeholder="اسمك المستعار"></label>
+        <label class="fb-field">فريقك المفضل<input id="fbFanClub" maxlength="60" placeholder="النادي أو المنتخب"></label>
+        <label class="fb-field">بطولتك المفضلة<input id="fbFanLeague" maxlength="60" placeholder="البطولة"></label>
+      </div>
+      <button class="btn" id="fbFanSave" type="button" style="margin-top:12px">احفظ بطاقة المشجع</button><div id="fbFanResult" class="fb-result" hidden></div>
+    </section>
+    <section class="fb-extra-pane" data-extra-pane="academy">
+      <h4 class="fb-subhead">أكاديمية أُفُق الكروية · اختبر معلوماتك</h4>
+      <p class="fb-note">اختبار معلومات عام للتعلم والترفيه.</p>
+      <div id="fbQuiz" class="fb-list"></div><button class="btn" id="fbQuizSubmit" type="button" style="margin-top:12px">صحّح إجاباتي</button><div id="fbQuizResult" class="fb-result" hidden></div>
+    </section>
+  `);
+  const extraTabs=Array.from(wrap.querySelectorAll('[data-extra-tab]'));
+  const extraPanes=Array.from(wrap.querySelectorAll('[data-extra-pane]'));
+  extraTabs.forEach(btn=>btn.addEventListener('click',()=>{
+    wrap.querySelectorAll('.fb-tab[data-tab]').forEach(x=>x.classList.remove('active'));
+    wrap.querySelectorAll('.fb-pane').forEach(x=>x.classList.remove('active'));
+    extraTabs.forEach(x=>x.classList.toggle('active',x===btn));
+    extraPanes.forEach(x=>x.classList.toggle('active',x.dataset.extraPane===btn.dataset.extraTab));
+  }));
+  wrap.querySelectorAll('.fb-tab[data-tab]').forEach(btn=>btn.addEventListener('click',()=>{
+    extraTabs.forEach(x=>x.classList.remove('active'));extraPanes.forEach(x=>x.classList.remove('active'));
+  }));
+  const val=id=>wrap.querySelector('#'+id)?.value?.trim()??'';
+  const num=id=>Number(wrap.querySelector('#'+id)?.value);
+  const show=(id,message)=>{const el=wrap.querySelector('#'+id);el.textContent=message;el.hidden=false;};
+  const validScore=id=>Number.isFinite(num(id))&&num(id)>=1&&num(id)<=10;
+  wrap.querySelector('#fbScoutBuild').addEventListener('click',()=>{
+    const name=val('fbScoutName'),age=num('fbScoutAge');
+    if(!name||!Number.isInteger(age)||age<10||age>60){show('fbScoutResult','أدخل اسم اللاعب وعمراً صحيحاً بين 10 و60.');return;}
+    const scores=['fbScoutTech','fbScoutVision','fbScoutFit','fbScoutTactic'];
+    if(!scores.every(validScore)){show('fbScoutResult','يجب أن تكون جميع التقييمات بين 1 و10.');return;}
+    const avg=scores.reduce((a,id)=>a+num(id),0)/scores.length;
+    show('fbScoutResult','بطاقة كشاف أُفُق\nاللاعب: '+name+' · العمر: '+age+'\nالمركز: '+val('fbScoutPosition')+'\nالفريق: '+(val('fbScoutClub')||'غير محدد')+'\nالمعدل التقييمي اليدوي: '+avg.toFixed(1)+'/10\nالتقييم لا يمثل حكماً احترافياً دون مشاهدة اللاعب وبيانات موثقة.');
+  });
+  wrap.querySelector('#fbPredRun').addEventListener('click',()=>{
+    const a=val('fbPredA'),b=val('fbPredB'),ra=num('fbPredRA'),rb=num('fbPredRB');
+    if(!a||!b||a.toLocaleLowerCase()===b.toLocaleLowerCase()||![ra,rb].every(x=>Number.isFinite(x)&&x>=1&&x<=10)){show('fbPredResult','أدخل اسمين مختلفين وتقييماً بين 1 و10 لكل فريق.');return;}
+    const diff=(ra-rb)*0.42+(num('fbPredHome')?0.35:0),strength=1/(1+Math.exp(-diff));
+    const draw=Math.max(.12,.30-Math.abs(strength-.5)*.28),winA=strength*(1-draw),winB=(1-strength)*(1-draw);
+    show('fbPredResult','سيناريو حسابي مبسط\n'+a+': '+(winA*100).toFixed(1)+'%\nالتعادل: '+(draw*100).toFixed(1)+'%\n'+b+': '+(winB*100).toFixed(1)+'%\n\nالمعادلة تستخدم تقييماتك وأفضلية الملعب فقط؛ لا تعتمد على إصابات أو تشكيلات أو نتائج فعلية، ولا تصلح للمراهنة.');
+  });
+  const formations={'4-3-3':[[50,91],[17,73],[39,76],[61,76],[83,73],[32,52],[50,57],[68,52],[20,25],[50,17],[80,25]],'4-2-3-1':[[50,91],[17,73],[39,76],[61,76],[83,73],[39,58],[61,58],[20,35],[50,31],[80,35],[50,13]],'4-4-2':[[50,91],[17,73],[39,76],[61,76],[83,73],[17,48],[39,48],[61,48],[83,48],[35,19],[65,19]],'3-5-2':[[50,91],[25,73],[50,77],[75,73],[10,48],[32,52],[50,58],[68,52],[90,48],[38,22],[62,22]],'3-4-3':[[50,91],[25,73],[50,77],[75,73],[18,49],[40,53],[60,53],[82,49],[20,23],[50,17],[80,23]],'5-3-2':[[50,91],[10,73],[30,76],[50,77],[70,76],[90,73],[32,51],[50,57],[68,51],[38,22],[62,22]]};
+  function drawPitch(){
+    const pitch=wrap.querySelector('#fbPitch');pitch.replaceChildren();
+    const formation=val('fbFormation'),names=val('fbLineup').split('\n').map(x=>x.trim()).filter(Boolean);
+    formations[formation].forEach((pos,i)=>{const player=document.createElement('span');player.className='fb-pitch-player';player.style.left=pos[0]+'%';player.style.top=pos[1]+'%';player.textContent=(i+1)+'. '+(names[i]||(['حارس','ظهير','قلب دفاع','قلب دفاع','ظهير','وسط','وسط','وسط','جناح','مهاجم','جناح'][i]));pitch.appendChild(player);});
+  }
+  wrap.querySelector('#fbDrawPitch').addEventListener('click',drawPitch);drawPitch();
+  wrap.querySelector('#fbDnaRun').addEventListener('click',()=>{
+    const name=val('fbDnaName');const fields=[['الهجوم','fbDnaAttack'],['الدفاع','fbDnaDefense'],['الاستحواذ','fbDnaPossession'],['التحولات','fbDnaTransition'],['الضغط','fbDnaPress']];
+    if(!name||!fields.every(x=>validScore(x[1]))){show('fbDnaResult','أدخل اسم الفريق وجميع التقييمات بين 1 و10.');return;}
+    const box=wrap.querySelector('#fbDnaResult');box.replaceChildren();const heading=document.createElement('strong');heading.textContent='البصمة الكروية · '+name;box.appendChild(heading);
+    const bars=document.createElement('div');bars.className='fb-bars';
+    fields.forEach(([label,id])=>{const row=document.createElement('div');row.className='fb-bar-row';const l=document.createElement('span');l.textContent=label;const track=document.createElement('div');track.className='fb-bar-track';const fill=document.createElement('div');fill.className='fb-bar-fill';fill.style.width=(num(id)*10)+'%';track.appendChild(fill);const n=document.createElement('b');n.textContent=num(id)+'/10';row.append(l,track,n);bars.appendChild(row);});
+    box.appendChild(bars);const note=document.createElement('p');note.className='fb-note';note.textContent='تقييم يدوي قابل للتغيير، وليس إحصائية رسمية أو تحليلاً آلياً من بيانات المباريات.';box.appendChild(note);box.hidden=false;
+  });
+  wrap.querySelector('#fbMomentBuild').addEventListener('click',()=>{
+    const title=val('fbMomentTitle'),events=val('fbMomentEvents').split('\n').map(x=>x.trim()).filter(Boolean);
+    if(!title||!events.length){show('fbMomentResult','أدخل عنوان المباراة وحدثاً واحداً على الأقل.');return;}
+    const box=wrap.querySelector('#fbMomentResult');box.replaceChildren();const h=document.createElement('strong');h.textContent=title;box.appendChild(h);const line=document.createElement('div');line.className='fb-timeline';
+    events.slice(0,30).forEach(event=>{const item=document.createElement('div');item.className='fb-timeline-item';item.textContent=event;line.appendChild(item);});box.appendChild(line);box.hidden=false;
+  });
+  wrap.querySelector('#fbFanSave').addEventListener('click',()=>{
+    const name=val('fbFanName'),club=val('fbFanClub'),league=val('fbFanLeague');
+    if(!name||!club){show('fbFanResult','أدخل اسم العرض وفريقك المفضل.');return;}
+    const fan={name,club,league,updatedAt:new Date().toISOString()};
+    try{localStorage.setItem('ofoq_football_fan_passport_v1',JSON.stringify(fan));show('fbFanResult','🏅 جواز مشجع أُفُق\n'+name+'\nالفريق المفضل: '+club+'\nالبطولة المفضلة: '+(league||'غير محددة')+'\nتم الحفظ على هذا الجهاز فقط.');}
+    catch(_){show('fbFanResult','تعذر الحفظ المحلي في هذا المتصفح.');}
+  });
+  const quiz=[['كم لاعباً يبدأ به الفريق المباراة داخل الملعب؟',['9','10','11'],2],['ما اسم البطولة القارية الأشهر للأندية الأوروبية؟',['دوري أبطال أوروبا','كأس آسيا','كوبا أمريكا'],0],['كم دقيقة زمن المباراة الأصلي عادةً دون الوقت بدل الضائع؟',['80','90','100'],1],['ما البطاقة التي تعني الطرد؟',['الصفراء','الحمراء','الخضراء'],1],['ماذا تعني التسلل باختصار؟',['مخالفة تمركز هجومي وفق شروط القانون','خروج الكرة من الملعب','تبديل لاعب'],0]];
+  const quizBox=wrap.querySelector('#fbQuiz');
+  quiz.forEach((q,i)=>{const card=document.createElement('div');card.className='fb-card';const title=document.createElement('strong');title.textContent=(i+1)+'. '+q[0];card.appendChild(title);q[1].forEach((answer,j)=>{const label=document.createElement('label');label.style.cssText='display:block;margin:7px 0;color:var(--white)';const radio=document.createElement('input');radio.type='radio';radio.name='fbQuiz'+i;radio.value=String(j);radio.style.marginLeft='8px';label.append(radio,document.createTextNode(answer));card.appendChild(label);});quizBox.appendChild(card);});
+  wrap.querySelector('#fbQuizSubmit').addEventListener('click',()=>{
+    let score=0,answered=0;quiz.forEach((q,i)=>{const choice=wrap.querySelector('input[name="fbQuiz'+i+'"]:checked');if(choice){answered++;if(Number(choice.value)===q[2])score++;}});
+    show('fbQuizResult','نتيجتك: '+score+' من '+quiz.length+' · أجبت عن '+answered+' أسئلة. '+(score===quiz.length?'ممتاز!':'واصل التعلم وحاول مرة أخرى.'));
+  });
+
 }
 function renderUtilityModule(sec,tool){
 const cfg=utilityModules[sec.id];if(!cfg)return false;
