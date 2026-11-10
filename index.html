@@ -285,7 +285,38 @@ const sectionRank = new Map(sectionPriority.map((id,index)=>[id,index]));
 sections.sort((a,b)=>(sectionRank.get(a.id)??999)-(sectionRank.get(b.id)??999));
 window.BAWABA_SECTIONS=sections;
 const grid=document.getElementById('sectionsGrid'), panel=document.getElementById('detailPanel');
-function render(list){grid.innerHTML='';document.getElementById('countLabel').textContent=list.length+' قسم متاح';if(!list.length){grid.innerHTML='<div class="empty">لا توجد نتائج مطابقة. جرّب كلمة بحث أخرى.</div>';return;}list.forEach(sec=>{const b=document.createElement('button');b.className='tile';b.type='button';const icon=document.createElement('div');icon.className='ico';icon.textContent=sec.icon;const h=document.createElement('h3');h.textContent=sec.title;const p=document.createElement('p');p.textContent=sec.desc;b.append(icon,h,p);b.addEventListener('click',()=>openSection(sec));grid.appendChild(b);});}
+function render(list){
+  grid.innerHTML='';
+  const count=document.getElementById('countLabel');
+  if(count)count.textContent=list.length+' قسم متاح';
+  if(!list.length){grid.innerHTML='<div class="empty">لا توجد نتائج مطابقة. جرّب كلمة بحث أخرى.</div>';return;}
+  const groups=[
+    {name:'الأكثر استكشافاً والأسواق',ids:['auto_moto_gallery','tech_devices','luxury_villas','sports_radar','zodiac_world','news','prices','syria_marketplace','ecommerce_studio']},
+    {name:'التقنية والذكاء الاصطناعي والإبداع',ids:['syria_ai','ai_lab','code_sandbox','security','cash_shield','apps_games','mirror','design_lab','creative_studio','photography_media','video_factory_vip']},
+    {name:'الأعمال والتجارة والمال',ids:['trader_market','trading_academy','personal_finance','accounting_vip','marketing_vip','freelance_vip','business','startup_lab','jobs','directory_services','expatriates_invest']},
+    {name:'التعليم والعلوم والمعرفة',ids:['education','syria_curriculum','no_khosoosie','language_academy','science_space','world_encyclopedia','world_history','global_languages','books_knowledge','engineer_vip']},
+    {name:'الحياة والسفر والترفيه',ids:['chef','travel_visa','tourism','global_travel','nostalgia_archive','body_language','fitness_coach','fitness_wellness','global_cuisine','family_life','gaming_arena','birds_pets','culture','heritage','events_calendar']},
+    {name:'الخدمات العامة والدليل المحلي',ids:['civil','realestate','consular','legal','energy','water','telecom','health','transport','cars_guide','agriculture','fertilizers','solidarity','reports']},
+    {name:'العالم والاستدامة والحياة الرقمية',ids:['environment_climate','sustainable_living','digital_citizenship','privacy_center','accessibility_center','terms_of_use','domestic_economy'] }
+  ];
+  const assigned=new Set();
+  groups.forEach(group=>{
+    const items=list.filter(sec=>group.ids.includes(sec.id));
+    if(!items.length)return;
+    items.forEach(sec=>assigned.add(sec.id));
+    const heading=document.createElement('h3');heading.className='catalog-group-heading';heading.textContent=group.name;grid.appendChild(heading);
+    items.forEach(sec=>appendTile(sec));
+  });
+  const remaining=list.filter(sec=>!assigned.has(sec.id));
+  if(remaining.length){const heading=document.createElement('h3');heading.className='catalog-group-heading';heading.textContent='موسوعات وأدلة إضافية';grid.appendChild(heading);remaining.forEach(appendTile);}
+  function appendTile(sec){
+    const b=document.createElement('button');b.className='tile';b.type='button';b.setAttribute('aria-label','افتح قسم '+sec.title);
+    const icon=document.createElement('div');icon.className='ico';icon.textContent=sec.icon;
+    const h=document.createElement('h3');h.textContent=sec.title;
+    const p=document.createElement('p');p.textContent=sec.desc;
+    b.append(icon,h,p);b.addEventListener('click',()=>openSection(sec));grid.appendChild(b);
+  }
+}
 // Render the portal catalogue immediately; later optional module setup must not hide the homepage if it fails.
 render(sections);
 
@@ -1392,6 +1423,50 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
   const kicker=document.querySelector('.welcome-kicker');if(kicker)kicker.textContent='عالم من المعرفة… بلا حدود';
   const enter=document.getElementById('bawaba-welcome-enter');if(enter)enter.textContent='ابدأ رحلتك في أُفُق ✨';
   const skip=document.getElementById('bawaba-welcome-skip');if(skip)skip.textContent='تخطي المقدمة';
+})();
+</script>
+
+
+<style id="ofoq-structure-polish">
+.catalog-group-heading{grid-column:1/-1;margin:25px 0 1px;padding:0 2px 10px;border-bottom:1px solid #31536a;color:#a4f3e7;font-size:clamp(17px,2.4vw,21px);font-weight:800;letter-spacing:.1px}
+.catalog-group-heading:first-child{margin-top:8px}
+#sectionsGrid{align-items:stretch}
+#sectionsGrid .tile{position:relative;overflow:hidden;min-height:185px;padding:14px 15px 16px}
+#sectionsGrid .tile h3{line-height:1.55}
+#sectionsGrid .tile p{line-height:1.8}
+#sectionsGrid .tile-cover{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;opacity:.3;transition:transform .35s,opacity .35s}
+#sectionsGrid .tile>*:not(.tile-cover){position:relative;z-index:1}
+#sectionsGrid .tile:hover .tile-cover,#sectionsGrid .tile:focus-visible .tile-cover{transform:scale(1.06);opacity:.48}
+#homeBtn{white-space:nowrap}
+#backBtn{position:sticky;top:76px;z-index:4;box-shadow:0 5px 18px #0005}
+#detailPanel{scroll-margin-top:82px}
+#specialTool{min-width:0}
+@media(max-width:600px){.catalog-group-heading{margin-top:20px}#sectionsGrid .tile{min-height:160px}#backBtn{top:64px}}
+</style>
+<script id="ofoq-final-navigation">
+(function(){
+  const home=()=>{if(typeof window.showHome==='function')window.showHome();else{document.body.classList.remove('section-mode');document.getElementById('detailPanel')?.classList.remove('open');document.getElementById('membershipPanel')?.classList.remove('open');window.scrollTo({top:0,behavior:'smooth'});}};
+  window.ofoqShowHome=home;
+  const homeButton=document.getElementById('homeBtn');
+  const backButton=document.getElementById('backBtn');
+  const memberBack=document.getElementById('membershipBack');
+  [homeButton,backButton,memberBack].forEach(button=>{
+    if(!button)return;
+    button.addEventListener('click',()=>{home();if(history.state&&history.state.ofoqSection)history.replaceState({},'',location.pathname+location.search);});
+  });
+  const originalOpen=window.openSection;
+  if(typeof originalOpen==='function'&&!originalOpen.__ofoqHistoryWrapped){
+    const wrapped=async function(section){
+      history.pushState({ofoqSection:section.id},'',location.pathname+location.search+'#'+encodeURIComponent(section.id));
+      await originalOpen(section);
+      window.scrollTo({top:0,behavior:'smooth'});
+    };
+    wrapped.__ofoqHistoryWrapped=true;
+    window.openSection=wrapped;
+  }
+  window.addEventListener('popstate',()=>{if(document.body.classList.contains('section-mode'))home();});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.body.classList.contains('section-mode'))home();});
+  document.querySelectorAll('[data-open-section]').forEach(link=>link.addEventListener('click',()=>{setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),0);}));
 })();
 </script>
 
