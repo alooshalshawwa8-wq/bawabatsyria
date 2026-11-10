@@ -50,7 +50,7 @@ Deno.serve(async (request: Request) => {
   if (!rateAllowed(ip)) return reply({ error: "عم توصلني رسائل بسرعة 😊 خذ نفس صغير وجرب كمان شوي." }, 429);
 
   const apiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
-  if (!apiKey) return reply({ error: "المساعد الإرشادي جاهز، لكن محادثة الذكاء الاصطناعي تحتاج إضافة مفتاح Gemini الآمن إلى إعدادات الخادم." }, 503);
+  if (!apiKey) return reply({ error: "المساعد يعمل حالياً بوضع الإرشاد الأساسي؛ خدمة الإجابات الذكية المتقدمة غير متاحة مؤقتاً." }, 503);
 
   const contentLength = Number(request.headers.get("content-length") ?? "0");
   if (contentLength > 24_000) return reply({ error: "المحادثة طويلة كتير. اختصر آخر الرسائل وجرب من جديد." }, 413);
