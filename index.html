@@ -1528,4 +1528,114 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
 })();
 </script>
 
+
+<style id="ofoq-cinematic-featured">
+/* Featured cinematic category cards */
+#sectionsGrid .tile.ofoq-featured-tile{
+  grid-column:span 2;min-height:292px;padding:190px 25px 24px;
+  border:1px solid #5a9b9c;border-radius:22px;
+  background:linear-gradient(180deg,#07132100 12%,#071321 100%);
+  box-shadow:0 18px 42px #0005;isolation:isolate;
+  transition:transform .45s cubic-bezier(.2,.7,.2,1),border-color .35s,box-shadow .35s;
+}
+#sectionsGrid .tile.ofoq-featured-tile .tile-cover{
+  inset:0;height:auto;z-index:-2;opacity:1!important;
+  background-position:center 42%;background-size:cover;
+  border:0;transform:scale(1.001);
+  filter:saturate(1.16) contrast(1.08);
+}
+#sectionsGrid .tile.ofoq-featured-tile::before{
+  content:"";position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(0deg,#061321 0%,#061321e8 17%,#06132180 52%,#06132108 100%),
+             linear-gradient(90deg,#06132155,#06132108 72%);
+}
+#sectionsGrid .tile.ofoq-featured-tile:hover,
+#sectionsGrid .tile.ofoq-featured-tile:focus-visible{
+  transform:translateY(-6px);border-color:#a4f3e7;
+  box-shadow:0 25px 55px #0008,0 0 0 1px #70ded055;
+}
+#sectionsGrid .tile.ofoq-featured-tile:hover .tile-cover,
+#sectionsGrid .tile.ofoq-featured-tile:focus-visible .tile-cover{transform:scale(1.075);opacity:1!important}
+#sectionsGrid .tile.ofoq-featured-tile h3{
+  color:#f3fffd;font-size:clamp(19px,2.4vw,25px);font-weight:900;
+  line-height:1.45;text-shadow:0 3px 18px #000;
+  margin:8px 0 7px;max-width:760px;
+}
+#sectionsGrid .tile.ofoq-featured-tile p{
+  color:#e0edf2;font-size:13px;line-height:1.9;max-width:700px;
+  text-shadow:0 2px 12px #000;
+}
+#sectionsGrid .ofoq-featured-meta{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 11px;border:1px solid #b1f4e58a;border-radius:999px;
+  background:#071b2bbd;color:#baf8ed;font-size:11px;font-weight:800;
+  backdrop-filter:blur(8px);letter-spacing:.2px;
+}
+#sectionsGrid .ofoq-featured-meta::before{
+  content:"";width:6px;height:6px;border-radius:50%;background:#83f0dc;
+  box-shadow:0 0 12px #83f0dc;
+}
+@media(max-width:700px){
+  #sectionsGrid .tile.ofoq-featured-tile{grid-column:1/-1;min-height:245px;padding:154px 17px 19px;border-radius:17px}
+  #sectionsGrid .tile.ofoq-featured-tile .tile-cover{background-position:center}
+  #sectionsGrid .tile.ofoq-featured-tile h3{font-size:20px}
+  #sectionsGrid .tile.ofoq-featured-tile p{font-size:12px;line-height:1.8}
+}
+@media(prefers-reduced-motion:reduce){
+  #sectionsGrid .tile.ofoq-featured-tile,#sectionsGrid .tile.ofoq-featured-tile .tile-cover{transition:none!important}
+}
+</style>
+<script id="ofoq-cinematic-featured">
+(function(){
+  const featured={
+    sports_radar:{
+      image:'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1800&q=90',
+      label:'كرة القدم · البطولات العالمية'
+    },
+    trading_academy:{
+      image:'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1800&q=90',
+      label:'الأسواق المالية · العملات الرقمية'
+    },
+    social_media_hub:{
+      image:'https://images.unsplash.com/photo-1611262588024-d12430b98920?auto=format&fit=crop&w=1800&q=90',
+      label:'منصات التواصل · صناعة المحتوى'
+    },
+    ai_lab:{
+      image:'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1800&q=90',
+      label:'النماذج الذكية · أدوات المستقبل'
+    }
+  };
+  function applyFeaturedCards(){
+    const grid=document.getElementById('sectionsGrid');
+    if(!grid)return;
+    grid.querySelectorAll('.tile').forEach(tile=>{
+      const heading=tile.querySelector('h3');
+      if(!heading)return;
+      const section=(window.BAWABA_SECTIONS||[]).find(item=>item.title===heading.textContent.trim());
+      if(!section||!featured[section.id])return;
+      const config=featured[section.id];
+      tile.classList.add('ofoq-featured-tile');
+      tile.dataset.featuredSection=section.id;
+      let cover=tile.querySelector('.tile-cover');
+      if(!cover){cover=document.createElement('div');cover.className='tile-cover';cover.setAttribute('aria-hidden','true');tile.insertBefore(cover,tile.firstChild);}
+      cover.style.backgroundImage='url("'+config.image+'")';
+      cover.style.backgroundPosition='center';
+      let meta=tile.querySelector('.ofoq-featured-meta');
+      if(!meta){meta=document.createElement('span');meta.className='ofoq-featured-meta';tile.insertBefore(meta,heading);}
+      meta.textContent=config.label;
+    });
+  }
+  applyFeaturedCards();
+  const grid=document.getElementById('sectionsGrid');
+  if(grid&&'MutationObserver'in window){
+    let queued=false;
+    new MutationObserver(()=>{
+      if(queued)return;queued=true;
+      requestAnimationFrame(()=>{queued=false;applyFeaturedCards();});
+    }).observe(grid,{childList:true,subtree:true});
+  }
+  window.addEventListener('pageshow',applyFeaturedCards);
+})();
+</script>
+
 </body></html>
