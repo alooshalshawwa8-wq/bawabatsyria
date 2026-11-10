@@ -895,29 +895,6 @@ function appendAutoPartsGuide(tool){
 }
 async function openSection(sec){
 activateSectionPage(sec);
-document.getElementById('detailTitle').textContent=sec.title;
-document.getElementById('detailDesc').textContent=sec.desc;
-if(!token){
-document.getElementById('detailNotice').textContent='هذا القسم ضمن مزايا VIP. سجّل الدخول أولاً ليتحقق النظام من عضويتك.';
-tool.replaceChildren();
-const btn=document.createElement('button');btn.className='btn';btn.textContent='عرض الباقات والعضوية';btn.onclick=openMembership;tool.appendChild(btn);
-panel.classList.add('open');panel.scrollIntoView({behavior:'smooth',block:'start'});return;
-}
-try{
-const response=await fetch(membershipApi+'/api/me',{headers:{authorization:'Bearer '+token,accept:'application/json'}});
-if(!response.ok)throw new Error('تعذر التحقق من العضوية');
-const me=await response.json(),now=Date.now(),validEntitlement=(key)=>(me.entitlements||[]).some(x=>x.entitlement_key===key&&x.active===true&&(!x.expires_at||Date.parse(x.expires_at)>now)),allowed=me.owner===true||me.role==='OWNER'||validEntitlement('owner_access')||validEntitlement('vip_access')||validEntitlement('business_access');
-if(!allowed){
-document.getElementById('detailNotice').textContent='هذه الميزة متاحة للمشتركين في VIP أو باقة الأعمال. يمكنك مراجعة الباقات لمعرفة التفاصيل.';
-tool.replaceChildren();
-const btn=document.createElement('button');btn.className='btn';btn.textContent='عرض الباقات';btn.onclick=openMembership;tool.appendChild(btn);
-panel.classList.add('open');panel.scrollIntoView({behavior:'smooth',block:'start'});return;
-}
-}catch(error){
-document.getElementById('detailNotice').textContent='تعذر التحقق من صلاحية VIP حالياً؛ أوقفنا فتح هذه الميزة حمايةً لحسابك. حاول مجدداً بعد قليل.';
-tool.replaceChildren();panel.classList.add('open');panel.scrollIntoView({behavior:'smooth',block:'start'});return;
-}
-}
 document.getElementById('detailTitle').textContent=sec.title;document.getElementById('detailDesc').textContent=sec.desc;const tool=document.getElementById('specialTool');tool.innerHTML='';document.getElementById('detailNotice').style.display='block';
 if(sec.id==='sports_radar'){document.getElementById('detailNotice').textContent='مركز كرة قدم موسّع يضم البطولات الكبرى والديربيات وموسوعة الأندية والمنتخبات وترتيباً مرجعياً للشعبية وقائمة متابعة شخصية. النتائج الحية والترتيب المتجدد والإحصائيات الدقيقة تتطلب ربط مزود بيانات رياضي.';renderFootballModule(tool);}
 else if(sec.id==='zodiac_world'){document.getElementById('detailNotice').textContent='عالم ترفيهي تفاعلي للأبراج والتوافق والتاروت ورسائل المرح. قراءة صور الفنجان الذكية جاهزة من ناحية الواجهة وتنتظر ربط نموذج الذكاء الاصطناعي. النتائج رمزية وليست تنبؤات مؤكدة.';renderMysticModule(tool);}
