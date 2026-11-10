@@ -155,6 +155,8 @@ sections.sort((a,b)=>(sectionRank.get(a.id)??999)-(sectionRank.get(b.id)??999));
 window.BAWABA_SECTIONS=sections;
 const grid=document.getElementById('sectionsGrid'), panel=document.getElementById('detailPanel');
 function render(list){grid.innerHTML='';document.getElementById('countLabel').textContent=list.length+' قسم متاح';if(!list.length){grid.innerHTML='<div class="empty">لا توجد نتائج مطابقة. جرّب كلمة بحث أخرى.</div>';return;}list.forEach(sec=>{const b=document.createElement('button');b.className='tile';b.type='button';const icon=document.createElement('div');icon.className='ico';icon.textContent=sec.icon;const h=document.createElement('h3');h.textContent=sec.title;const p=document.createElement('p');p.textContent=sec.desc;b.append(icon,h,p);b.addEventListener('click',()=>openSection(sec));grid.appendChild(b);});}
+// Render the portal catalogue immediately; later optional module setup must not hide the homepage if it fails.
+render(sections);
 
 const utilityModules={
 trader_market:{title:'حاسبة تكلفة مواد البناء',notice:'تقدير حسابي للكميات والتكلفة وفق الأرقام التي تدخلها. أضف نسبة هدر مناسبة وتحقق من القياسات ميدانياً.',fields:[['qty','الكمية المطلوبة','number','مثال: 120'],['unit','سعر الوحدة','number','مثال: 8.5'],['waste','نسبة الهدر %','number','مثال: 7']],run:v=>{const q=+v.qty,u=+v.unit,w=+v.waste;if(q<=0||u<0||w<0)return 'أدخل كمية موجبة وأسعاراً ونسبة هدر غير سالبة.';const total=q*(1+w/100);return 'الكمية بعد الهدر: '+total.toFixed(2)+'\nالتكلفة التقديرية: '+(total*u).toFixed(2)+'\nالهدر المضاف: '+(total-q).toFixed(2)+' وحدة.';}},
@@ -919,7 +921,6 @@ panel.classList.add('open');panel.scrollIntoView({behavior:'smooth',block:'start
 function showHome(){panel.classList.remove('open');document.getElementById('searchInput').focus({preventScroll:true});}
 function doSearch(){const q=document.getElementById('searchInput').value.trim().toLocaleLowerCase('ar');if(!q){render(sections);return;}const titleMatches=sections.filter(s=>s.title.toLocaleLowerCase('ar').includes(q));render(titleMatches.length?titleMatches:sections.filter(s=>s.desc.toLocaleLowerCase('ar').includes(q)));}
 document.getElementById('searchBtn').addEventListener('click',doSearch);document.getElementById('searchInput').addEventListener('input',doSearch);document.getElementById('homeBtn').addEventListener('click',showHome);document.getElementById('backBtn').addEventListener('click',showHome);
-render(sections);
 const membershipPanel=document.getElementById('membershipPanel');
 const membershipStatus=document.getElementById('membershipStatus');
 const membershipPlans=document.getElementById('membershipPlans');
