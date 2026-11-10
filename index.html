@@ -1277,7 +1277,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
   <div class="bawaba-chat-quick" id="bawaba-chat-quick">
     <button type="button" data-q="شو فيني استفيد من أُفُق؟">عرّفني على البوابة</button>
     <button type="button" data-q="كيف بلاقي القسم اللي بدي ياه؟">دلّني على الأقسام</button>
-    <button type="button" data-q="شو الفرق بين الباقات والعضويات؟">الباقات والعضويات</button>
+    <button type="button" data-q="هل استخدام أُفُق مجاني؟">هل أُفُق مجاني؟</button>
   </div>
   <div class="bawaba-chat-compose"><textarea id="bawaba-chat-input" rows="1" maxlength="1200" placeholder="اكتب سؤالك هون…"></textarea><button id="bawaba-chat-send" type="button">إرسال</button></div>
   <div class="bawaba-chat-foot">لا ترسل كلمات مرور أو رموز تحقق أو معلومات مالية حساسة.</div>
@@ -1317,11 +1317,11 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
       const matches=sections.filter(x=>(x.title+' '+x.desc).toLowerCase().includes(s)).slice(0,4);
       return matches.length?'أكيد! جرّب هالأقسام:\n'+matches.map(x=>'• '+x.title).join('\n')+'\n\nاكتب اسم القسم بخانة البحث أعلى الصفحة وافتحه مباشرة.': 'من خانة البحث أعلى الصفحة اكتب اسم الخدمة أو كلمة بتوصف حاجتك، وبتظهرلك الأقسام القريبة منها. وإذا بتقلي شو بدك تعمل، بدلك على القسم الأنسب.';
     }
-    if(/باق|عضوي|اشتراك|vip|pro|مجاني|سعر/.test(s))return 'عنا مستويات عضوية مختلفة، وفي ميزات مرتبطة بباقات معينة. افتح زر «العضوية والمحفظة» أعلى الموقع لتشوف الخطط وحالة حسابك. الدفع مو مفعّل حالياً، فما رح أطلب منك أي تحويل أو دفعة.';
-    if(/تجرب|سبع|7 أيام|اسبوع|أسبوع/.test(s))return 'فكرة التجربة المجانية لمدة 7 أيام ضمن خطة التطوير، لكن ما بدي أوعدك إنها مفعّلة قبل ما نتأكد من إعدادها بحسابك. فيك تشوف تفاصيل العضوية من زر «العضوية والمحفظة».';
-    if(/حساب|دخول|سجل|كلمة مرور|نسيت/.test(s))return 'لإدارة حسابك افتح «العضوية والمحفظة» من أعلى الصفحة. وإذا واجهتك مشكلة بالدخول، خبرني شو الرسالة اللي ظهرتلك، بس لا تبعتلي كلمة المرور أو رمز التحقق.';
+    if(/باق|عضوي|اشتراك|vip|pro|مجاني|سعر/.test(s))return 'أُفُق مفتوح ومجاني حالياً، وما في اشتراكات أو مدفوعات مفعّلة. فيك تستخدم الأقسام المفتوحة مباشرة من دون عضوية أو دفع.';
+    if(/تجرب|سبع|7 أيام|اسبوع|أسبوع/.test(s))return 'حالياً ما في حاجة لتجربة أو اشتراك؛ الأقسام المفتوحة في أُفُق متاحة مجاناً. إذا تغيّرت سياسة الوصول رح نوضح ذلك داخل الموقع.';
+    if(/حساب|دخول|سجل|كلمة مرور|نسيت/.test(s))return 'استخدام الأقسام المفتوحة لا يحتاج منك مشاركة كلمة مرور أو رمز تحقق. إذا واجهتك مشكلة محددة، اكتبلي نص رسالة الخطأ من دون أي بيانات سرية.';
     if(/شام كاش|دفع|تحويل/.test(s))return 'الدفع عبر شام كاش قيد التجهيز والتحقق، ولسه مو مفعّل. لا تحوّل أي مبلغ لأي حساب قبل الإعلان الرسمي عن تفعيل الدفع داخل الموقع.';
-    if(/مساعدة|مساعد|ذكاء|ai|روبوت|مرشد/.test(s))return 'أنا مرشد البوابة التجريبي. فيني دلّك على الأقسام وأشرحلك طريقة استخدامها. المحادثة التوليدية الكاملة رح تتفعّل بعد إضافة مفتاح نموذج الذكاء الاصطناعي بشكل آمن على الخادم.';
+    if(/مساعدة|مساعد|ذكاء|ai|روبوت|مرشد/.test(s))return 'أنا نَبْراس، مرشد أُفُق. فيني ساعدك تفهم الأقسام، ترتّب أفكارك، وتوصل لخطوات عملية. خبرني شو بدك تعمل.';
     if(/شكرا|شكراً|يسلمو|مشكور/.test(s))return 'أهلاً وسهلاً فيك، هاد واجبي! ❤️ إذا بدك شي تاني أنا هون.';
     return 'تمام، فهمت عليك بشكل أولي 😊 احكيلي شو هدفك أو شو النتيجة اللي بدك توصللها، وبحاول دلّك على القسم المناسب. فيك كمان تستخدم البحث أعلى الصفحة لتوصل للخدمة بسرعة.';
   }
@@ -1336,7 +1336,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
     }catch(error){
       const fallback=localGuide(q);
       addMessage(fallback,'assistant');remember('assistant',fallback);
-      if(!window.__bawabaAssistantNoticeShown){window.__bawabaAssistantNoticeShown=true;addMessage('ملاحظة صغيرة: عم اشتغل حالياً بوضع الإرشاد التجريبي. المساعد يعمل حالياً بوضع الإرشاد الأساسي؛ بعض الإجابات الذكية المتقدمة غير متاحة مؤقتاً.','assistant');}
+      if(!window.__bawabaAssistantNoticeShown){window.__bawabaAssistantNoticeShown=true;addMessage('ملاحظة: تعذّر الاتصال بالمساعد الذكي هالمرة، لذلك أعطيتك إرشاداً أساسياً. جرّب إرسال سؤالك مرة ثانية بعد قليل.','assistant');}
     }finally{send.disabled=false;send.textContent='إرسال';input.focus();}
   }
   launcher.addEventListener('click',openChat);close.addEventListener('click',closeChat);send.addEventListener('click',ask);
