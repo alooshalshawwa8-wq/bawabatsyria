@@ -8,5 +8,13 @@
   "display": "standalone",
   "background_color": "#071321",
   "theme_color": "#071321",
-  "description": "منصة عالمية عربية للمعرفة والموسوعات والأدوات الرقمية والتعلم والإبداع والخدمات"
+  "description": "منصة عالمية عربية للمعرفة والموسوعات والأدوات الرقمية والتعلم والإبداع والخدمات",
+  "icons": [
+    {
+      "src": "./ofoq-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
