@@ -121,11 +121,11 @@ header{background:#081727eF;border-bottom:1px solid #31536a;box-shadow:0 8px 35p
 #bawaba-welcome{background:#061321;isolation:isolate;padding:0}
 .welcome-photo-sequence{position:absolute;inset:0;z-index:0;overflow:hidden;background:#061321}
 .welcome-photo-sequence::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,#04101b66,#061a2c33 50%,#06132177),linear-gradient(0deg,#06132166,transparent 72%);pointer-events:none}
-.welcome-photo-sequence img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;filter:saturate(1.16) contrast(1.07);will-change:opacity,transform}
+.welcome-photo-sequence img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;opacity:0;filter:saturate(1.08) contrast(1.04);will-change:opacity;background:#061321}
 .welcome-photo-sequence img:first-child{animation:ofoqSceneOne 7s ease-in-out forwards}
-.welcome-photo-sequence img:nth-child(2){opacity:0;animation:ofoqSceneTwo 7s ease-in-out forwards;object-position:center 34%}
-@keyframes ofoqSceneOne{0%{opacity:0;transform:scale(1.08)}8%,38%{opacity:1;transform:scale(1.015)}53%{opacity:.82;transform:scale(1)}66%,100%{opacity:0;transform:scale(.985)}}
-@keyframes ofoqSceneTwo{0%,38%{opacity:0;transform:scale(1.08)}50%{opacity:.72;transform:scale(1.035)}64%,92%{opacity:1;transform:scale(1.015)}100%{opacity:0;transform:scale(1)}}
+.welcome-photo-sequence img:nth-child(2){opacity:0;animation:ofoqSceneTwo 7s ease-in-out forwards;object-position:center}
+@keyframes ofoqSceneOne{0%,4%{opacity:0}10%,38%{opacity:1}53%{opacity:.82}66%,100%{opacity:0}}
+@keyframes ofoqSceneTwo{0%,38%{opacity:0}50%{opacity:.72}64%,92%{opacity:1}100%{opacity:0}}
 .welcome-founder-overlay{position:absolute;z-index:2;inset:auto 18px 12%;text-align:center;opacity:0;animation:ofoqFounderCaption 7s ease-in-out forwards;pointer-events:none}
 .welcome-founder-overlay strong{display:inline-block;padding:12px 26px;border:1px solid #ffe2a0;border-radius:999px;background:#07152599;color:#ffe4aa;font-size:clamp(20px,4vw,34px);text-shadow:0 3px 24px #000;box-shadow:0 0 34px #e6b95c44;backdrop-filter:blur(8px)}
 .welcome-founder-overlay span{display:block;margin-top:8px;color:#f5fbff;font-size:clamp(12px,2vw,17px);text-shadow:0 2px 14px #000}
@@ -153,7 +153,7 @@ header{background:#081727eF;border-bottom:1px solid #31536a;box-shadow:0 8px 35p
 <style id="ofoq-welcome-accessibility">@media(prefers-reduced-motion:reduce){.welcome-photo-sequence img:first-child{opacity:0!important;animation:none!important}.welcome-photo-sequence img:nth-child(2){opacity:1!important;animation:none!important}.welcome-founder-overlay{opacity:1!important;animation:none!important}}</style>
 </head>
 <body>
-<section id="bawaba-welcome" role="dialog" aria-modal="true" aria-label="الافتتاحية السينمائية ثم صورة المؤسس"><div class="welcome-photo-sequence" aria-hidden="true"><img src="./assets/file_000000008668821282987c991b233d13.png" alt=""><img src="./assets/file_00000000dce882129102a05013969410.png" alt=""></div><div class="welcome-stars"></div><div class="welcome-founder-overlay"><strong>❤️Aloosh alshawwa ❤️</strong><span>مؤسس وصاحب البوابة — أهلاً بكم في عالم المعرفة والإبداع</span></div><div class="welcome-content"><button class="welcome-skip" id="bawaba-welcome-skip" type="button">تخطي المقدمة</button></div></section>
+<section id="bawaba-welcome" role="dialog" aria-modal="true" aria-label="الافتتاحية السينمائية ثم صورة المؤسس"><div class="welcome-photo-sequence" aria-hidden="true"><img src="./assets/file_00000000dce882129102a05013969410.png" alt="الصورة الترحيبية الأولى"><img src="./assets/file_000000008668821282987c991b233d13.png" alt="الصورة الترحيبية الثانية"></div><div class="welcome-stars"></div><div class="welcome-founder-overlay"><strong>❤️Aloosh alshawwa ❤️</strong><span>مؤسس وصاحب البوابة — أهلاً بكم في عالم المعرفة والإبداع</span></div><div class="welcome-content"><button class="welcome-skip" id="bawaba-welcome-skip" type="button">تخطي المقدمة</button></div></section>
 <header><div class="brand"><div class="mark">✦</div><div><strong>أُفُق | OFOQ</strong><small>الموسوعة والخدمات الرقمية</small></div></div><div style="display:flex;gap:8px;align-items:center"><button class="btn secondary" id="membershipBtn">العضوية والمحفظة</button><button class="btn secondary" id="homeBtn" type="button" aria-label="العودة إلى الواجهة الرئيسية">الرئيسية</button></div></header>
 <section class="ofoq-founder-top" aria-label="مؤسس بوابة أفق">
   <div class="ofoq-founder-avatar"><img src="./assets/ofoq-founder.jpg" alt="الصورة الشخصية لمؤسس بوابة أُفُق"></div>
