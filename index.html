@@ -151,6 +151,25 @@ header{background:#081727eF;border-bottom:1px solid #31536a;box-shadow:0 8px 35p
 </style>
 
 <style id="ofoq-welcome-accessibility">@media(prefers-reduced-motion:reduce){.welcome-photo-sequence img:first-child{opacity:0!important;animation:none!important}.welcome-photo-sequence img:nth-child(2){opacity:1!important;animation:none!important}.welcome-founder-overlay{opacity:1!important;animation:none!important}}</style>
+<style id="ofoq-premium-catalog">
+/* Premium classified catalogue */
+#sectionsGrid.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;align-items:stretch;margin-top:18px}
+#sectionsGrid .catalog-group-heading{grid-column:1/-1;position:relative;display:flex;align-items:center;gap:13px;margin:26px 0 2px;padding:13px 16px 13px 18px;border:1px solid #315d70;border-right:4px solid #62d9ca;border-radius:13px;background:linear-gradient(105deg,#123047eF,#10243a 68%,#17283b);color:#e9fffb;font-size:clamp(16px,2vw,20px);font-weight:800;line-height:1.5;box-shadow:0 8px 24px #0002}
+#sectionsGrid .catalog-group-heading:first-child{margin-top:5px}
+#sectionsGrid .catalog-group-heading:before{content:"";width:9px;height:9px;flex:0 0 9px;border-radius:3px;background:#75e5d5;box-shadow:0 0 14px #75e5d577;transform:rotate(45deg)}
+#sectionsGrid .tile{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:9px;min-height:205px;padding:19px 18px 42px;text-align:right;text-align:start;border:1px solid #294b61;border-radius:19px;background:radial-gradient(circle at 100% 0%,#1d5260aa,transparent 46%),linear-gradient(145deg,#152d43,#0b1a2c 78%);box-shadow:0 10px 26px #0003;overflow:hidden;isolation:isolate;transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease}
+#sectionsGrid .tile:before{content:"";position:absolute;inset:auto -25px -65px auto;width:150px;height:150px;border:1px solid #69dcca22;border-radius:50%;box-shadow:0 0 0 17px #69dcca08,0 0 0 34px #69dcca05;z-index:-1}
+#sectionsGrid .tile:after{content:"استكشف القسم  ←";position:absolute;right:18px;bottom:14px;color:#8de9dc;font-size:11px;font-weight:700;letter-spacing:.1px}
+#sectionsGrid .tile:hover,#sectionsGrid .tile:focus-visible{transform:translateY(-5px);border-color:#72e3d4;box-shadow:0 18px 34px #0006,0 0 0 1px #72e3d433;outline:none}
+#sectionsGrid .tile .ico{display:grid;place-items:center;width:52px;height:52px;margin:0;border:1px solid #5bcdbb55;border-radius:15px;background:linear-gradient(145deg,#1b5360,#122b40);font-size:27px;box-shadow:inset 0 1px #ffffff16,0 8px 18px #0003}
+#sectionsGrid .tile h3{margin:2px 0 0;color:#e9fffb;font-size:16px;line-height:1.55;font-weight:800}
+#sectionsGrid .tile p{margin:0;color:#b6c9d7;font-size:12px;line-height:1.85;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+#sectionsGrid .empty{grid-column:1/-1}
+@media(max-width:900px){#sectionsGrid.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}#sectionsGrid .tile{min-height:195px;padding:16px 15px 40px}}
+@media(max-width:560px){#sectionsGrid.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}#sectionsGrid .catalog-group-heading{margin:20px 0 1px;padding:11px 12px;font-size:15px}#sectionsGrid .tile{min-height:190px;padding:13px 12px 39px;border-radius:15px;gap:7px}#sectionsGrid .tile .ico{width:43px;height:43px;border-radius:12px;font-size:23px}#sectionsGrid .tile h3{font-size:13px;line-height:1.5}#sectionsGrid .tile p{font-size:10.5px;line-height:1.7;-webkit-line-clamp:3}#sectionsGrid .tile:after{right:12px;bottom:12px;font-size:10px}}
+@media(max-width:360px){#sectionsGrid.grid{grid-template-columns:1fr}#sectionsGrid .tile{min-height:160px}}
+@media(prefers-reduced-motion:reduce){#sectionsGrid .tile{transition:none}}
+</style>
 </head>
 <body>
 <section id="bawaba-welcome" role="dialog" aria-modal="true" aria-label="الافتتاحية السينمائية ثم صورة المؤسس"><div class="welcome-photo-sequence" aria-hidden="true"><img src="./assets/file_00000000dce882129102a05013969410.png" alt="الصورة الترحيبية الأولى"><img src="./assets/file_000000008668821282987c991b233d13.png" alt="الصورة الترحيبية الثانية"></div><div class="welcome-stars"></div><div class="welcome-founder-overlay"><strong>❤️Aloosh alshawwa ❤️</strong><span>مؤسس وصاحب البوابة — أهلاً بكم في عالم المعرفة والإبداع</span></div><div class="welcome-content"><button class="welcome-skip" id="bawaba-welcome-skip" type="button">تخطي المقدمة</button></div></section>
