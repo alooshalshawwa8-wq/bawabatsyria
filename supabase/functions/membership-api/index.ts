@@ -7,7 +7,7 @@ const API_KEY = PUBLISHABLE_KEYS.default ?? Deno.env.get("SUPABASE_ANON_KEY") ??
 const PAYMENTS_ENABLED = Deno.env.get("PAYMENTS_ENABLED") === "true";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://alooshalshawwa8-wq.github.io",
   "Access-Control-Allow-Headers": "authorization, apikey, content-type",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Max-Age": "86400",
@@ -233,10 +233,18 @@ async function getJson(path: string, token?: string) {
 }
 
 Deno.serve(async (request: Request) => {
-  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
+  if (request.method === "OPTIONS") {
+    const origin = request.headers.get("Origin") ?? "";
+    if (origin !== "https://alooshalshawwa8-wq.github.io") return new Response(null, { status: 403 });
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
   if (!SUPABASE_URL || !API_KEY) return reply({ error: "Membership service is not configured" }, 503);
 
   const path = pathOf(new URL(request.url));
+  const origin = request.headers.get("Origin") ?? "";
+  if (path !== "/api/stripe/webhook" && origin && origin !== "https://alooshalshawwa8-wq.github.io") {
+    return reply({ error: "Origin not allowed" }, 403);
+  }
   try {
     if (request.method === "GET" && path === "/api/health") {
       return reply({ ok: true, service: "bawabatsyria-membership", provider: "supabase", version: 7 });
