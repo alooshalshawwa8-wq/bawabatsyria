@@ -118,3 +118,11 @@ All inventory data remains in browser localStorage on the current device. No API
 - Added CSV export with spreadsheet-formula injection mitigation, plus browser print action for the current report.
 - Cash movement reports use recorded paid amounts only and explicitly do not infer an opening cash balance. Party statements are based on exact party-name matches and the selected month. Profit summary distinguishes known cost-at-sale snapshots and does not misclassify all purchases as cost of goods sold.
 - Reports are local projections of the existing transaction ledger; they do not include expenses, taxes, owner withdrawals, opening balances, or external bank reconciliation. No APIs, Supabase, Gemini, API-Football, keys, or quotas changed. No live browser/device test or Pages deployment verification.
+
+
+## Customer and supplier directory — 2026-11-11
+
+- Added locally stored party profiles with role (customer/supplier/both), phone, address, and notes.
+- Added search, party cards, linked transaction totals, receivables/payables indicators, and per-party chronological statement generated from the existing ledger.
+- New and existing transaction parties are discovered automatically; the directory does not duplicate or independently mutate financial balances. Statements explicitly distinguish ledger-derived transaction history from attached invoice files (none are stored).
+- Party profiles use a separate localStorage key and remain on the current browser/device. No cloud sync, API, Supabase, Gemini, API-Football, or quota changes. No live browser/device test or Pages deployment verification.
