@@ -147,3 +147,12 @@ All inventory data remains in browser localStorage on the current device. No API
 - Backup file size remains capped at 2 MB. Data remains browser-local and should be downloaded regularly; imports are not a cloud synchronization service.
 
 - Backup import hardening: validate all collections before writes, snapshot affected localStorage keys, attempt rollback if a write fails, and report merged expense/settlement counts. Profit wording now explicitly refers only to known cost-backed gross profit after recorded expenses.
+
+
+## Treasury, assets and obligations manager — 2026-11-11
+
+- Added local multiple-account register (cash, bank, e-wallet, other), opening balances, dated deposits/receipts and withdrawals/payments, and computed account balances.
+- Added an asset register with acquisition cost and manually maintained estimated current value; estimates are not a certified valuation and no depreciation schedule is calculated.
+- Added obligations with creditor, registration date, optional due date, amount, paid amount, outstanding balance, and separately dated settlement events.
+- Added an isolated JSON backup/merge workflow for treasury data, with 2 MB file cap, schema checks, ID-based merge, and attempted localStorage rollback on write failure.
+- Treasury movements are deliberately not auto-posted from the sales ledger to avoid duplicate cash entries. Users should record a cash movement once when reconciling actual receipts/payments. The treasury is browser-local and is not cloud-synced or tested in a live browser.
