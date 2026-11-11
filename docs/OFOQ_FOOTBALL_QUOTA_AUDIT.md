@@ -34,3 +34,18 @@ The `studio` action starts from a fixture lookup and, on a cold cache, fans out 
 - SQL budget function definitions: not yet inspected in this pass.
 - Browser acceptance suite / GitHub Actions: no PR-triggered workflow runs were returned for the latest documentation commit; deployment status remains unverified.
 - No claim is made here that all 78 sections are functionally complete.
+
+## Live Supabase verification (2026-11-11)
+
+Read-only inspection of project `elzquyehghuxhswogsch` confirmed:
+
+- The active policy row currently has `daily_limit_override=70`, `pacing_buffer_percent=30`, `warning_percent=50`, `critical_percent=85`, and, most importantly, `provider_blocked=true`. The provider is therefore intentionally blocked at the database guard. No setting was changed and no upstream API call was attempted.
+- `football_api_budget_reserve` serializes reservations with transaction-scoped advisory locks (global minute lock plus UTC-day lock), checks the provider-block flag, enforces a hard maximum of 70 calls/day and 6 calls/rolling minute (or lower provider-reported limits), applies pacing, and freezes `live` and `emergency` buckets at the configured critical threshold.
+- The four football budget/rate RPC functions are `SECURITY INVOKER`; their function ACLs show EXECUTE for `postgres` and `service_role` only. They are not executable by `anon` or `authenticated` according to the inspected ACL.
+- The 10 tables flagged by the security advisor have RLS enabled and no policies. The inspected table grants for these tables are limited to `postgres` and `service_role`; no `anon` or `authenticated` table grants were present. This supports the intended backend-only model and means no broad client policy should be added just to silence the INFO linter finding.
+- Supabase security advisor also reports leaked-password protection disabled. This is an Auth dashboard setting; it was not changed during this audit.
+- Performance advisor reports 15 unused indexes. No indexes were removed because the findings alone do not prove an index is unnecessary, particularly on low-traffic or newly introduced modules.
+
+## Updated conclusion
+
+The central football quota guard is materially stronger than a simple per-instance throttle: reservations are serialized in the database, provider blocking is authoritative, and the hard daily/minute caps fail closed. The currently observed `provider_blocked=true` state must be preserved until the owner explicitly authorizes re-enabling provider traffic after reviewing the provider account and quota. Do not run live football tests while this flag is true.
