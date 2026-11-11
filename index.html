@@ -928,6 +928,37 @@ function renderFootballModule(tool){
     const odds=studioBox('fbStudioOdds');if(!(data.odds||[]).length)odds.append(studioEmpty('احتمالات ما قبل المباراة غير متاحة.'));else data.odds.forEach(x=>(x.bookmakers||[]).forEach(b=>{odds.append(node('h5',b.name||'مزود','fb-subhead'));(b.bets||[]).forEach(q=>(q.values||[]).forEach(v=>odds.append(node('div',(q.name||'')+' · '+(v.value||'')+' · '+(v.odd||''),'fb-studio-row'))));}));
     const coverage=studioBox('fbStudioCoverage'),cov=(data.coverage||[])[0]?.seasons?.find(x=>Number(x.year)===Number(lg.season))?.coverage;
     if(!cov)coverage.append(studioEmpty('خريطة تغطية البطولة غير متاحة.'));else [['الأحداث',cov.fixtures?.events],['التشكيلات',cov.fixtures?.lineups],['إحصاءات المباريات',cov.fixtures?.statistics_fixtures],['إحصاءات اللاعبين',cov.fixtures?.statistics_players],['الترتيب',cov.standings],['اللاعبون',cov.players],['الهدافون',cov.top_scorers],['الصناعة',cov.top_assists],['البطاقات',cov.top_cards],['الإصابات',cov.injuries],['التوقعات',cov.predictions],['الاحتمالات',cov.odds]].forEach(([a,b])=>coverage.append(node('div',(b?'✓ ':'— ')+a+' · '+(b?'متاح بالتغطية':'غير مشمول/غير متاح'),'fb-studio-row')));
+
+    // OFOQ PRO MATCH TOOLS: grounded match reading, source health, print and export.
+    const reportGrid=studioReport.querySelector('.fb-studio-grid');
+    const insightPanel=node('section',undefined,'fb-studio-panel fb-studio-wide');
+    insightPanel.append(node('h4','🧠 القراءة الرقمية للمباراة'));
+    const insights=[];
+    const statFor=(teamName,label)=>{const team=(data.statistics||[]).find(x=>x.team?.name===teamName);const raw=team?.statistics?.find(x=>x.type===label)?.value;const n=Number.parseFloat(String(raw??'').replace('%','').replace(',','.'));return Number.isFinite(n)?{raw,n}:null;};
+    const hp=statFor(home.name,'Ball Possession'),ap=statFor(away.name,'Ball Possession');
+    if(hp&&ap)insights.push('الاستحواذ: '+home.name+' '+hp.raw+' مقابل '+away.name+' '+ap.raw+'.');
+    const hs=statFor(home.name,'Total Shots'),as=statFor(away.name,'Total Shots');
+    if(hs&&as)insights.push('إجمالي التسديدات: '+home.name+' '+hs.raw+' مقابل '+away.name+' '+as.raw+'.');
+    const hot=statFor(home.name,'Shots on Goal'),aot=statFor(away.name,'Shots on Goal');
+    if(hot&&aot)insights.push('التسديدات على المرمى: '+home.name+' '+hot.raw+' مقابل '+away.name+' '+aot.raw+'.');
+    const rated=(data.players||[]).flatMap(team=>(team.players||[]).map(item=>({team:team.team?.name||'الفريق',name:item.player?.name||'لاعب',rating:Number((item.statistics||[])[0]?.games?.rating),minutes:(item.statistics||[])[0]?.games?.minutes}))).filter(x=>Number.isFinite(x.rating)).sort((a,b)=>b.rating-a.rating);
+    if(rated.length)insights.push('أعلى تقييم مسجل: '+rated.slice(0,3).map(x=>x.name+' ('+x.team+') '+x.rating.toFixed(1)).join(' · ')+'.');
+    if(!insights.length)insights.push('لا تتوفر مؤشرات رقمية كافية لبناء قراءة مقارنة لهذه المباراة؛ راجع خريطة تغطية البطولة.');
+    insights.forEach(line=>insightPanel.append(node('p',line,'fb-studio-row')));
+    if(reportGrid)reportGrid.append(insightPanel);
+    const health=node('section',undefined,'fb-studio-panel fb-studio-wide');
+    health.append(node('h4','🛡️ شفافية البيانات وحداثتها'));
+    const unavailable=(data.unavailable||[]);
+    [['استجابت نقاط النهاية', (17-unavailable.length)+' / 17'],['نقاط النهاية المتعذرة',unavailable.length?unavailable.join('، '):'لا يوجد'],['توقيت جلب البيانات',new Date(data.fetchedAt||Date.now()).toLocaleString('ar-SY')],['حالة التخزين',data.cached?'نتيجة مخزنة مؤقتاً':'استجابة جديدة من المصدر']].forEach(([label,value])=>{const row=node('div',undefined,'fb-studio-row');row.append(node('span',label),node('strong',String(value)));health.append(row);});
+    if(reportGrid)reportGrid.append(health);
+    if(!document.getElementById('fbStudioPrintStyles')){const style=node('style');style.id='fbStudioPrintStyles';style.textContent='@media print{body *{visibility:hidden!important}#fbStudioReport,#fbStudioReport *{visibility:visible!important}#fbStudioReport{display:block!important;position:absolute!important;inset:0!important;width:100%!important;background:#fff!important;color:#111!important;padding:12px!important}#fbStudioReport .fb-studio-actions{display:none!important}#fbStudioReport .fb-studio-panel,#fbStudioReport .fb-studio-kpi,#fbStudioReport .fb-studio-report-head{background:#fff!important;color:#111!important;border:1px solid #bbb!important;break-inside:avoid}#fbStudioReport h3,#fbStudioReport h4,#fbStudioReport strong{color:#111!important}#fbStudioReport .fb-studio-row,#fbStudioReport .fb-studio-footer{color:#222!important;border-color:#ddd!important}#fbStudioReport .fb-studio-pitch{print-color-adjust:exact;-webkit-print-color-adjust:exact}}';document.head.append(style);}
+    const actions=node('div',undefined,'fb-studio-actions');
+    actions.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;';
+    const printBtn=node('button','🖨️ طباعة التقرير / حفظ PDF','btn');printBtn.type='button';printBtn.addEventListener('click',()=>window.print());
+    const copyBtn=node('button','📋 نسخ ملخص المباراة','btn secondary');copyBtn.type='button';copyBtn.addEventListener('click',()=>{const summary=[(home.name||'الفريق الأول')+' '+(g.home??'–')+' : '+(g.away??'–')+' '+(away.name||'الفريق الثاني'),lg.name||'',fx.fixture?.date||'',...insights,'مصدر البيانات: API-Football'].filter(Boolean).join('\n');if(navigator.clipboard?.writeText){navigator.clipboard.writeText(summary).then(()=>{copyBtn.textContent='✓ تم نسخ الملخص';}).catch(()=>{copyBtn.textContent='تعذر النسخ من هذا المتصفح';});}else{copyBtn.textContent='النسخ غير مدعوم في هذا المتصفح';}});
+    actions.append(printBtn,copyBtn);
+    studioReport.insertBefore(actions,studioReport.firstElementChild);
+
     $('fbStudioFooter').textContent='API-Football · طلبات المصدر: '+(data.requestsMade||'—')+' · آخر تحديث: '+new Date(data.fetchedAt||Date.now()).toLocaleString('ar-SY')+' · '+(data.cached?'مخزن مؤقتاً':'حديث')+' · أقسام غير متاحة: '+((data.unavailable||[]).join('، ')||'لا يوجد')+'. لا تمثل البيانات توصية مراهنة.';
     studioReport.hidden=false;studioReport.scrollIntoView({behavior:'smooth',block:'start'});
   }
