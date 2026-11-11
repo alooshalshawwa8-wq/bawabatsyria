@@ -182,3 +182,12 @@ All inventory data remains in browser localStorage on the current device. No API
 - Journal and checklist data remain in the visitor's browser on the current device; export is required for backup or transfer.
 - Verification: source committed to GitHub main. GitHub Pages workflow and browser-level interaction checks are pending.
 
+## OFOQ Gemini mission console — 2026-11-11
+
+- Upgraded the section-aware Gemini panel to a guided mission console available when a visitor opens a section.
+- Added one-click prompt templates for expert explanations, implementation plans, input analysis, checklists, and knowledge quizzes. Selecting a template only fills the prompt; the visitor must explicitly send it.
+- Added a live character counter, Ctrl/Cmd+Enter send shortcut, copy-last-answer control, and plain-text conversation export.
+- Preserved fixed trusted section-profile routing, the existing protected `site-assistant` endpoint, the 10-message in-memory context cap, and the shared daily reservation ceiling of 30 requests across the whole site.
+- Each explicit send remains exactly one Gemini request. No automatic requests, background refreshes, browser-side API keys, new provider integrations, API-Football calls, or quota increases were introduced.
+- Conversation context remains in memory for the open section session only; clearing the conversation removes the visible in-session context. Export is user-initiated.
+- Verification: source changes committed to GitHub main. GitHub Actions syntax validation and Pages deployment are required before calling this release deployed. Browser-level interaction and real Gemini calls remain untested; no provider quota was consumed during implementation.
