@@ -39,8 +39,20 @@ jobs:
           root = Path(".")
           html = (root / "index.html").read_text(encoding="utf-8")
           json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+          structured_data = re.findall(r'<script\b[^>]*type=["\']application/ld\+json["\'][^>]*>([\s\S]*?)</script>', html, re.I)
+          if not structured_data:
+              raise SystemExit("Missing JSON-LD structured data")
+          for block in structured_data:
+              json.loads(block)
+          print(f"Validated {len(structured_data)} JSON-LD block(s).")
 
-          scripts = re.findall(r"<script\b[^>]*>([\s\S]*?)</script>", html, re.I)
+          script_tags = re.findall(r"<script\b([^>]*)>([\s\S]*?)</script>", html, re.I)
+          scripts = []
+          for attrs, body in script_tags:
+              if re.search(r'type\s*=\s*["\']application/ld\+json["\']', attrs, re.I):
+                  json.loads(body)
+                  continue
+              scripts.append(body)
           if not scripts:
               raise SystemExit("No inline JavaScript found in index.html")
           Path("/tmp/site-inline.js").write_text("\n".join(scripts), encoding="utf-8")
