@@ -58,6 +58,11 @@ try {
   await merchant.locator("#ofoq-ecom-order-qty").fill("2");
   await merchant.getByRole("button", { name: "إضافة طلب" }).click();
   await merchant.getByText("OFOQ-BROWSER-001").waitFor({ state: "visible" });
+  await merchant.locator("#ofoq-ecom-order-no").fill("OFOQ-BROWSER-002");
+  await merchant.locator("#ofoq-ecom-order-qty").fill("6");
+  await merchant.getByRole("button", { name: "إضافة طلب" }).click();
+  await merchant.getByText(/الكمية تتجاوز المتاح/).waitFor({ state: "visible" });
+  await merchant.getByLabel("حالة الطلب OFOQ-BROWSER-001").selectOption("processing");
 
   await page.evaluate(async () => {
     const business = window.BAWABA_SECTIONS.find(item => item.id === "business");
