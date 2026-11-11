@@ -132,14 +132,14 @@ const rows=[
 rows.forEach(([title,detail])=>{const r=el("article","oph-item");r.append(el("div","",""),el("small","",detail));r.firstChild.append(el("strong","",title));linkedList.append(r);});
 };
 linked.append(linkedSummary,linkedList);actions(linked,btn("تحديث البيانات الآن",()=>{render();renderLinked();status.textContent="تم تحديث لوحة القيادة ومصادرها دون تعديل السجلات الأصلية.";}));
-const backup=pane("backup");backup.append(el("h3","","نسخ البيانات واستعادتها"),el("p","oph-note","تتضمن النسخة بيانات مركز القيادة ولقطة مؤرخة من مصادر المخزون والمبيعات والفواتير والمصروفات والتحصيلات والعملاء وطلبات العمل. اللقطة أرشيف مستقل ولا تستبدل بيانات الأدوات الأصلية عند الاستيراد."));
+const backup=pane("backup");backup.append(el("h3","","نسخ البيانات واستعادتها"),el("p","oph-note","تتضمن النسخة بيانات مركز القيادة ولقطة مؤرخة من المخزون والمبيعات والفواتير والمصروفات والتحصيلات والعملاء وطلبات العمل وكتالوج المنتجات والطلبات المحلية. اللقطة أرشيف مستقل ولا تستبدل بيانات الأدوات الأصلية عند الاستيراد."));
 const importFile=el("input","");importFile.type="file";importFile.accept=".json,application/json";importFile.hidden=true;
 actions(backup,btn("تنزيل نسخة JSON",()=>{const blob=new Blob([JSON.stringify({app:"ofoq-operations-hub",version:2,exportedAt:new Date().toISOString(),data,linkedSources:sourceSnapshot()},null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=el("a");a.href=url;a.download="ofoq-complete-operations-backup.json";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);status.textContent="تم تجهيز النسخة الاحتياطية.";}),btn("استيراد نسخة JSON",()=>importFile.click()));
 backup.append(importFile);
 
 const cloudPanel=el("section","oph-cloud-panel");
 cloudPanel.style.cssText="margin-top:18px;padding:15px;border:1px solid #347b83;border-radius:15px;background:#081a29";
-cloudPanel.append(el("h3","","الخزنة السحابية الخاصة"),el("p","oph-note","نسخ احتياطي اختياري لحسابك فقط؛ يحتفظ النظام بآخر 20 نسخة لكل حساب. لا توجد مزامنة تلقائية. استخدم بريدك وكلمة مرور حساب أُفُق، ثم اضغط إنشاء نسخة بنفسك. لا تُخزّن كلمة المرور في الموقع؛ تحفظ جلسة الدخول مؤقتاً في علامة التبويب."));
+cloudPanel.append(el("h3","","الخزنة السحابية الخاصة"),el("p","oph-note","نسخ احتياطي اختياري لحسابك فقط؛ يحتفظ النظام بآخر 20 نسخة لكل حساب، وتشمل اللقطة كتالوج المنتجات والطلبات المحلية. لا توجد مزامنة تلقائية. استخدم بريدك وكلمة مرور حساب أُفُق، ثم اضغط إنشاء نسخة بنفسك. لا تُخزّن كلمة المرور في الموقع؛ تحفظ جلسة الدخول مؤقتاً في علامة التبويب."));
 const authGrid=el("div","oph-grid");
 const cloudEmail=field(authGrid,"البريد الإلكتروني","cloud-email","email");
 cloudEmail.autocomplete="email";cloudEmail.inputMode="email";
@@ -187,7 +187,7 @@ const validCloudBackup=p=>{
  if(!d.tasks.every(x=>x&&typeof x.title==="string"&&x.title.length<=160&&["open","done"].includes(x.status)))return false;
  if(!d.transactions.every(x=>x&&["income","expense"].includes(x.kind)&&Number.isFinite(x.amount)&&x.amount>0&&x.amount<=1e12&&typeof x.category==="string"))return false;
  const ls=p.linkedSources;
- return !ls||(Array.isArray(ls.stock)&&Array.isArray(ls.trade)&&Array.isArray(ls.expenses)&&Array.isArray(ls.settlements)&&ls.stock.length<=10000&&ls.trade.length<=20000&&ls.expenses.length<=20000&&ls.settlements.length<=20000);
+ return !ls||(Array.isArray(ls.stock)&&Array.isArray(ls.trade)&&Array.isArray(ls.expenses)&&Array.isArray(ls.settlements)&&ls.stock.length<=10000&&ls.trade.length<=20000&&ls.expenses.length<=20000&&ls.settlements.length<=20000&&(!ls.commerceProducts||(Array.isArray(ls.commerceProducts)&&ls.commerceProducts.length<=500&&ls.commerceProducts.every(x=>x&&typeof x.id==="string"&&typeof x.name==="string"&&Number.isFinite(Number(x.price))&&Number(x.price)>=0&&Number.isFinite(Number(x.stock))&&Number(x.stock)>=0)))&&(!ls.commerceOrders||(Array.isArray(ls.commerceOrders)&&ls.commerceOrders.length<=1000&&ls.commerceOrders.every(x=>x&&typeof x.id==="string"&&typeof x.orderNo==="string"&&Number.isFinite(Number(x.total))&&Number(x.total)>=0&&Number.isInteger(Number(x.qty))&&Number(x.qty)>0&&["new","processing","shipped","delivered","cancelled"].includes(x.status)))));
 };
 const loadCloudBackups=async()=>{
  cloudList.replaceChildren();
