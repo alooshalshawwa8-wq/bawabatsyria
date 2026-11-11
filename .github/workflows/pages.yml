@@ -146,3 +146,19 @@ jobs:
           npm install --no-save --no-package-lock playwright@1.65.0
           PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=30000 npx --no-install playwright install --only-shell chromium
           node tests/browser-smoke.mjs
+      - name: Run Lighthouse quality audit
+        env:
+          OFOQ_BASE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          npm install --no-save --no-package-lock lighthouse@12.8.2
+          npx --no-install lighthouse "$OFOQ_BASE_URL" --chrome-flags="--headless --no-sandbox" --only-categories=performance,accessibility,best-practices,seo --output=json --output=html --output-path=./lighthouse-report --quiet
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ofoq-lighthouse-reports
+          path: |
+            lighthouse-report.report.json
+            lighthouse-report.report.html
+          if-no-files-found: ignore
+          retention-days: 14
