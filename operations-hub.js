@@ -41,7 +41,9 @@ const sales=s.trade.filter(x=>x.type==="sale").reduce((n,x)=>n+Number(x.total||0
 const purchases=s.trade.filter(x=>x.type==="purchase").reduce((n,x)=>n+Number(x.total||0),0);
 const expenses=s.expenses.reduce((n,x)=>n+Number(x.amount||0),0);
 const units=s.stock.reduce((n,x)=>n+Number(x.qty||0),0);
-return {sales,purchases,expenses,units};
+const commerceUnits=s.commerceProducts.reduce((n,x)=>n+Number(x.stock||0),0);
+const commerceOrderValue=s.commerceOrders.filter(x=>x.status!=="cancelled").reduce((n,x)=>n+Number(x.total||0),0);
+return {sales,purchases,expenses,units,commerceUnits,commerceOrderValue};
 };
 
 const el=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n;};
@@ -90,7 +92,7 @@ function render(){
 metrics.replaceChildren();
 const open=data.tasks.filter(x=>x.status!=="done").length,done=data.tasks.length-open;
 const income=data.transactions.filter(x=>x.kind==="income").reduce((a,x)=>a+x.amount,0),expense=data.transactions.filter(x=>x.kind==="expense").reduce((a,x)=>a+x.amount,0);
-metric("المشاريع النشطة",String(data.projects.filter(x=>x.status!=="done").length));metric("المهام المفتوحة",String(open));metric("المهام المنجزة",String(done));metric("الإيرادات المسجلة",money(income));metric("المصروفات المسجلة",money(expense));metric("صافي الحركة",money(income-expense));const imported=sourceSnapshot(),totals=sourceTotals(imported);metric("أصناف المخزون",String(imported.stock.length));metric("المبيعات من الدفتر",money(totals.sales));metric("المشتريات من الدفتر",money(totals.purchases));metric("مصروفات المحاسبة",money(totals.expenses));metric("طلبات التوظيف",String(imported.career.length));
+metric("المشاريع النشطة",String(data.projects.filter(x=>x.status!=="done").length));metric("المهام المفتوحة",String(open));metric("المهام المنجزة",String(done));metric("الإيرادات المسجلة",money(income));metric("المصروفات المسجلة",money(expense));metric("صافي الحركة",money(income-expense));const imported=sourceSnapshot(),totals=sourceTotals(imported);metric("أصناف المخزون",String(imported.stock.length));metric("المبيعات من الدفتر",money(totals.sales));metric("المشتريات من الدفتر",money(totals.purchases));metric("مصروفات المحاسبة",money(totals.expenses));metric("طلبات التوظيف",String(imported.career.length));metric("منتجات المتجر",String(imported.commerceProducts.length));metric("طلبات المتجر",String(imported.commerceOrders.length));metric("قيمة الطلبات غير الملغاة",money(totals.commerceOrderValue));
 projectList.replaceChildren();if(!data.projects.length)showEmpty(projectList,"لا توجد مشاريع بعد.");
 data.projects.slice().reverse().forEach(x=>{const a=el("div","oph-actions");a.append(btn(x.status==="done"?"إعادة فتح":"إنجاز",()=>{x.status=x.status==="done"?"active":"done";persist();}),btn("حذف",()=>{if(confirm("حذف المشروع؟")){data.projects=data.projects.filter(y=>y.id!==x.id);persist();}},"oph-btn oph-danger"));projectList.append(record(x.name,(x.owner||"دون مسؤول")+" · "+x.status+" · "+new Date(x.createdAt).toLocaleDateString(),a));});
 taskList.replaceChildren();if(!data.tasks.length)showEmpty(taskList,"لا توجد مهام مسجلة.");
