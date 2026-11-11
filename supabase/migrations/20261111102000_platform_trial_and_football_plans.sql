@@ -114,4 +114,4 @@ values
  ('business_monthly','أُفُق أعمال','باقة المؤسسات والفرق والاحتياجات المتقدمة عند إطلاق خدمات الأعمال.','month',true,4,null,null,null)
 on conflict (id) do update set
  name_ar=excluded.name_ar,description_ar=excluded.description_ar,billing_interval=excluded.billing_interval,
- active=excluded.active,display_order=excluded.display_order,stripe_price_id=null,price_minor=null,currency=null;
+ active=excluded.active,display_order=excluded.display_order;
