@@ -113,10 +113,14 @@ require("SUPABASE_SERVICE_ROLE_KEY" not in operations and "service_role" not in 
 require("site-assistant" not in operations and "functions/v1/football-data" not in operations, "operations hub must not consume AI or football provider quotas")
 backup_migration = ROOT / "supabase/migrations/20261111160644_user_workspace_backup_vault.sql"
 require(backup_migration.is_file(), "cloud backup RLS migration missing")
+retention_migration = ROOT / "supabase/migrations/20261111161225_bound_workspace_backup_retention.sql"
+require(retention_migration.is_file(), "cloud backup retention migration missing")
+retention_sql = retention_migration.read_text(encoding="utf-8")
+require("security invoker" in retention_sql and "limit 19" in retention_sql and "user_workspace_backups_keep_20" in retention_sql, "cloud backup retention must be bounded and invoker-safe")
 backup_sql = backup_migration.read_text(encoding="utf-8")
 for token in ("enable row level security", "Users read own workspace backups", "Users create own workspace backups", "Users delete own workspace backups", "revoke all on public.user_workspace_backups from anon"):
     require(token in backup_sql, "cloud backup database security contract missing: " + token)
-require("./operations-hub.js" in worker and "ofoq-shell-v30" in worker, "operations hub missing from offline shell or cache not refreshed")
+require("./operations-hub.js" in worker and "ofoq-shell-v31" in worker, "operations hub missing from offline shell or cache not refreshed")
 
 # Cross-tool local data adapters and non-destructive recovery archive.
 for token in (
