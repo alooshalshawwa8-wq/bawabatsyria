@@ -2848,6 +2848,22 @@ if(!Array.isArray(data.parties)||!Array.isArray(data.expenses)||!Array.isArray(d
 if(!data.parties.every(x=>x&&typeof x.name==='string'&&x.name.length<=80&&['customer','supplier','both'].includes(x.role)))throw new Error('ملفات الأطراف غير صالحة.');
 if(!data.expenses.every(x=>x&&typeof x.id==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x.date)&&typeof x.name==='string'&&Number.isFinite(x.amount)&&x.amount>0&&Number.isFinite(x.paid)&&x.paid>=0&&x.paid<=x.amount))throw new Error('سجلات المصروفات غير صالحة.');
 if(!data.settlements.every(x=>x&&typeof x.id==='string'&&typeof x.transactionId==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x.date)&&Number.isFinite(x.amount)&&x.amount>0&&['in','out'].includes(x.direction)))throw new Error('سجلات التحصيل غير صالحة.');
+const uniqueIds=rows=>new Set(rows.map(x=>x.id)).size===rows.length;
+if(!uniqueIds(data.transactions)||!uniqueIds(data.expenses)||!uniqueIds(data.settlements))throw new Error('تحتوي النسخة على معرفات مكررة؛ لم يتم استيرادها.');
+const transactionMap=new Map(data.transactions.map(x=>[x.id,x])),settledCents=new Map();
+for(const paymentEvent of data.settlements){
+const transaction=transactionMap.get(paymentEvent.transactionId);
+if(!transaction)throw new Error('توجد دفعة مرتبطة بعملية غير موجودة؛ لم يتم استيراد النسخة.');
+const expectedDirection=transaction.type==='sale'?'in':'out';
+if(paymentEvent.direction!==expectedDirection)throw new Error('اتجاه إحدى الدفعات لا يطابق نوع العملية المرتبطة بها.');
+const cents=Math.round(paymentEvent.amount*100);
+settledCents.set(paymentEvent.transactionId,(settledCents.get(paymentEvent.transactionId)||0)+cents);
+}
+for(const [transactionId,paidCents] of settledCents){
+const transaction=transactionMap.get(transactionId),recordedPaid=Math.round(transaction.paid*100),recordedTotal=Math.round(transaction.total*100);
+if(paidCents>recordedPaid||recordedPaid>recordedTotal)throw new Error('مجموع الدفعات لا يتطابق مع المبلغ المدفوع أو يتجاوز قيمة العملية.');
+}
+
 const partyNames=new Set(oldParties.map(x=>x.name.toLocaleLowerCase('ar')));newParties=data.parties.filter(x=>!partyNames.has(x.name.toLocaleLowerCase('ar')));
 const merge=(a,b)=>{const seen=new Set(a.map(x=>x.id));return a.concat(b.filter(x=>!seen.has(x.id)));};
 const mergedExpenses=merge(newExpenses,data.expenses),mergedSettlements=merge(newSettlements,data.settlements);
