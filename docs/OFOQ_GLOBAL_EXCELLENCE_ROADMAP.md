@@ -90,3 +90,12 @@ OFOQ must create original value through connected workflows: one search can disc
 ## Current status
 
 Phase 1 is in progress. A successful GitHub commit is not proof of a successful Pages deployment; deployment and browser tests must pass before this feature is called production-verified. Supabase security review and live deployment verification remain explicit launch blockers until checked.
+
+### 2026-11-11 — Phase 1 security and quota review
+- Confirmed three active Edge Functions: `membership-api`, `site-assistant`, and `football-data`; all are configured with platform JWT verification disabled, so application-level controls remain important.
+- `membership-api` validates bearer tokens against Supabase Auth and keeps payment activation disabled unless explicitly enabled server-side.
+- `site-assistant` restricts browser CORS to the Pages origin, applies best-effort per-runtime throttling, and reserves a globally enforced Gemini daily slot before provider calls (30 requests/day). CORS is not authentication; keep the global quota guard as the primary cost safety net.
+- `football-data` uses server-side provider credentials, cache/rate-limit controls, and database-backed budget policy. Do not expose the provider key or bypass its quota guard.
+- Supabase reports ten RLS-enabled tables with no explicit policies. These are currently consistent with backend-only usage and fail closed for direct client access; verify intended service-role-only access before adding any policy.
+- Supabase also reports leaked-password protection disabled. This is a remaining Auth dashboard hardening item; no automatic setting change was made.
+- No database policy or Edge Function was changed during this review to avoid breaking authenticated or quota-controlled workflows without a full table-by-table authorization test.
