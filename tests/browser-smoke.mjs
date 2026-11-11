@@ -177,6 +177,20 @@ try {
   await page.getByText("حُفظت العملية وتم تحديث رصيد المخزون.").waitFor({ state: "visible" });
   const centTrade = await page.evaluate(() => JSON.parse(localStorage.getItem("bawabatsyria_trade_ledger_v1") || "[]"));
   if (centTrade.length !== 1 || centTrade[0].total !== 1.23) throw new Error("Cent-precision trade was not saved correctly");
+  const orphanSettlementBackup = {
+    app: "ofoq-trade-ledger", version: 2, createdAt: new Date().toISOString(),
+    transactions: [{ id: "tx_valid", type: "sale", date: "2026-11-11", item: "OFOQ Cent Precision Test", qty: 1, unitPrice: 1.23, total: 1.23, paid: 1, party: "اختبار" }],
+    parties: [], expenses: [],
+    settlements: [{ id: "pay_orphan", transactionId: "tx_missing", date: "2026-11-11", amount: 1, direction: "in" }],
+    invoiceNumbers: {}
+  };
+  await page.locator("#specialTool input[type=file]").last().setInputFiles({
+    name: "orphan-settlement.json", mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(orphanSettlementBackup))
+  });
+  await page.getByText(/توجد دفعة مرتبطة بعملية غير موجودة/).waitFor({ state: "visible" });
+  const unchangedTradeCount = await page.evaluate(() => JSON.parse(localStorage.getItem("bawabatsyria_trade_ledger_v1") || "[]").length);
+  if (unchangedTradeCount !== 1) throw new Error("Invalid settlement backup changed the local trade ledger");
 
   await page.evaluate(async () => {
     const business = window.BAWABA_SECTIONS.find(item => item.id === "business");
