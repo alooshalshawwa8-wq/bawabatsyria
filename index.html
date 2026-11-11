@@ -794,6 +794,7 @@ function renderFootballModule(tool){
   }
 
   const $=id=>wrap.querySelector('#'+id);
+  const damascusToday=()=>{const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Damascus',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).reduce((o,x)=>(o[x.type]=x.value,o),{});return p.year+'-'+p.month+'-'+p.day;};
   wrap.querySelectorAll('.fb-tab').forEach(btn=>btn.addEventListener('click',()=>{
     wrap.querySelectorAll('.fb-tab').forEach(x=>x.classList.toggle('active',x===btn));
     wrap.querySelectorAll('.fb-pane').forEach(x=>x.classList.toggle('active',x.dataset.pane===btn.dataset.tab));
@@ -943,7 +944,7 @@ function renderFootballModule(tool){
   $('fbApiRun')?.addEventListener('click',runApiCatalog);
   $('fbApiParams')?.addEventListener('keydown',e=>{if(e.key==='Enter')runApiCatalog();});
   $('fbApiClear')?.addEventListener('click',()=>{$('fbApiResults').replaceChildren();$('fbApiRaw').textContent='';$('fbApiStatus').textContent='تم مسح النتائج المعروضة.';});
-  const studioDate=$('fbStudioDate');if(studioDate)studioDate.value=new Date().toISOString().slice(0,10);
+  const studioDate=$('fbStudioDate');if(studioDate)studioDate.value=damascusToday();
   const studioStatus=$('fbStudioStatus'),studioFixtures=$('fbStudioFixtures'),studioReport=$('fbStudioReport');
   const studioEmpty=message=>node('p',message,'fb-studio-empty');
   const studioVal=(v)=>v===null||v===undefined||v===''?'—':String(v);
@@ -1001,13 +1002,17 @@ function renderFootballModule(tool){
     if(rated.length)insights.push('أعلى تقييم مسجل: '+rated.slice(0,3).map(x=>x.name+' ('+x.team+') '+x.rating.toFixed(1)).join(' · ')+'.');
     if(!insights.length)insights.push('لا تتوفر مؤشرات رقمية كافية لبناء قراءة مقارنة لهذه المباراة؛ راجع خريطة تغطية البطولة.');
     insights.forEach(line=>insightPanel.append(node('p',line,'fb-studio-row')));
+    insightPanel.classList.add('fb-studio-generated');
+    reportGrid?.querySelectorAll('.fb-studio-generated').forEach(el=>el.remove());
     if(reportGrid)reportGrid.append(insightPanel);
     const health=node('section',undefined,'fb-studio-panel fb-studio-wide');
     health.append(node('h4','🛡️ شفافية البيانات وحداثتها'));
     const unavailable=(data.unavailable||[]);
     [['استجابت نقاط النهاية', (17-unavailable.length)+' / 17'],['نقاط النهاية المتعذرة',unavailable.length?unavailable.join('، '):'لا يوجد'],['توقيت جلب البيانات',new Date(data.fetchedAt||Date.now()).toLocaleString('ar-SY')],['حالة التخزين',data.cached?'نتيجة مخزنة مؤقتاً':'استجابة جديدة من المصدر']].forEach(([label,value])=>{const row=node('div',undefined,'fb-studio-row');row.append(node('span',label),node('strong',String(value)));health.append(row);});
+    health.classList.add('fb-studio-generated');
     if(reportGrid)reportGrid.append(health);
     if(!document.getElementById('fbStudioPrintStyles')){const style=node('style');style.id='fbStudioPrintStyles';style.textContent='@media print{body *{visibility:hidden!important}#fbStudioReport,#fbStudioReport *{visibility:visible!important}#fbStudioReport{display:block!important;position:absolute!important;inset:0!important;width:100%!important;background:#fff!important;color:#111!important;padding:12px!important}#fbStudioReport .fb-studio-actions{display:none!important}#fbStudioReport .fb-studio-panel,#fbStudioReport .fb-studio-kpi,#fbStudioReport .fb-studio-report-head{background:#fff!important;color:#111!important;border:1px solid #bbb!important;break-inside:avoid}#fbStudioReport h3,#fbStudioReport h4,#fbStudioReport strong{color:#111!important}#fbStudioReport .fb-studio-row,#fbStudioReport .fb-studio-footer{color:#222!important;border-color:#ddd!important}#fbStudioReport .fb-studio-pitch{print-color-adjust:exact;-webkit-print-color-adjust:exact}}';document.head.append(style);}
+    studioReport.querySelectorAll('.fb-studio-actions').forEach(el=>el.remove());
     const actions=node('div',undefined,'fb-studio-actions');
     actions.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;';
     const printBtn=node('button','🖨️ طباعة التقرير / حفظ PDF','btn');printBtn.type='button';printBtn.addEventListener('click',()=>window.print());
@@ -1032,7 +1037,7 @@ function renderFootballModule(tool){
   const matchStatus=$('fbMatchesStatus');
   const matchesList=$('fbMatchesList');
   const matchDate=$('fbMatchDate');
-  if(matchDate)matchDate.value=new Date().toISOString().slice(0,10);
+  if(matchDate)matchDate.value=damascusToday();
   footballRequest('status').then(data=>{
     if(providerStatus)providerStatus.textContent=data.configured?'متصل بمزوّد API-Football. البيانات الفعلية ستظهر عند طلب المباريات أو الجداول.':'مصدر النتائج المباشرة غير موصول حالياً؛ يمكنك استخدام موسوعة كرة القدم والأدلة المتاحة دون عرض بيانات غير مؤكدة.';
   }).catch(()=>{if(providerStatus)providerStatus.textContent='تعذر التحقق من حالة مزود البيانات. حاول تحديث الصفحة لاحقاً.';});
