@@ -172,6 +172,8 @@ jobs:
           OFOQ_BASE_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
           npm install --no-save --no-package-lock lighthouse@12.8.2
+          export CHROME_PATH="$(find "$HOME/.cache/ms-playwright" -type f -name chrome-headless-shell -print -quit)"
+          test -n "$CHROME_PATH"
           npx --no-install lighthouse "$OFOQ_BASE_URL" --chrome-flags="--headless --no-sandbox" --only-categories=performance,accessibility,best-practices,seo --output=json --output=html --output-path=./lighthouse-report --quiet
       - name: Upload Lighthouse reports
         if: always()
