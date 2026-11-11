@@ -104,9 +104,11 @@
     const saved=make("div","ofoq-ecom-saved");pricing.append(saved);
     function getPriceValues(){return Object.fromEntries(Object.entries(priceFields).map(([k,v])=>[k,number(v.value)]));}
     function calculatePrice(){
+      priceOutput.dataset.valid="0";
+      priceMetrics.replaceChildren();
       const v=getPriceValues(),fixed=v.cost+v.inbound+v.packaging+v.fulfilment+v.ad,rate=(v.platform+v.payment+v.returns)/100;
       const valid=Object.values(v).every(Number.isFinite)&&Object.values(v).every(x=>x>=0)&&v.qty>0&&Number.isInteger(v.qty)&&rate<1&&v.target/100+rate<1;
-      if(!valid){priceOutput.textContent="تحقق من القيم: يجب أن تكون التكاليف والنسب غير سالبة، وعدد الطلبات عدداً صحيحاً موجباً، ومجموع الرسوم والمرتجعات والهامش المستهدف أقل من 100%.";return;}
+      if(!valid){priceOutput.textContent="تحقق من القيم: يجب أن تكون التكاليف والنسب غير سالبة، وعدد الطلبات عدداً صحيحاً موجباً، ومجموع الرسوم والمرتجعات والهامش المستهدف أقل من 100%. لم تُعرض نتائج قديمة.";return;}
       const breakEven=fixed/(1-rate),targetPrice=fixed/(1-rate-v.target/100),profit=v.price*(1-rate)-fixed,margin=v.price>0?profit/v.price*100:0;
       priceMetrics.replaceChildren();
       metric(priceMetrics,"التكلفة الثابتة لكل طلب",fmt(fixed));
