@@ -69,7 +69,7 @@ try {
   await personalSpace.waitFor({ state: "visible", timeout: 5000 });
   const favoriteCurrent = page.locator("#ofoq-favorite-current");
   await favoriteCurrent.waitFor({ state: "attached", timeout: 5000 });
-  await favoriteCurrent.scrollIntoViewIfNeeded();
+  const favoriteVisibleBeforeScroll = await favoriteCurrent.isVisible();
   const favoriteState = await favoriteCurrent.evaluate(element => {
     const chain = [];
     for (let node = element; node && node.nodeType === 1; node = node.parentElement) {
@@ -89,8 +89,8 @@ try {
     }
     return chain;
   });
-  const favoriteVisible = await favoriteCurrent.isVisible();
-  if (!favoriteVisible) throw new Error("Current-section favorite action is hidden: " + JSON.stringify(favoriteState));
+  if (!favoriteVisibleBeforeScroll) throw new Error("Current-section favorite action is hidden before scrolling: " + JSON.stringify(favoriteState));
+  await favoriteCurrent.scrollIntoViewIfNeeded({ timeout: 10000 });
   const lastVisitedTitle = (await page.locator("#detailTitle").innerText()).trim();
   await favoriteCurrent.click({ timeout: 10000 });
   if (await favoriteCurrent.getAttribute("aria-pressed") !== "true") throw new Error("Favorite toggle did not activate");
