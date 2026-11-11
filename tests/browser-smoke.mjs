@@ -35,10 +35,12 @@ try {
     if (title !== section.title) throw new Error("Section title mismatch for " + section.id + ": " + title);
     const workspace = page.locator("#specialTool .bw-workspace");
     await workspace.waitFor({ state: "visible", timeout: 5000 });
-    const workspaceTabs = workspace.getByRole("tab");
-    if (await workspaceTabs.count() !== 3) throw new Error("Expected tools/tasks/notes workspace tabs for " + section.id);
+    const workspaceTabList = workspace.locator(":scope > .bw-tabs");
+    const workspaceTabs = workspaceTabList.getByRole("tab");
+    const workspaceTabCount = await workspaceTabs.count();
+    if (workspaceTabCount !== 3) throw new Error("Expected 3 top-level workspace tabs for " + section.id + "; found " + workspaceTabCount);
     for (const tabName of ["🗂️ خطة التنفيذ", "📝 ملاحظاتي", "🧰 أدوات القسم"]) {
-      const tab = workspace.getByRole("tab", { name: tabName });
+      const tab = workspaceTabList.getByRole("tab", { name: tabName });
       await tab.click();
       if (await tab.getAttribute("aria-selected") !== "true") throw new Error("Workspace tab failed for " + section.id + ": " + tabName);
     }
