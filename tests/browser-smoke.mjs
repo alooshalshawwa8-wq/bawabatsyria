@@ -74,6 +74,15 @@ try {
     throw new Error("Escape closed the active section instead of only closing the command center");
   }
 
+  // Escape should dismiss only the command center; explicitly return home before testing catalogue filters.
+  await page.locator("#homeBtn").click();
+  await page.locator("#detailPanel").waitFor({ state: "hidden", timeout: 5000 }).catch(async () => {
+    if (await page.locator("#detailPanel").evaluate(element => element.classList.contains("open"))) {
+      throw new Error("Home control did not close the active section before catalogue testing");
+    }
+  });
+  await page.locator("#sectionsGrid").waitFor({ state: "visible", timeout: 5000 });
+
   const personalSpace = page.locator("#ofoq-personal-space");
   await personalSpace.waitFor({ state: "visible", timeout: 5000 });
   const favoriteCurrent = page.locator("#ofoq-favorite-current");
