@@ -2117,7 +2117,6 @@ function renderMysticModule(parent){
   $('mFun').onclick=()=>{const type=$('mFunType').value,q=$('mFunQuestion').value.trim(),opts=type==='yes'?['الإشارات تقول: جرّب بعد أن تفكر جيداً.','الجواب الرمزي: نعم، إذا كانت الخطوة آمنة.','ليس الآن؛ ربما تحتاج معلومات أكثر.']:type==='color'?['بنفسجي — خيال وتجدد','أزرق — هدوء وتركيز','ذهبي — تفاؤل وطموح','أخضر — توازن ونمو']:['أرسل رسالة امتنان لشخص تحبه.','تعلّم شيئاً جديداً خلال عشر دقائق.','ابتسم لشخص لا تتوقعه.','رتّب زاوية صغيرة من مساحتك.'];$('mFunOut').textContent=(q?'سؤالك: '+q+'\n':'')+choose(opts,Math.floor(Math.random()*opts.length))+'\n(للترفيه فقط!)';};
 }
 
-async 
 function renderPremiumCatalogModule(sec,tool){
   const catalogs={
     auto_moto_gallery:{
