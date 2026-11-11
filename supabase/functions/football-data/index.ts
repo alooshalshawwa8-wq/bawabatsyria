@@ -271,16 +271,12 @@ Deno.serve(async (request: Request) => {
     try {
       const paths = ["fixtures/events", "fixtures/lineups", "fixtures/players", "fixtures/statistics"];
       const results = await Promise.allSettled(paths.map(async path => {
-        const response = await fetch("https://v3.football.api-sports.io/" + path + "?fixture=" + fixture, {
-          headers: { "x-apisports-key": apiKey, "Accept": "application/json" }
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok || (Array.isArray(data.errors) && data.errors.length)) throw new Error("تعذر تحميل " + path);
-        return Array.isArray(data.response) ? data.response : [];
+        const data = await providerFetch(path, { fixture }, 60_000, tracker);
+        return data.response;
       }));
       const unpack = (index: number) => results[index].status === "fulfilled" ? results[index].value : [];
       const unavailable = paths.filter((_path, index) => results[index].status === "rejected");
-      const result = { events: unpack(0), lineups: unpack(1), players: unpack(2), statistics: unpack(3), unavailable, provider: "API-Football", fetchedAt: new Date().toISOString(), cached: false };
+      const result = { events: unpack(0), lineups: unpack(1), players: unpack(2), statistics: unpack(3), unavailable, provider: "API-Football", fetchedAt: new Date().toISOString(), cached: false, requestsMade: tracker.upstreamCalls, cacheHits: tracker.cacheHits, usageTracked: true };
       cache.set(cacheKey, { until: Date.now() + 60_000, data: result });
       return reply(result);
     } catch (_error) {
