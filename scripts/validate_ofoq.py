@@ -106,6 +106,9 @@ require("operations-hub.js" in html, "operations hub script not loaded by the po
 for token in ("ofoq_operations_hub_v1", "ofoq-operations-hub", "transactions", "projects", "tasks", "1024*1024", "persist"):
     require(token in operations, "operations hub feature missing: " + token)
 require("تعذر إنشاء نقطة الاستعادة" in operations and "أُعيدت البيانات إلى الحالة السابقة" in operations, "operations hub must roll back failed local writes")
+require('Math.abs(n-Math.round(n*100)/100)>1e-8' in operations and 'lf.amount.step="0.01"' in operations, "operations ledger must reject sub-cent values")
+require("const sumMoney=rows=>" in operations, "operations ledger totals must sum integer cents")
+require('amountInput.fill("125.567")' in (ROOT / "tests/browser-smoke.mjs").read_text(encoding="utf-8"), "browser suite must cover sub-cent ledger rejection")
 require("النسخ السحابية الاختيارية في أُفُق" in html, "privacy center cloud backup disclosure missing")
 for token in ("user_workspace_backups", "cloudRequest", "/token?grant_type=password", "/signup", "sessionStorage", "createCloudBackup", "validCloudBackup", "refresh_token"):
     require(token in operations, "opt-in cloud backup contract missing: " + token)
