@@ -652,7 +652,7 @@ function renderFootballModule(tool){
     '.fb-match{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:13px;border:1px solid var(--line);border-radius:12px;background:#0d192b}.fb-match-team{font-weight:700;line-height:1.6}.fb-match-team:last-child{text-align:left}.fb-score{font-size:20px;font-weight:800;color:var(--gold2);white-space:nowrap}.fb-match-meta{grid-column:1/-1;color:var(--muted);font-size:11px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.fb-table{width:100%;border-collapse:collapse;min-width:480px;font-size:12px}.fb-table th,.fb-table td{padding:9px;border-bottom:1px solid var(--line);text-align:center}.fb-table th{color:var(--gold2);background:#14233a}.fb-table td:nth-child(2){text-align:right}'+
     '</style>'+
     '<div class="fb-hero"><div class="eyebrow">BAWABA FOOTBALL HUB · مركز المشجعين</div><h3>⚽ عالم كرة القدم بين إيديك</h3><p>البطولات الكبرى، القمم والديربيات، موسوعة الأندية والمنتخبات، سجل الألقاب، الأكثر شعبية، وقائمة متابعة خاصة فيك. كل معلومة إحصائية مؤرخة أو موضحة بمصدرها؛ لا توجد نتائج مباشرة وهمية.</p></div>'+
-    '<div class="fb-tabs" role="tablist"><button class="fb-tab active" data-tab="home">الرئيسية</button><button class="fb-tab" data-tab="matches">المباريات والنتائج</button><button class="fb-tab" data-tab="competitions">البطولات</button><button class="fb-tab" data-tab="archive">أرشيف البطولات والموسم</button><button class="fb-tab" data-tab="biggames">المباريات الكبرى</button><button class="fb-tab" data-tab="clubs">الأندية والمنتخبات</button><button class="fb-tab" data-tab="popular">الأكثر متابعة</button><button class="fb-tab" data-tab="favorites">قائمتي</button></div>'+
+    '<div class="fb-tabs" role="tablist"><button class="fb-tab active" data-tab="home">الرئيسية</button><button class="fb-tab" data-tab="matches">المباريات والنتائج</button><button class="fb-tab" data-tab="competitions">البطولات</button><button class="fb-tab" data-tab="archive">أرشيف البطولات والموسم</button><button class="fb-tab" data-tab="biggames">المباريات الكبرى</button><button class="fb-tab" data-tab="clubs">الأندية والمنتخبات</button><button class="fb-tab" data-tab="popular">الأكثر متابعة</button><button class="fb-tab" data-tab="api">مركز بيانات API-Football</button><button class="fb-tab" data-tab="favorites">قائمتي</button></div>'+
     '<section class="fb-pane active" data-pane="home"><div class="fb-grid">'+
     '<article class="fb-card"><strong>🏆 البطولات الكبرى</strong><span>كأس العالم، دوري الأبطال، البطولات القارية وأقوى الدوريات المحلية.</span></article>'+
     '<article class="fb-card"><strong>🔥 ليالي القمة</strong><span>الكلاسيكو، ديربيات المدن، ومواجهات المنتخبات التاريخية.</span></article>'+
@@ -685,7 +685,38 @@ function renderFootballModule(tool){
     '<section class="fb-pane" data-pane="biggames"><h4 class="fb-subhead">أشهر القمم والديربيات</h4><div id="fbDerbies" class="fb-grid"></div><div class="notice">هذه قائمة بالمواجهات المعروفة تاريخياً، وليست جدول مباريات قادمة. مواعيد كل مواجهة تعتمد على جدول الموسم الرسمي.</div></section>'+
     '<section class="fb-pane" data-pane="clubs"><h4 class="fb-subhead">موسوعة الأندية والمنتخبات</h4><input id="fbClubSearch" class="fb-search" type="search" placeholder="ابحث عن نادٍ أو منتخب…"><div id="fbClubGroups"></div><h4 class="fb-subhead">موسوعة الألقاب والإنجازات</h4><div class="fb-grid"><article class="fb-card"><strong>ألقاب الأندية</strong><span>الدوري المحلي، الكأس، السوبر، دوري الأبطال القاري، البطولات العالمية.</span></article><article class="fb-card"><strong>ألقاب المنتخبات</strong><span>كأس العالم، كأس القارة، دوري الأمم، البطولات الإقليمية.</span></article><article class="fb-card"><strong>سجل الأساطير</strong><span>الهدافون التاريخيون، صناع اللعب، الحراس، والمدربون أصحاب الإنجازات.</span></article><article class="fb-card"><strong>مقارنة تاريخية</strong><span>مقارنة ناديين أو منتخبين من حيث الألقاب والمواجهات والأرقام عند توافر مصدر موثق.</span></article></div><div class="notice">الألقاب والسنوات والأعداد التفصيلية ستُعرض مع مصدر موثوق وتاريخ تحديث. هذه النسخة تعرض تصنيفاً للموسوعة ولا تخمّن أعداد البطولات.</div></section>'+
     '<section class="fb-pane" data-pane="popular"><h4 class="fb-subhead">الأندية الأكثر متابعة على منصات التواصل</h4><p class="fb-muted">لقطة مرجعية منشورة في مايو 2026، مجموع متابعي Facebook وInstagram وTikTok وYouTube وX؛ الأرقام بالمليون وتقريبية وليست عدّادات لحظية.</p><div id="fbSocial" class="fb-list"></div><p class="fb-muted">المصدر المرجعي: CIES Football Observatory، تقرير شعبية الأندية على الشبكات الاجتماعية، مايو 2026. تتغير الأرقام باستمرار.</p></section>'+
-    '<section class="fb-pane" data-pane="favorites"><h4 class="fb-subhead">فرقك ومنتخباتك المفضلة</h4><p class="fb-muted">أضف حتى 30 اسماً لتجهيز قائمة شخصية محفوظة على هذا الجهاز فقط.</p><div class="calc"><label>اسم النادي أو المنتخب<input id="fbFavoriteInput" maxlength="60" placeholder="مثال: ريال مدريد أو منتخب سوريا"></label></div><button class="btn" id="fbAddFavorite" type="button" style="margin-top:10px">＋ أضف إلى قائمتي</button><div id="fbFavoritesList" class="fb-list" style="margin-top:12px" aria-live="polite"></div><div class="notice">الحفظ محلي على هذا المتصفح، ولا تتم مزامنته بين الأجهزة أو الحسابات حالياً.</div></section>';
+    '<section class="fb-pane" data-pane="api">
+<h4 class="fb-subhead">🌐 مركز بيانات API-Football الشامل</h4>
+<p class="fb-muted">استكشف جميع مجموعات البيانات التي تدعمها الخدمة. اختر المصدر، ثم أدخل معرّفات البطولة أو الفريق أو اللاعب بحسب نوع البيانات. لا تُعرض إلا النتائج التي يعيدها المزود فعلياً.</p>
+<div class="fb-card" style="margin-bottom:12px">
+<label for="fbApiDataset">مجموعة البيانات</label>
+<select id="fbApiDataset" class="fb-search" style="margin-top:8px">
+<optgroup label="الدول والبطولات والمواسم">
+<option value="countries">الدول</option><option value="seasons">المواسم المتاحة</option><option value="timezones">المناطق الزمنية</option><option value="league_list">البطولات والدوريات والكؤوس</option><option value="rounds">مراحل وجولات البطولة</option><option value="standings">جداول الترتيب</option>
+</optgroup>
+<optgroup label="المباريات">
+<option value="fixture_list">قائمة المباريات والنتائج</option><option value="headtohead">المواجهات المباشرة H2H</option><option value="fixture_events">أحداث المباراة والبطاقات وVAR</option><option value="fixture_lineups">التشكيلات وخطط المدربين</option><option value="fixture_stats">إحصاءات المباراة</option><option value="fixture_players">إحصاءات وتقييمات اللاعبين بالمباراة</option>
+</optgroup>
+<optgroup label="الأندية والملاعب">
+<option value="team_list">الأندية والمنتخبات</option><option value="team_stats">إحصاءات الفريق في بطولة</option><option value="team_seasons">مواسم الفريق</option><option value="team_countries">دول الفرق</option><option value="venues">الملاعب والمدن والسعة</option>
+</optgroup>
+<optgroup label="اللاعبون والمدربون">
+<option value="players">ملفات اللاعبين وإحصائياتهم</option><option value="player_seasons">مواسم إحصائيات اللاعب</option><option value="squads">قوائم الفرق واللاعبين</option><option value="coaches">المدربون ومسيرتهم</option><option value="scorers">ترتيب الهدافين</option><option value="assists">ترتيب صناع الأهداف</option><option value="cards">ترتيب البطاقات</option><option value="transfers">الانتقالات</option><option value="trophies">سجل بطولات اللاعبين والمدربين</option><option value="sidelined">سجل الغياب والإبعاد</option><option value="injuries">الإصابات والإيقافات والشكوك</option>
+</optgroup>
+<optgroup label="التحليل والاحتمالات">
+<option value="predictions">توقعات المباراة والمقارنة الإحصائية</option><option value="odds">احتمالات ما قبل المباراة</option><option value="odds_live">احتمالات المباريات المباشرة</option><option value="odds_bets">أنواع أسواق الاحتمالات المباشرة</option><option value="bookmakers">شركات تقديم الاحتمالات</option><option value="odds_mapping">ربط المباريات ببيانات الاحتمالات</option>
+</optgroup>
+</select>
+<label for="fbApiParams">معايير البحث (حسب نوع البيانات)</label>
+<input id="fbApiParams" class="fb-search" type="text" placeholder="مثال: league=39&season=2025 أو fixture=123456" autocomplete="off">
+<p class="fb-muted">أمثلة: league=39&season=2025 · team=33 · player=276 · fixture=123456 · search=Messi · country=England · h2h=33-34. بعض الأقسام تتطلب أكثر من معيار.</p>
+<div class="panel-actions"><button class="btn" id="fbApiRun" type="button">اجلب البيانات من API-Football</button><button class="btn secondary" id="fbApiClear" type="button">مسح النتائج</button></div>
+<div class="notice" id="fbApiStatus" role="status">اختر مجموعة بيانات وأدخل المعايير المناسبة لبدء الاستعلام.</div>
+</div>
+<div id="fbApiResults" class="fb-grid" aria-live="polite"></div>
+<details class="fb-card" style="margin-top:12px"><summary>معلومات الاستجابة الخام من المزود</summary><pre id="fbApiRaw" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:420px;overflow:auto;color:#cbd8e8;font-size:11px"></pre></details>
+<p class="fb-muted">تنبيه: API-Football لا يضمن وجود كل أنواع البيانات لكل بطولة أو موسم. تقييم اللاعب قد لا يتوفر في بعض المباريات. بيانات الجوائز هنا هي سجل البطولات/المراكز التي يقدمها المصدر، وليست قاعدة شاملة للجوائز الفردية مثل الكرة الذهبية.</p>
+</section><section class="fb-pane" data-pane="favorites"><h4 class="fb-subhead">فرقك ومنتخباتك المفضلة</h4><p class="fb-muted">أضف حتى 30 اسماً لتجهيز قائمة شخصية محفوظة على هذا الجهاز فقط.</p><div class="calc"><label>اسم النادي أو المنتخب<input id="fbFavoriteInput" maxlength="60" placeholder="مثال: ريال مدريد أو منتخب سوريا"></label></div><button class="btn" id="fbAddFavorite" type="button" style="margin-top:10px">＋ أضف إلى قائمتي</button><div id="fbFavoritesList" class="fb-list" style="margin-top:12px" aria-live="polite"></div><div class="notice">الحفظ محلي على هذا المتصفح، ولا تتم مزامنته بين الأجهزة أو الحسابات حالياً.</div></section>';
   tool.appendChild(wrap);
   // OFOQ FOOTBALL GALAXY: cinematic, fully clickable branch gateway.
   if(!wrap.querySelector('.fb-cinema')){
@@ -793,6 +824,54 @@ function renderFootballModule(tool){
     if(!response.ok)throw new Error(data.error||'تعذر جلب البيانات الرياضية.');
     return data;
   }
+  const apiDatasetLabels={
+    countries:'الدول',seasons:'المواسم المتاحة',timezones:'المناطق الزمنية',league_list:'البطولات والدوريات والكؤوس',rounds:'جولات البطولة',standings:'جداول الترتيب',
+    fixture_list:'المباريات والنتائج',headtohead:'المواجهات المباشرة',fixture_events:'أحداث المباراة',fixture_lineups:'التشكيلات وخطط المدربين',fixture_stats:'إحصاءات المباراة',fixture_players:'تقييمات وإحصاءات اللاعبين',
+    team_list:'الأندية والمنتخبات',team_stats:'إحصاءات الفريق',team_seasons:'مواسم الفريق',team_countries:'دول الفرق',venues:'الملاعب',
+    players:'ملفات اللاعبين وإحصائياتهم',player_seasons:'مواسم اللاعب',squads:'قوائم الفرق واللاعبين',coaches:'المدربون',scorers:'الهدافون',assists:'صناع الأهداف',cards:'البطاقات',transfers:'الانتقالات',trophies:'سجل البطولات',sidelined:'الغياب والإبعاد',injuries:'الإصابات والإيقافات',
+    predictions:'توقعات المباراة',odds:'احتمالات ما قبل المباراة',odds_live:'الاحتمالات المباشرة',odds_bets:'أسواق الاحتمالات',bookmakers:'شركات تقديم الاحتمالات',odds_mapping:'ربط المباريات بالاحتمالات'
+  };
+  async function runApiCatalog(){
+    const dataset=$('fbApiDataset')?.value||'';
+    const raw=$('fbApiParams')?.value.trim()||'';
+    const status=$('fbApiStatus'),results=$('fbApiResults'),rawBox=$('fbApiRaw');
+    results.replaceChildren();rawBox.textContent='';status.textContent='جارٍ الاتصال بمصدر '+(apiDatasetLabels[dataset]||dataset)+'…';
+    const values={dataset};
+    if(raw){
+      try{
+        const parsed=new URLSearchParams(raw.replace(/^\?/,''));
+        parsed.forEach((value,key)=>{if(!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(key))throw new Error('اسم معيار بحث غير صالح.');values[key]=value;});
+      }catch(error){status.textContent=error.message||'صيغة معايير البحث غير صحيحة.';return;}
+    }
+    try{
+      const data=await footballRequest('catalog',values);
+      const rows=Array.isArray(data.response)?data.response:[];
+      rawBox.textContent=JSON.stringify(data,null,2);
+      status.textContent='اكتمل الاستعلام · '+(data.results??rows.length)+' نتيجة · '+(data.cached?'من الذاكرة المؤقتة':'استجابة جديدة')+' · '+new Date(data.fetchedAt||Date.now()).toLocaleString('ar-SY');
+      if(!rows.length){results.append(node('div','لم يُرجع المصدر بيانات لهذا الاستعلام. جرّب تغيير المعرّف أو الموسم، أو تحقق من تغطية البطولة وخطتك.','fb-note'));return;}
+      rows.slice(0,60).forEach((item,index)=>{
+        const title=item.league?.name||item.team?.name||item.player?.name||item.name||item.country?.name||item.venue?.name||item.fixture?.id||item.id||('نتيجة '+(index+1));
+        const card=node('article',undefined,'fb-card');
+        card.append(node('strong',String(title)));
+        const details=[];
+        if(item.country?.name)details.push(item.country.name);
+        if(item.league?.name&&item.league.name!==title)details.push(item.league.name);
+        if(item.season?.year)details.push('موسم '+item.season.year);
+        if(item.team?.name&&item.team.name!==title)details.push(item.team.name);
+        if(item.fixture?.date)details.push(new Date(item.fixture.date).toLocaleString('ar-SY'));
+        if(item.venue?.name)details.push('الملعب: '+item.venue.name);
+        if(item.venue?.capacity)details.push('السعة: '+Number(item.venue.capacity).toLocaleString('ar'));
+        if(item.statistics?.[0]?.games?.rating)details.push('التقييم: '+item.statistics[0].games.rating);
+        card.append(node('small',details.join(' · ')||'تفاصيل إضافية ضمن الاستجابة الخام.'));
+        const pre=node('pre',JSON.stringify(item,null,2));pre.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere;max-height:180px;overflow:auto;font-size:10px;color:#b9c9dc;margin-top:8px';
+        card.append(pre);results.append(card);
+      });
+      if(rows.length>60)status.textContent+=' · يعرض أول 60 عنصراً من أصل '+rows.length+'.';
+    }catch(error){status.textContent=error.message||'تعذر استرجاع البيانات. تحقق من المفتاح وحدود الاشتراك ومعايير البحث.';}
+  }
+  $('fbApiRun')?.addEventListener('click',runApiCatalog);
+  $('fbApiParams')?.addEventListener('keydown',e=>{if(e.key==='Enter')runApiCatalog();});
+  $('fbApiClear')?.addEventListener('click',()=>{$('fbApiResults').replaceChildren();$('fbApiRaw').textContent='';$('fbApiStatus').textContent='تم مسح النتائج المعروضة.';});
   function showPane(name,skipLoad=false){
     wrap.querySelectorAll('.fb-tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===name));
     wrap.querySelectorAll('.fb-pane').forEach(x=>x.classList.toggle('active',x.dataset.pane===name));
@@ -1342,6 +1421,7 @@ function renderFootballModule(tool){
     {title:'كشاف المواهب',desc:'أنشئ بطاقة تقييم واكتشاف لاعب',icon:'🔎',photo:'photo-1517466787929-bc90951d0974',branches:[['scout','بطاقة كشاف المواهب','extra']]},
     {title:'نبض الجماهير',desc:'شارك في تصويت تفاعلي تجريبي',icon:'📣',photo:'photo-1518604666860-9ed391f76460',branches:[['fans','تصويت الجمهور','extra']]},
     {title:'ذاكرة الملاعب وهوية المشجع',desc:'وثّق لحظاتك وأنشئ جوازك الكروي',icon:'🎬',photo:'photo-1508098682722-e99c43a406b2',branches:[['moments','ذاكرة المباراة والخط الزمني','extra'],['passport','جواز المشجع','extra']]},
+    {title:'موسوعة API-Football الشاملة',desc:'استكشف جميع قواعد بيانات المباريات واللاعبين والأندية والإحصائيات والاحتمالات',icon:'🌐',photo:'photo-1518091043644-c1d4457512c6',branches:[['api','مركز بيانات API-Football الشامل','tab']]},
     {title:'أكاديمية أُفُق',desc:'تعلم قوانين اللعبة واختبر معلوماتك',icon:'🎓',photo:'photo-1461896836934-905e1c4c147a',branches:[['academy','اختبارات وأكاديمية كرة القدم','extra']]}
   ];
   function openFootballBranch(id,type){
