@@ -130,7 +130,7 @@ require("ofoq_ecommerce_products_v1" in operations and "ofoq_ecommerce_orders_v1
 require("ofoq-ecom-import-file" in ecommerce and "استيراد نسخة الكتالوج والطلبات" in ecommerce, "merchant backup import and restore control missing")
 require("commerceBackup" in (ROOT / "tests/browser-smoke.mjs").read_text(encoding="utf-8"), "browser suite must exercise merchant backup restore")
 require("reserved+qty>productRow.stock" in ecommerce and "button(\"تعديل\"" in ecommerce, "merchant stock reservation and product editing checks missing")
-require('["new","processing","shipped"].includes(x.status)' in ecommerce and "بعد التسليم حدّث المخزون يدوياً" in ecommerce, "delivered orders must release reservations for manual stock reconciliation")
+require('x.status!=="cancelled"' in ecommerce and "بعد التسليم حدّث المخزون يدوياً" in ecommerce, "all non-cancelled orders, including delivered orders, must remain allocated until manual stock reconciliation")
 require("commerceProducts" in operations and "commerceOrders" in operations, "merchant records missing from unified backup snapshot")
 require("ls.commerceProducts.length<=500" in operations and "ls.commerceOrders.length<=1000" in operations, "cloud backup must validate merchant snapshot bounds and records")
 require("منتجات المتجر" in operations and "طلبات المتجر" in operations, "merchant data indicators missing from linked dashboard")
