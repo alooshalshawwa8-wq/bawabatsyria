@@ -43,6 +43,22 @@ try {
   await page.keyboard.press("Escape");
   await commandDialog.waitFor({ state: "hidden", timeout: 5000 });
 
+  const personalSpace = page.locator("#ofoq-personal-space");
+  await personalSpace.waitFor({ state: "visible", timeout: 5000 });
+  const favoriteCurrent = page.locator("#ofoq-favorite-current");
+  await favoriteCurrent.waitFor({ state: "visible", timeout: 5000 });
+  const lastVisitedTitle = (await page.locator("#detailTitle").innerText()).trim();
+  await favoriteCurrent.click();
+  if (await favoriteCurrent.getAttribute("aria-pressed") !== "true") throw new Error("Favorite toggle did not activate");
+  await personalSpace.locator('[data-ofoq-view="favorites"]').click();
+  const favoriteTiles = page.locator("#sectionsGrid .tile:visible");
+  if (await favoriteTiles.count() !== 1) throw new Error("Favorites filter should show exactly one saved section");
+  if (!(await favoriteTiles.first().innerText()).includes(lastVisitedTitle)) throw new Error("Favorite filter showed the wrong section");
+  await personalSpace.locator('[data-ofoq-view="recent"]').click();
+  if (!(await page.locator("#ofoq-recent-links").innerText()).includes(lastVisitedTitle)) throw new Error("Recent visits did not record the last opened section");
+  await personalSpace.locator('[data-ofoq-view="all"]').click();
+  if (await page.locator("#sectionsGrid .tile:visible").count() !== 78) throw new Error("Returning to all sections did not restore the full catalogue");
+
   await page.evaluate(async () => {
     const commerce = window.BAWABA_SECTIONS.find(item => item.id === "ecommerce_studio");
     await window.openSection(commerce);
@@ -143,7 +159,7 @@ try {
   if (widthCheck.document > widthCheck.viewport + 2) throw new Error("Horizontal overflow on mobile: " + JSON.stringify(widthCheck));
 
   if (pageErrors.length) throw new Error("Uncaught browser errors: " + pageErrors.join(" | "));
-  console.log("PASS: " + sections.length + " section workspaces, command-center keyboard controls, Operations Hub tabs and CRUD, local JSON export, cloud-backup guardrails, and mobile overflow check.");
+  console.log("PASS: " + sections.length + " section workspaces, command-center keyboard controls, local favorites/recent filters, Operations Hub tabs and CRUD, local JSON export, cloud-backup guardrails, and mobile overflow check.");
   console.log("External requests blocked during test: " + [...new Set(externalRequests)].join(", "));
 } finally {
   await context.close();
