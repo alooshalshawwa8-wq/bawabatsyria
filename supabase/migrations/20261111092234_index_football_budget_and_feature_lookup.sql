@@ -1,2 +1,0 @@
-create index if not exists platform_plan_features_feature_code_idx on public.platform_plan_features(feature_code);
-create index if not exists football_api_budget_reservations_reserved_at_idx on public.football_api_budget_reservations(reserved_at);
