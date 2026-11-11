@@ -63,7 +63,7 @@ Deno.serve(async (request: Request) => {
       const from = url.searchParams.get("from") ?? "";
       const to = url.searchParams.get("to") ?? "";
       const page = url.searchParams.get("page") ?? "1";
-      if (!/^\\d+$/.test(league) || !/^20\\d{2}$/.test(season) || !/^\\d+$/.test(page)) {
+      if (!/^\d+$/.test(league) || !/^20\d{2}$/.test(season) || !/^\d+$/.test(page)) {
         return reply({ error: "معرّف البطولة أو الموسم أو الصفحة غير صالح." }, 400);
       }
       if ((from && !validDate(from)) || (to && !validDate(to)) || (from && to && from > to)) {
@@ -86,7 +86,7 @@ Deno.serve(async (request: Request) => {
     endpoint = "teams";
     const league = url.searchParams.get("league") ?? "";
     const season = url.searchParams.get("season") ?? "";
-    if (!/^\\d+$/.test(league) || !/^20\\d{2}$/.test(season)) {
+    if (!/^\d+$/.test(league) || !/^20\d{2}$/.test(season)) {
       return reply({ error: "معرّف البطولة أو الموسم غير صالح." }, 400);
     }
     params.set("league", league);
