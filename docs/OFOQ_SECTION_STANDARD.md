@@ -67,3 +67,15 @@ The frontend maps section IDs to a fixed set of trusted specialist profiles. The
 - This is a frontend-only accessibility improvement; no API, provider quota, database, or secrets were changed.
 - Commit: a32ac4700ef0eed839388dd4913db761b57f6e4b.
 - Verification: source saved to GitHub main; browser and screen-reader interaction testing remains pending.
+
+
+## Specialized business and trading knowledge tracks — 2026-11-11
+
+Added first-match specialized knowledge profiles ahead of the broad category profiles in `OFOQ_SECTION_STUDIOS`:
+- `ecommerce_studio`: product presentation, full-cost pricing and contribution margin, order operations, and conversion measurement.
+- `trading_academy`: market structure, technical-analysis literacy, position sizing and risk, and paper-trading journals. Explicitly educational; no buy/sell recommendations.
+- `trader_market`: construction-material catalog units, quantity/waste estimates, landed procurement cost, and quotation terms.
+- `accounting_vip`: bookkeeping separation, pricing and margin, stock movement, and operating reports.
+- Business/startup/freelance/jobs/directory/marketplace sections receive a dedicated customer, revenue-model, acquisition, and operations profile.
+
+Implementation is front-end content only. No API, Supabase, database, provider key, quota, or external request behavior changed. Existing utility modules and tools were not replaced. The specialized profiles use the existing knowledge-studio renderer and local workspace. Validation is source-level only; no live browser, accessibility, or end-to-end tests were run. GitHub Pages deployment is not asserted.
