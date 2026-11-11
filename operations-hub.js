@@ -71,7 +71,14 @@ const tab=(id,label)=>{const t=btn(label,()=>activate(id),"oph-tab");t.dataset.p
 const field=(p,label,name,type="text",opts=[])=>{const w=el("label","oph-field",label);let x;if(type==="select"){x=el("select");opts.forEach(([v,l])=>{const o=el("option","",l);o.value=v;x.append(o);});}else{x=el("input");x.type=type;if(type==="number"){x.min="0";x.step="any";}}x.name=name;w.append(x);p.append(w);return x;};
 const actions=(p,...nodes)=>{const r=el("div","oph-actions");nodes.forEach(n=>r.append(n));p.append(r);};
 const showEmpty=(p,msg)=>p.append(el("div","oph-empty",msg));
-const persist=()=>{try{const previous=localStorage.getItem(KEY);if(previous!==null){try{localStorage.setItem(RECOVERY_KEY,JSON.stringify({savedAt:new Date().toISOString(),data:JSON.parse(previous)}));}catch(_){status.textContent="تعذر إنشاء نقطة الاستعادة؛ لم يتم تغيير السجل الحالي.";return false;}}localStorage.setItem(KEY,JSON.stringify(data));render();status.textContent="تم الحفظ مع نقطة استعادة محلية.";return true;}catch(_){status.textContent="تعذر الحفظ؛ لم يتم تأكيد التغيير. صدّر نسخة احتياطية.";return false;}};
+const persist=()=>{
+ let previous=null;
+ try{previous=localStorage.getItem(KEY);}catch(_){status.textContent="تعذر قراءة السجل السابق؛ لم يتم اعتماد التغيير.";return false;}
+ const rollback=()=>{try{data=previous===null?empty():clean(JSON.parse(previous));}catch(_){data=empty();}render();};
+ if(previous!==null){try{localStorage.setItem(RECOVERY_KEY,JSON.stringify({savedAt:new Date().toISOString(),data:JSON.parse(previous)}));}catch(_){rollback();status.textContent="تعذر إنشاء نقطة الاستعادة؛ أُعيدت البيانات إلى حالتها السابقة.";return false;}}
+ try{localStorage.setItem(KEY,JSON.stringify(data));render();status.textContent="تم الحفظ مع نقطة استعادة محلية.";return true;}
+ catch(_){rollback();status.textContent="تعذر الحفظ؛ أُعيدت البيانات إلى الحالة السابقة. صدّر نسخة احتياطية.";return false;}
+};
 const record=(title,detail,buttons)=>{const r=el("article","oph-item"),left=el("div","");left.append(el("strong","",title),el("small","",detail));r.append(left,buttons);return r;};
 const metric=(label,value)=>{const m=el("div","oph-metric");m.append(el("small","",label),el("strong","",value));metrics.append(m);};
 const projectList=el("div","oph-list"),taskList=el("div","oph-list"),txList=el("div","oph-list");
