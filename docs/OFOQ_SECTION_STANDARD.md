@@ -57,3 +57,13 @@ The frontend maps section IDs to a fixed set of trusted specialist profiles. The
 - No Gemini or API-Football request was sent during this code change.
 - Commit: 281f826723130844a00aab6ad4a0ea4e7b6fb68c.
 - Verification: source change saved to GitHub main; runtime/browser behavior remains untested pending a safe browser test.
+
+
+## 2026-11-11 — Accessible section workspace tabs
+
+- Improved the shared workspace tabs used across section pages with semantic tablist, tab, and tabpanel roles.
+- Added selected-state and panel relationships for assistive technologies, and keyboard navigation using Left/Right arrows plus Home/End.
+- Kept the existing tools, knowledge studio, task checklist, notes, local persistence, and section-specific renderers intact.
+- This is a frontend-only accessibility improvement; no API, provider quota, database, or secrets were changed.
+- Commit: a32ac4700ef0eed839388dd4913db761b57f6e4b.
+- Verification: source saved to GitHub main; browser and screen-reader interaction testing remains pending.
