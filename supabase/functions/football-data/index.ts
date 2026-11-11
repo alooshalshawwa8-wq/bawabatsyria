@@ -66,7 +66,7 @@ async function persistentCacheSet(key: string, endpoint: string, payload: unknow
 }
 async function recordProviderUsage(row: {
   endpoint: string; cacheKey: string; status: number; errors?: unknown;
-  responseCount?: number; remaining?: number | null; limit?: number | null; durationMs: number;
+  responseCount?: number; remaining?: number | null; limit?: number | null; minuteRemaining?: number | null; minuteLimit?: number | null; durationMs: number;
 }) {
   try {
     await dbRest("football_api_usage", {
@@ -76,6 +76,7 @@ async function recordProviderUsage(row: {
         endpoint: row.endpoint, cache_key: row.cacheKey, http_status: row.status,
         provider_errors: row.errors ?? null, response_count: row.responseCount ?? null,
         requests_remaining: row.remaining ?? null, requests_limit: row.limit ?? null,
+        minute_remaining: row.minuteRemaining ?? null, minute_limit: row.minuteLimit ?? null,
         duration_ms: row.durationMs
       })
     });
@@ -244,14 +245,20 @@ async function providerFetch(path: string, query: Record<string,string>, ttl: nu
   }
   const remainingHeader = upstream.headers.get("x-ratelimit-requests-remaining");
   const limitHeader = upstream.headers.get("x-ratelimit-requests-limit");
+  const minuteRemainingHeader = upstream.headers.get("x-ratelimit-remaining");
+  const minuteLimitHeader = upstream.headers.get("x-ratelimit-limit");
   const remaining = remainingHeader === null ? null : Number(remainingHeader);
   const limit = limitHeader === null ? null : Number(limitHeader);
+  const minuteRemaining = minuteRemainingHeader === null ? null : Number(minuteRemainingHeader);
+  const minuteLimit = minuteLimitHeader === null ? null : Number(minuteLimitHeader);
   await recordProviderUsage({
     endpoint: path, cacheKey, status: upstream.status,
     errors: hasProviderErrors(data.errors) ? data.errors : null,
     responseCount: Array.isArray(data.response) ? data.response.length : 0,
     remaining: Number.isFinite(remaining) ? remaining : null,
     limit: Number.isFinite(limit) ? limit : null,
+    minuteRemaining: Number.isFinite(minuteRemaining) ? minuteRemaining : null,
+    minuteLimit: Number.isFinite(minuteLimit) ? minuteLimit : null,
     durationMs: Date.now()-started
   });
   if (!upstream.ok || hasProviderErrors(data.errors)) {
