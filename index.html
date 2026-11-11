@@ -794,7 +794,8 @@ function renderFootballModule(tool){
   }
 
   const $=id=>wrap.querySelector('#'+id);
-  const damascusToday=()=>{const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Damascus',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).reduce((o,x)=>(o[x.type]=x.value,o),{});return p.year+'-'+p.month+'-'+p.day;};
+  const damascusDateOffset=(days=0)=>{const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Damascus',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).reduce((o,x)=>(o[x.type]=x.value,o),{});const d=new Date(Date.UTC(Number(p.year),Number(p.month)-1,Number(p.day)+days));return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0');};
+  const damascusToday=()=>damascusDateOffset(0);
   wrap.querySelectorAll('.fb-tab').forEach(btn=>btn.addEventListener('click',()=>{
     wrap.querySelectorAll('.fb-tab').forEach(x=>x.classList.toggle('active',x===btn));
     wrap.querySelectorAll('.fb-pane').forEach(x=>x.classList.toggle('active',x.dataset.pane===btn.dataset.tab));
@@ -1292,8 +1293,8 @@ function renderFootballModule(tool){
     const selected=archiveSeasons.find(item=>Number(item.year)===Number(season));
     renderArchiveHistory(selected);
     const isCurrent=Boolean(selected?.current);
-    const from=isCurrent?new Date(now.getTime()-7*86400000).toISOString().slice(0,10):(selected?.start||'');
-    const toDate=isCurrent?new Date(now.getTime()+60*86400000).toISOString().slice(0,10):(selected?.end||'');
+    const from=isCurrent?damascusDateOffset(-7):(selected?.start||'');
+    const toDate=isCurrent?damascusDateOffset(60):(selected?.end||'');
     const data=await footballRequest('fixtures',{mode:'season',league:archiveLeague.id,season,from,to:toDate,page});
     if(replace)box.replaceChildren();
     const fixtures=data.response||[];
