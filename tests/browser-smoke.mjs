@@ -152,6 +152,30 @@ try {
   await merchant.getByText("OFOQ TEMP Product").waitFor({ state: "detached" });
   await merchant.getByText("OFOQ Browser Test Product").waitFor({ state: "visible" });
 
+  await page.evaluate(() => {
+    localStorage.setItem("bawabatsyria_stock_v1", JSON.stringify([
+      { name: "OFOQ Cent Precision Test", qty: 5, cost: 2, sale: 3, min: 0 }
+    ]));
+  });
+  await page.evaluate(async () => {
+    const accounting = window.BAWABA_SECTIONS.find(item => item.id === "accounting_vip");
+    await window.openSection(accounting);
+  });
+  await page.getByText("دفتر المبيعات والمشتريات").waitFor({ state: "visible", timeout: 10000 });
+  await page.getByLabel("الكمية").fill("1");
+  await page.getByLabel("سعر الوحدة").fill("1.239");
+  await page.getByLabel("المبلغ المدفوع").fill("0");
+  await page.getByLabel("حالة الدفع").selectOption("unpaid");
+  await page.getByRole("button", { name: "حفظ العملية" }).click();
+  await page.getByText(/العملة تقبل منزلتين عشريتين فقط/).waitFor({ state: "visible" });
+  const rejectedTrade = await page.evaluate(() => JSON.parse(localStorage.getItem("bawabatsyria_trade_ledger_v1") || "[]").length);
+  if (rejectedTrade !== 0) throw new Error("Sub-cent unit price was incorrectly recorded");
+  await page.getByLabel("سعر الوحدة").fill("1.23");
+  await page.getByRole("button", { name: "حفظ العملية" }).click();
+  await page.getByText("حُفظت العملية وتم تحديث رصيد المخزون.").waitFor({ state: "visible" });
+  const centTrade = await page.evaluate(() => JSON.parse(localStorage.getItem("bawabatsyria_trade_ledger_v1") || "[]"));
+  if (centTrade.length !== 1 || centTrade[0].total !== 1.23) throw new Error("Cent-precision trade was not saved correctly");
+
   await page.evaluate(async () => {
     const business = window.BAWABA_SECTIONS.find(item => item.id === "business");
     await window.openSection(business);
