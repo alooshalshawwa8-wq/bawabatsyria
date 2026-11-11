@@ -678,7 +678,7 @@ function render(list){
   const remaining=list.filter(sec=>!assigned.has(sec.id));
   if(remaining.length){const heading=document.createElement('h3');heading.className='catalog-group-heading';heading.textContent='موسوعات وأدلة إضافية';grid.appendChild(heading);remaining.forEach(appendTile);}
   function appendTile(sec){
-    const b=document.createElement('button');b.className='tile';b.type='button';b.setAttribute('aria-label','افتح قسم '+sec.title);
+    const b=document.createElement('button');b.className='tile';b.type='button';b.dataset.ofoqSectionId=sec.id;b.setAttribute('aria-label','افتح قسم '+sec.title);
     const icon=document.createElement('div');icon.className='ico';icon.textContent=sec.icon;
     const h=document.createElement('h3');h.textContent=sec.title;
     const p=document.createElement('p');p.textContent=sec.desc;
