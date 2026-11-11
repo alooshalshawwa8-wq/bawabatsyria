@@ -243,3 +243,6 @@ All inventory data remains in browser localStorage on the current device. No API
 - Cloud snapshots are stored as JSON in the database and are protected by Supabase RLS, but are not end-to-end encrypted by the browser. Do not upload secrets or data you do not want stored in the cloud.
 - This is manual backup/restore, not continuous cross-device synchronization. No Gemini or API-Football requests are used.
 - Migration: `20261111160644_user_workspace_backup_vault.sql`. CI checks the frontend contract and migration security markers; the service-worker cache is advanced to v29.
+
+- Reliability refinement: failed local writes now roll back the in-memory Operations Hub state to the last persisted version; failed recovery-point creation also prevents the attempted write. The privacy center explains manual cloud backup, RLS ownership and the absence of browser-side end-to-end encryption.
+- Advanced the service-worker cache to v30 so installed clients fetch the updated Operations Hub and privacy disclosure.
