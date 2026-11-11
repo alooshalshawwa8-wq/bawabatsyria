@@ -305,13 +305,18 @@ try {
   await hub.getByRole("button", { name: "إنشاء نسخة سحابية الآن" }).click();
   await hub.locator(".oph-cloud-panel .oph-status").getByText(/سجّل الدخول أولاً/).waitFor({ state: "visible" });
   const cloudPanel = hub.locator(".oph-cloud-panel");
-  await cloudPanel.locator('input[name="cloud-email"]').fill("");
-  await cloudPanel.locator('input[name="cloud-password"]').fill("");
+  const cloudEmail = cloudPanel.locator('input[name="cloud-email"]');
+  const cloudPassword = cloudPanel.locator('input[name="cloud-password"]');
+  await cloudEmail.evaluate(el => { el.value = ""; el.dispatchEvent(new Event("input", { bubbles: true })); });
+  await cloudPassword.evaluate(el => { el.value = ""; el.dispatchEvent(new Event("input", { bubbles: true })); });
+  const emptyCloudCredentials = await Promise.all([cloudEmail.inputValue(), cloudPassword.inputValue()]);
+  if (emptyCloudCredentials.some(Boolean)) throw new Error("Cloud credential fields were not empty before local validation");
   await cloudPanel.getByRole("button", { name: "تسجيل الدخول" }).click();
   const cloudStatus = cloudPanel.locator(".oph-status");
   await cloudStatus.getByText(/تعذر تسجيل الدخول/).waitFor({ state: "visible" });
-  if (!(await cloudStatus.innerText()).includes("أدخل البريد الإلكتروني وكلمة المرور")) {
-    throw new Error("Cloud login did not reject empty credentials locally");
+  const cloudStatusText = await cloudStatus.textContent() || "";
+  if (!cloudStatusText.includes("أدخل البريد الإلكتروني وكلمة المرور")) {
+    throw new Error("Cloud login empty-credential validation mismatch: " + cloudStatusText);
   }
 
   await page.setViewportSize({ width: 390, height: 844 });
