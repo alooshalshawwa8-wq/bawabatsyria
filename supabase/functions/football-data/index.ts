@@ -23,6 +23,128 @@ function rateAllowed(ip: string) {
   requests.set(ip, recent);
   return true;
 }
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_SECRET_KEY") ?? "";
+type FetchTracker = { upstreamCalls: number; cacheHits: number };
+async function dbRest(path: string, init: RequestInit = {}) {
+  if (!SUPABASE_URL || !SERVICE_KEY) throw new Error("Persistent storage credentials unavailable");
+  return await fetch(SUPABASE_URL + "/rest/v1/" + path, {
+    ...init,
+    headers: {
+      "apikey": SERVICE_KEY,
+      "Authorization": "Bearer " + SERVICE_KEY,
+      "Content-Type": "application/json",
+      ...(init.headers ?? {}),
+    },
+  });
+}
+async function persistentCacheGet(key: string): Promise<unknown | null> {
+  try {
+    const response = await dbRest("football_api_cache?cache_key=eq." + encodeURIComponent(key) + "&select=payload,expires_at&limit=1");
+    if (!response.ok) return null;
+    const rows = await response.json();
+    if (!Array.isArray(rows) || !rows[0]) return null;
+    if (Date.parse(rows[0].expires_at) <= Date.now()) return null;
+    return rows[0].payload;
+  } catch { return null; }
+}
+async function persistentCacheSet(key: string, endpoint: string, payload: unknown, ttl: number) {
+  try {
+    await dbRest("football_api_cache?on_conflict=cache_key", {
+      method: "POST",
+      headers: { "Prefer": "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify({
+        cache_key: key, endpoint, payload,
+        expires_at: new Date(Date.now() + ttl).toISOString(),
+        updated_at: new Date().toISOString()
+      })
+    });
+  } catch (error) { console.error("Football persistent cache write failed", String(error).slice(0,160)); }
+}
+async function recordProviderUsage(row: {
+  endpoint: string; cacheKey: string; status: number; errors?: unknown;
+  responseCount?: number; remaining?: number | null; limit?: number | null; durationMs: number;
+}) {
+  try {
+    await dbRest("football_api_usage", {
+      method: "POST",
+      headers: { "Prefer": "return=minimal" },
+      body: JSON.stringify({
+        endpoint: row.endpoint, cache_key: row.cacheKey, http_status: row.status,
+        provider_errors: row.errors ?? null, response_count: row.responseCount ?? null,
+        requests_remaining: row.remaining ?? null, requests_limit: row.limit ?? null,
+        duration_ms: row.durationMs
+      })
+    });
+  } catch (error) { console.error("Football usage log failed", String(error).slice(0,160)); }
+}
+async function hashClientKey(value: string) {
+  const bytes = new TextEncoder().encode(value || "unknown");
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest)).map(x => x.toString(16).padStart(2,"0")).join("");
+}
+async function persistentRateAllowed(bucket: string, maxRequests = 60): Promise<boolean> {
+  try {
+    const response = await dbRest("rpc/football_rate_limit_hit", {
+      method: "POST", body: JSON.stringify({ p_bucket_key: bucket, p_window_seconds: 60, p_max_requests: maxRequests })
+    });
+    if (!response.ok) return true;
+    const count = Number(await response.json());
+    return count <= maxRequests;
+  } catch { return true; }
+}
+async function providerFetch(path: string, query: Record<string,string>, ttl: number, tracker: FetchTracker) {
+  const params = new URLSearchParams(query);
+  const cacheKey = path + "?" + params.toString();
+  const local = cache.get("provider:" + cacheKey);
+  if (local && local.until > Date.now()) { tracker.cacheHits++; return local.data as Record<string, any>; }
+  const persisted = await persistentCacheGet(cacheKey);
+  if (persisted && typeof persisted === "object") {
+    tracker.cacheHits++;
+    cache.set("provider:" + cacheKey, { until: Date.now() + Math.min(ttl, 60_000), data: persisted });
+    return persisted as Record<string, any>;
+  }
+  const started = Date.now();
+  tracker.upstreamCalls++;
+  let upstream: Response;
+  let data: Record<string, any>;
+  try {
+    upstream = await fetch("https://v3.football.api-sports.io/" + path + (params.size ? "?" + params.toString() : ""), {
+      headers: { "x-apisports-key": Deno.env.get("API_FOOTBALL_KEY") ?? "", "Accept": "application/json" }
+    });
+    data = await upstream.json().catch(() => ({}));
+  } catch (error) {
+    await recordProviderUsage({ endpoint: path, cacheKey, status: 0, errors: String(error).slice(0,300), durationMs: Date.now()-started });
+    throw error;
+  }
+  const remainingHeader = upstream.headers.get("x-ratelimit-requests-remaining");
+  const limitHeader = upstream.headers.get("x-ratelimit-requests-limit");
+  const remaining = remainingHeader === null ? null : Number(remainingHeader);
+  const limit = limitHeader === null ? null : Number(limitHeader);
+  await recordProviderUsage({
+    endpoint: path, cacheKey, status: upstream.status,
+    errors: Array.isArray(data.errors) && data.errors.length ? data.errors : null,
+    responseCount: Array.isArray(data.response) ? data.response.length : 0,
+    remaining: Number.isFinite(remaining) ? remaining : null,
+    limit: Number.isFinite(limit) ? limit : null,
+    durationMs: Date.now()-started
+  });
+  if (!upstream.ok || (Array.isArray(data.errors) && data.errors.length)) {
+    const err = new Error(path + " returned " + upstream.status);
+    (err as any).status = upstream.status;
+    throw err;
+  }
+  const result = {
+    response: Array.isArray(data.response) ? data.response : [],
+    results: Number(data.results ?? 0), paging: data.paging ?? null,
+    provider: "API-Football", fetchedAt: new Date().toISOString(), cached: false
+  };
+  cache.set("provider:" + cacheKey, { until: Date.now() + Math.min(ttl, 60_000), data: result });
+  await persistentCacheSet(cacheKey, path, result, ttl);
+  return result;
+}
+
 function validDate(value: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value + "T00:00:00Z"));
 }
@@ -37,13 +159,23 @@ Deno.serve(async (request: Request) => {
   if (request.method !== "GET") return reply({ error: "Method not allowed" }, 405);
 
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (!rateAllowed(ip)) return reply({ error: "تم تجاوز عدد الطلبات المؤقت. حاول بعد دقيقة." }, 429);
+  if (!rateAllowed(ip) || !(await persistentRateAllowed(await hashClientKey(ip), 60))) return reply({ error: "تم تجاوز عدد الطلبات المؤقت. حاول بعد دقيقة." }, 429);
+  const tracker: FetchTracker = { upstreamCalls: 0, cacheHits: 0 };
 
   const apiKey = Deno.env.get("API_FOOTBALL_KEY") ?? "";
   const url = new URL(request.url);
   const action = url.searchParams.get("action") ?? "status";
   if (action === "status") {
     return reply({ provider: "API-Football", configured: Boolean(apiKey), message: apiKey ? "مزود البيانات جاهز." : "أضف API_FOOTBALL_KEY إلى أسرار Supabase لتفعيل البيانات." });
+  }
+  if (action === "usage") {
+    try {
+      const response = await dbRest("rpc/football_api_usage_summary", { method: "POST", body: "{}" });
+      if (!response.ok) throw new Error("Usage summary unavailable");
+      return reply({ provider: "API-Football", configured: Boolean(apiKey), ...await response.json() });
+    } catch {
+      return reply({ error: "تعذر قراءة لوحة استهلاك المزود حالياً." }, 503);
+    }
   }
   if (!apiKey) return reply({ error: "لم تتم إضافة مفتاح مزود البيانات إلى إعدادات الخادم بعد.", code: "PROVIDER_NOT_CONFIGURED" }, 503);
 
@@ -160,19 +292,16 @@ Deno.serve(async (request: Request) => {
     const studioCacheKey = "studio:" + fixtureId;
     const previous = cache.get(studioCacheKey);
     if (previous && previous.until > Date.now()) return reply({ ...previous.data as Record<string, unknown>, cached: true });
+    const persistentStudio = await persistentCacheGet(studioCacheKey);
+    if (persistentStudio && typeof persistentStudio === "object") return reply({ ...persistentStudio as Record<string, unknown>, cached: true });
+    const ttlFor = (path: string) => path === "fixtures/events" || path === "fixtures/statistics" || path === "fixtures/players" ? 60_000 : path === "fixtures/lineups" ? 15 * 60_000 : path === "odds" ? 3 * 60 * 60_000 : path === "predictions" ? 60 * 60_000 : 6 * 60 * 60_000;
     const apiFetch = async (path: string, query: Record<string,string> = {}) => {
-      const qs = new URLSearchParams(query).toString();
-      const response = await fetch("https://v3.football.api-sports.io/" + path + (qs ? "?" + qs : ""), {
-        headers: { "x-apisports-key": apiKey, "Accept": "application/json" }
-      });
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok || (Array.isArray(body.errors) && body.errors.length)) {
-        throw new Error(path + " returned " + response.status);
-      }
-      return Array.isArray(body.response) ? body.response : [];
+      const body = await providerFetch(path, query, ttlFor(path), tracker);
+      return body.response;
     };
     try {
-      const fixtureRows = await apiFetch("fixtures", { id: fixtureId, timezone: "Asia/Damascus" });
+      const fixtureRowsData = await providerFetch("fixtures", { id: fixtureId, timezone: "Asia/Damascus" }, 15 * 60_000, tracker);
+      const fixtureRows = fixtureRowsData.response;
       const match = fixtureRows[0];
       if (!match) return reply({ error: "لم يعثر API-Football على المباراة بهذا الرقم." }, 404);
       const homeId = String(match.teams?.home?.id ?? "");
@@ -216,13 +345,16 @@ Deno.serve(async (request: Request) => {
         fixture: match,
         ...sections,
         unavailable,
-        requestsMade: 1 + names.length,
+        requestsMade: tracker.upstreamCalls,
+        cacheHits: tracker.cacheHits,
+        usageTracked: true,
         provider: "API-Football",
         fetchedAt: new Date().toISOString(),
         cacheSeconds: live ? 30 : (["FT","AET","PEN"].includes(status) ? 21600 : 900),
         cached: false
       };
       cache.set(studioCacheKey, { until: Date.now() + (live ? 30_000 : (["FT","AET","PEN"].includes(status) ? 6 * 60 * 60_000 : 15 * 60_000)), data: result });
+      await persistentCacheSet(studioCacheKey, "studio", result, live ? 30_000 : (["FT","AET","PEN"].includes(status) ? 6 * 60 * 60_000 : 15 * 60_000));
       return reply(result);
     } catch (error) {
       console.error("Football studio error", String(error).slice(0, 300));
@@ -317,22 +449,10 @@ Deno.serve(async (request: Request) => {
   if (cached && cached.until > Date.now()) return reply({ ...cached.data as Record<string, unknown>, cached: true });
 
   try {
-    const upstream = await fetch("https://v3.football.api-sports.io/" + endpoint + "?" + params.toString(), {
-      headers: { "x-apisports-key": apiKey, "Accept": "application/json" },
-    });
-    const data = await upstream.json().catch(() => ({}));
-    if (!upstream.ok) {
-      console.error("API-Football upstream error", upstream.status);
-      return reply({ error: "تعذر جلب البيانات من مزود كرة القدم.", providerStatus: upstream.status }, upstream.status === 429 ? 429 : 502);
-    }
-    if (Array.isArray(data.errors) && data.errors.length) {
-      console.error("API-Football returned validation errors", JSON.stringify(data.errors).slice(0, 500));
-      return reply({ error: "رفض مزود البيانات الطلب. تحقق من صلاحية الخطة أو بيانات البطولة.", details: data.errors }, 502);
-    }
-    const result = { response: Array.isArray(data.response) ? data.response : [], results: Number(data.results ?? 0), paging: data.paging ?? null, provider: "API-Football", fetchedAt: new Date().toISOString(), cached: false };
-    cache.set(cacheKey, { until: Date.now() + ttl, data: result });
-    return reply(result);
-  } catch (_error) {
-    return reply({ error: "تعذر الاتصال بمزود البيانات حالياً." }, 502);
+    const data = await providerFetch(endpoint, Object.fromEntries(params.entries()), ttl, tracker);
+    return reply({ ...data, cacheHits: tracker.cacheHits, upstreamCalls: tracker.upstreamCalls, usageTracked: true });
+  } catch (error) {
+    const status = Number((error as any)?.status ?? 502);
+    return reply({ error: "تعذر جلب البيانات من مزود كرة القدم أو أن الخطة لا تغطي هذا الطلب.", providerStatus: status }, status === 429 ? 429 : 502);
   }
 });
