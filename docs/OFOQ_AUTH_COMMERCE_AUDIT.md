@@ -70,3 +70,7 @@ Fix committed in `ecommerce-studio.js`: every order except `cancelled` remains a
 Regression assertion committed in `tests/browser-smoke.mjs`: mark the first order delivered, then attempt another order whose quantity would exceed the original stock once the delivered order is still counted. The test expects the same insufficient-stock validation.
 
 The updated source and test were fetched back from GitHub and their expected code markers were verified. The browser test itself has not yet been run in this session.
+
+## Inventory movement trigger hardening verification
+
+The `inventory_movement_apply` trigger invokes `private.apply_inventory_movement()`, a SECURITY DEFINER trigger function. Its definition uses an empty search_path, fully qualifies `public.inventory_items`, requires `auth.uid()` to equal the new movement's `user_id`, constrains the update to the same user's item, and rejects movements that would make quantity negative. Direct EXECUTE is false for `anon`, `authenticated`, and `service_role`; the `private` schema has no USAGE grant for `anon` or `authenticated`. The standard roles `anon` and `authenticated` also have neither superuser nor BYPASSRLS attributes. No database changes were needed for this trigger in this pass.
