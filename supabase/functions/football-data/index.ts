@@ -57,6 +57,17 @@ Deno.serve(async (request: Request) => {
     if (mode === "live") {
       params.set("live", "all");
       ttl = 20_000;
+    } else if (mode === "last") {
+      const league = url.searchParams.get("league") ?? "";
+      const season = url.searchParams.get("season") ?? "";
+      const last = url.searchParams.get("last") ?? "10";
+      if (!/^\d+$/.test(league) || !/^20\d{2}$/.test(season) || !/^([1-9]|1\d|20)$/.test(last)) {
+        return reply({ error: "معرّف البطولة أو الموسم أو عدد المباريات غير صالح." }, 400);
+      }
+      params.set("league", league);
+      params.set("season", season);
+      params.set("last", last);
+      ttl = 24 * 60 * 60_000;
     } else if (mode === "season") {
       const league = url.searchParams.get("league") ?? "";
       const season = url.searchParams.get("season") ?? "";
