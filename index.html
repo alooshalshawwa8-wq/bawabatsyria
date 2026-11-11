@@ -908,7 +908,7 @@ function renderFootballModule(tool){
   function renderStudio(data){
     const fx=data.fixture||{},tm=fx.teams||{},lg=fx.league||{},st=fx.fixture?.status||{},vn=fx.fixture?.venue||{},g=fx.goals||{},home=tm.home||{},away=tm.away||{};
     const head=studioBox('fbStudioMatchHead');head.append(node('div','OFOQ MATCH INTELLIGENCE · '+(lg.name||'مباراة'),'eyebrow'),node('h3',(home.name||'الفريق الأول')+' '+(g.home??'–')+' : '+(g.away??'–')+' '+(away.name||'الفريق الثاني')),node('p',(lg.country||'')+' · '+(lg.round||'')+' · '+(fx.fixture?.date?new Date(fx.fixture.date).toLocaleString('ar-SY',{timeZone:'Asia/Damascus',dateStyle:'full',timeStyle:'short'}):'')+' · '+(st.long||st.short||'')));
-    const k=studioBox('fbStudioKpis');[['الحالة',st.short],['الدقيقة',st.elapsed!==null?st.elapsed+'′':null],['الحكم',fx.fixture?.referee],['الملعب',vn.name],['السعة',vn.capacity?Number(vn.capacity).toLocaleString('ar'):null],['الجولة',lg.round]].forEach(([a,b])=>{const c=node('div',undefined,'fb-studio-kpi');c.append(node('small',a),node('strong',studioVal(b)));k.append(c);});
+    const k=studioBox('fbStudioKpis');[['الحالة',st.short],['الدقيقة',st.elapsed!==null&&st.elapsed!==undefined?st.elapsed+'′':null],['الحكم',fx.fixture?.referee],['الملعب',vn.name],['السعة',vn.capacity?Number(vn.capacity).toLocaleString('ar'):null],['الجولة',lg.round]].forEach(([a,b])=>{const c=node('div',undefined,'fb-studio-kpi');c.append(node('small',a),node('strong',studioVal(b)));k.append(c);});
     const hc=(data.homeTeamStats||[])[0]||{},ac=(data.awayTeamStats||[])[0]||{},cmp=studioBox('fbStudioTeamCompare');
     const statRows=(x)=>{const f=x.fixtures||{},go=x.goals||{};return [['المباريات',f.played?.total],['فوز',f.wins?.total],['تعادل',f.draws?.total],['خسارة',f.loses?.total],['أهداف مسجلة',go.for?.total?.total],['أهداف مستقبلة',go.against?.total?.total],['شباك نظيفة',x.clean_sheet?.total]];};
     if(!hc.team&&!ac.team)cmp.append(studioEmpty('إحصاءات الموسم غير متاحة للفريقين.'));
@@ -933,6 +933,7 @@ function renderFootballModule(tool){
   }
   async function loadStudioReport(id){if(!id)return;studioStatus.textContent='جارٍ جمع بيانات المباراة من API-Football…';studioReport.hidden=true;try{const data=await footballRequest('studio',{fixture:id});renderStudio(data);studioStatus.textContent='اكتمل تحليل المباراة · '+(data.cached?'من الذاكرة المؤقتة':'بيانات محدثة')+'.';}catch(e){studioStatus.textContent=e.message||'تعذر إنشاء التحليل.';}}
   $('fbStudioFind')?.addEventListener('click',()=>loadStudioFixtures('date'));$('fbStudioLive')?.addEventListener('click',()=>loadStudioFixtures('live'));
+  wrap.querySelectorAll('.fb-tab[data-tab="studio"]').forEach(btn=>btn.addEventListener('click',()=>loadStudioFixtures('date')));
   $('fbGoStudio')?.addEventListener('click',()=>{showPane('studio');loadStudioFixtures('date');});
   function showPane(name,skipLoad=false){
     wrap.querySelectorAll('.fb-tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===name));
