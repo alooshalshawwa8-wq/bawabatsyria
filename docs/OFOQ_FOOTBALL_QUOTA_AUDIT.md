@@ -54,3 +54,7 @@ The central football quota guard is materially stronger than a simple per-instan
 ## Exact studio fan-out correction
 
 A line-by-line review of the current `studio` branch confirms 16 parallel secondary datasets after the initial fixture lookup (17 endpoint datasets in total, not 17 additional calls). The full report is cached in memory and in the persistent cache with a 60-second TTL for live matches, 6 hours for completed matches, and 15 minutes for other statuses. The initial fixture lookup also has a status-sensitive persistent TTL. The browser's coverage indicator uses the 17-endpoint total.
+
+## Read-only budget snapshot
+
+The read-only `football_api_budget_status()` query returned: internal daily cap 70, reservations today 8 (core 7, live 1, emergency 0), internal remaining 62, rolling-minute cap 6 with 6 internally available at snapshot time, warning threshold 35, critical threshold 60, and `providerBlocked=true`. The recorded provider header showed 99 remaining from its last recorded observation; this is historical telemetry, not a fresh provider check. No reservation was created by this status query.
