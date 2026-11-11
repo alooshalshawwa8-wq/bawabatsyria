@@ -29,7 +29,8 @@ expenses:readSource(SOURCE_KEYS.expenses,x=>x&&typeof x.id==="string"&&Number.is
 settlements:readSource(SOURCE_KEYS.settlements,x=>x&&typeof x.transactionId==="string"&&Number.isFinite(Number(x.amount))&&Number(x.amount)>0,20000),
 parties:readSource(SOURCE_KEYS.parties,x=>x&&typeof x.name==="string",10000),
 career:readSource(SOURCE_KEYS.career,x=>x&&typeof x.id==="string",100),
-ecommerceScenarios:readSource(SOURCE_KEYS.ecommerceScenarios,x=>x&&typeof x==="object",100)
+ecommerceScenarios:readSource(SOURCE_KEYS.ecommerceScenarios,x=>x&&typeof x==="object",100),
+invoiceNumbers:(()=>{try{const x=JSON.parse(localStorage.getItem(SOURCE_KEYS.invoiceNumbers)||"{}");return x&&typeof x==="object"&&!Array.isArray(x)?x:{};}catch(_){return {};}})()
 });
 const sourceTotals=s=>{
 const sales=s.trade.filter(x=>x.type==="sale").reduce((n,x)=>n+Number(x.total||0),0);
@@ -78,7 +79,7 @@ function render(){
 metrics.replaceChildren();
 const open=data.tasks.filter(x=>x.status!=="done").length,done=data.tasks.length-open;
 const income=data.transactions.filter(x=>x.kind==="income").reduce((a,x)=>a+x.amount,0),expense=data.transactions.filter(x=>x.kind==="expense").reduce((a,x)=>a+x.amount,0);
-metric("المشاريع النشطة",String(data.projects.filter(x=>x.status!=="done").length));metric("المهام المفتوحة",String(open));metric("المهام المنجزة",String(done));metric("الإيرادات المسجلة",money(income));metric("المصروفات المسجلة",money(expense));metric("صافي الحركة",money(income-expense));
+metric("المشاريع النشطة",String(data.projects.filter(x=>x.status!=="done").length));metric("المهام المفتوحة",String(open));metric("المهام المنجزة",String(done));metric("الإيرادات المسجلة",money(income));metric("المصروفات المسجلة",money(expense));metric("صافي الحركة",money(income-expense));const imported=sourceSnapshot(),totals=sourceTotals(imported);metric("أصناف المخزون",String(imported.stock.length));metric("المبيعات من الدفتر",money(totals.sales));metric("المشتريات من الدفتر",money(totals.purchases));metric("مصروفات المحاسبة",money(totals.expenses));metric("طلبات التوظيف",String(imported.career.length));
 projectList.replaceChildren();if(!data.projects.length)showEmpty(projectList,"لا توجد مشاريع بعد.");
 data.projects.slice().reverse().forEach(x=>{const a=el("div","oph-actions");a.append(btn(x.status==="done"?"إعادة فتح":"إنجاز",()=>{x.status=x.status==="done"?"active":"done";persist();}),btn("حذف",()=>{if(confirm("حذف المشروع؟")){data.projects=data.projects.filter(y=>y.id!==x.id);persist();}},"oph-btn oph-danger"));projectList.append(record(x.name,(x.owner||"دون مسؤول")+" · "+x.status+" · "+new Date(x.createdAt).toLocaleDateString(),a));});
 taskList.replaceChildren();if(!data.tasks.length)showEmpty(taskList,"لا توجد مهام مسجلة.");
@@ -103,7 +104,7 @@ const linked=pane("linked");linked.append(el("h3","","مزامنة مصادر أ
 const linkedSummary=el("div","oph-metrics"),linkedList=el("div","oph-list");
 const renderLinked=()=>{
 const snap=sourceSnapshot(),totals=sourceTotals(snap);linkedSummary.replaceChildren();linkedList.replaceChildren();
-[[ "أصناف المخزون",snap.stock.length],["وحدات المخزون",money(totals.units)],["عمليات البيع",snap.trade.filter(x=>x.type==="sale").length],["عمليات الشراء",snap.trade.filter(x=>x.type==="purchase").length],["المصروفات",snap.expenses.length],["التحصيلات والتسديدات",snap.settlements.length],["ملفات العملاء والموردين",snap.parties.length],["طلبات التوظيف",snap.career.length],["سيناريوهات المتجر",snap.ecommerceScenarios.length],["أرقام الفواتير",Object.keys((()=>{try{return JSON.parse(localStorage.getItem(SOURCE_KEYS.invoiceNumbers)||"{}")||{};}catch(_){return {};}})()).length]].forEach(([label,value])=>{const m=el("div","oph-metric");m.append(el("small","",label),el("strong","",String(value)));linkedSummary.append(m);});
+[[ "أصناف المخزون",snap.stock.length],["وحدات المخزون",money(totals.units)],["عمليات البيع",snap.trade.filter(x=>x.type==="sale").length],["عمليات الشراء",snap.trade.filter(x=>x.type==="purchase").length],["المصروفات",snap.expenses.length],["التحصيلات والتسديدات",snap.settlements.length],["ملفات العملاء والموردين",snap.parties.length],["طلبات التوظيف",snap.career.length],["سيناريوهات المتجر",snap.ecommerceScenarios.length],["أرقام الفواتير",Object.keys(snap.invoiceNumbers).length]].forEach(([label,value])=>{const m=el("div","oph-metric");m.append(el("small","",label),el("strong","",String(value)));linkedSummary.append(m);});
 const add=(title,detail)=>linkedList.append(el("article","oph-item",""),el("small","",detail));
 const rows=[
 ["المخزون",snap.stock.length+" صنف · "+money(totals.units)+" وحدة · المصدر: دفتر المخزون"],
@@ -117,7 +118,7 @@ const rows=[
 ];
 rows.forEach(([title,detail])=>{const r=el("article","oph-item");r.append(el("div","",""),el("small","",detail));r.firstChild.append(el("strong","",title));linkedList.append(r);});
 };
-linked.append(linkedSummary,linkedList);actions(linked,btn("تحديث البيانات الآن",()=>{renderLinked();status.textContent="تم تحديث قراءة المصادر دون تعديلها.";}));
+linked.append(linkedSummary,linkedList);actions(linked,btn("تحديث البيانات الآن",()=>{render();renderLinked();status.textContent="تم تحديث لوحة القيادة ومصادرها دون تعديل السجلات الأصلية.";}));
 const backup=pane("backup");backup.append(el("h3","","نسخ البيانات واستعادتها"),el("p","oph-note","تتضمن النسخة بيانات مركز القيادة ولقطة مؤرخة من مصادر المخزون والمبيعات والفواتير والمصروفات والتحصيلات والعملاء وطلبات العمل. اللقطة أرشيف مستقل ولا تستبدل بيانات الأدوات الأصلية عند الاستيراد."));
 const importFile=el("input","");importFile.type="file";importFile.accept=".json,application/json";importFile.hidden=true;
 actions(backup,btn("تنزيل نسخة JSON",()=>{const blob=new Blob([JSON.stringify({app:"ofoq-operations-hub",version:2,exportedAt:new Date().toISOString(),data,linkedSources:sourceSnapshot()},null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=el("a");a.href=url;a.download="ofoq-complete-operations-backup.json";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);status.textContent="تم تجهيز النسخة الاحتياطية.";}),btn("استيراد نسخة JSON",()=>importFile.click()));
