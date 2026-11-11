@@ -268,3 +268,12 @@ All inventory data remains in browser localStorage on the current device. No API
 - Stock reservation lifecycle is explicit: new, processing and shipped orders reserve quantities; delivered or cancelled orders release reservations. After delivery, the merchant manually reconciles the catalogue quantity with the accounting inventory source. PWA cache advanced to v37.
 
 - Added a validated JSON import path for merchant catalogue/order backups (1.8 MB maximum, 500 products, 1,000 orders, unique product IDs/order numbers, non-negative prices and stock, valid order statuses). It asks before replacing current records and attempts to roll back the product write if saving orders fails. Browser smoke coverage now exercises export payload recovery and replacement; PWA cache advanced to v38.
+
+
+## 2026-11-11 — OFOQ NEXUS navigation upgrade
+
+- The command center now searches all 78 catalogue entries locally and supports four views: all sections, featured sections, favorites, and recently visited sections.
+- Favorites and recent views read from `window.OFOQ_CORE`; the search remains local and does not call Gemini or any third-party API.
+- Browser smoke coverage now checks a known-section search result, Escape from both inside and outside the dialog, and favorites/recent result filtering.
+- The offline shell cache was advanced to `ofoq-shell-v40` so returning users can receive the updated navigation after the service worker refreshes.
+- This is a shared navigation milestone, not a claim that all 78 section-specific workflows are complete. The section-by-section functional verification remains in progress.
