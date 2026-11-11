@@ -673,7 +673,7 @@ function renderFootballModule(tool){
     '<div class="fb-archive-grid">'+
     '<section class="fb-archive-panel"><h4>👑 أبرز المتصدرين والمرشحين إحصائياً</h4><div id="fbArchiveContenders" class="fb-archive-list"></div><p class="fb-note">هذا ترتيب تنافسي حالي من الجدول، وليس توقعاً مؤكداً للفائز.</p></section>'+
     '<section class="fb-archive-panel"><h4>🛡️ الفرق المشاركة</h4><div id="fbArchiveTeams" class="fb-archive-list"></div></section>'+
-    '<section class="fb-archive-panel fb-archive-wide"><h4>📅 مواعيد ومباريات الموسم</h4><div id="fbArchiveFixtures" class="fb-archive-list"></div><button class="btn secondary" id="fbArchiveMore" type="button" hidden>تحميل مباريات إضافية</button></section>'+
+    '<section class="fb-archive-panel fb-archive-wide"><h4>📅 المباريات القادمة والنتائج · نطاق 60 يوماً</h4><div id="fbArchiveFixtures" class="fb-archive-list"></div><button class="btn secondary" id="fbArchiveMore" type="button" hidden>تحميل مباريات إضافية</button></section>'+
     '<section class="fb-archive-panel fb-archive-wide"><h4>🏅 سجل الأبطال في المواسم السابقة</h4><div id="fbArchiveWinners" class="fb-archive-list"></div><p class="fb-note">يُعرض بطل الموسم السابق من الترتيب النهائي للمسابقات التي توفر جدول دوري. بطولات الكؤوس تحتاج إلى سجل نهائيات موثق؛ لن نخمن أسماء أبطالها.</p></section>'+
     '</div><p class="fb-archive-updated" id="fbArchiveUpdated"></p></div></section>'+
     '<section class="fb-pane" data-pane="biggames"><h4 class="fb-subhead">أشهر القمم والديربيات</h4><div id="fbDerbies" class="fb-grid"></div><div class="notice">هذه قائمة بالمواجهات المعروفة تاريخياً، وليست جدول مباريات قادمة. مواعيد كل مواجهة تعتمد على جدول الموسم الرسمي.</div></section>'+
@@ -969,7 +969,7 @@ function renderFootballModule(tool){
       const date=fixture.date?new Date(fixture.date).toLocaleString('ar-SY',{timeZone:'Asia/Damascus',dateStyle:'medium',timeStyle:'short'}):'موعد غير محدد';
       const state=status.long||'موعد غير محدد';
       const score=(goals.home??'–')+' : '+(goals.away??'–');
-      const row=archiveRow((teams.home?.name||'—')+'  '+score+'  '+(teams.away?.name||'—'),date+' · '+state,league.logo||archiveLogo(archiveLeague.id));
+      const row=archiveRow((teams.home?.name||'—')+'  '+score+'  '+(teams.away?.name||'—'),date+' · '+state+(league.round?' · '+league.round:'')+(fixture.venue?.name?' · '+fixture.venue.name:''),league.logo||archiveLogo(archiveLeague.id));
       box.append(row);
     });
     if(!fixtures.length&&page===1)box.append(node('div','لا توجد مباريات مسجلة في نطاق الستين يوماً القادماً لهذا الموسم. يمكنك اختيار موسم آخر أو تحديث البيانات لاحقاً.','fb-note'));
@@ -980,21 +980,34 @@ function renderFootballModule(tool){
   }
   async function loadArchiveWinners(sorted){
     const box=$('fbArchiveWinners');box.replaceChildren();
-    if((archiveLeague.type||'').toLowerCase()!=='league'){
-      box.append(node('div','هذه بطولة كؤوس أو مسابقة غير دوري؛ لا نستنتج أبطالها من جدول ترتيب غير موجود. سيظهر سجل الأبطال عند توفر تغطية موثوقة لنهائياتها.','fb-note'));return;
-    }
+    const leagueId=archiveLeague.id,leagueType=(archiveLeague.type||'').toLowerCase(),leagueName=archiveLeague.name||'البطولة';
     const currentYear=Number(archiveSeasons.find(x=>x.current)?.year||sorted[0]?.year||new Date().getFullYear());
     const past=sorted.filter(x=>Number(x.year)<currentYear).slice(0,4);
     if(!past.length){box.append(node('div','لا توجد مواسم مكتملة سابقة متاحة في سجل المصدر.','fb-note'));return;}
-    box.append(node('div','جارٍ التحقق من جداول المواسم المكتملة السابقة…','fb-note'));
-    const results=await Promise.allSettled(past.map(x=>footballRequest('standings',{league:archiveLeague.id,season:x.year})));
+    box.append(node('div','جارٍ التحقق من سجل الأبطال للمواسم المكتملة…','fb-note'));
+    const isLeague=leagueType==='league';
+    const results=await Promise.allSettled(past.map(x=>isLeague
+      ?footballRequest('standings',{league:leagueId,season:x.year})
+      :footballRequest('fixtures',{mode:'last',league:leagueId,season:x.year,last:10})));
+    if(archiveLeague?.id!==leagueId)return;
     box.replaceChildren();
     results.forEach((result,index)=>{
-      if(result.status!=='fulfilled'){box.append(node('div',past[index].year+' · تعذر تحميل سجل الترتيب.','fb-note'));return;}
-      const rows=((result.value.response||[])[0]?.league?.standings||[]).flat().sort((a,b)=>(a.rank||99)-(b.rank||99));
-      if(!rows.length){box.append(node('div',past[index].year+' · لا يوجد جدول نهائي متاح.','fb-note'));return;}
-      const champion=rows[0];
-      box.append(archiveRow('بطل موسم '+past[index].year+' · '+(champion.team?.name||'غير متاح'),(champion.points??'—')+' نقطة في الترتيب النهائي',archiveTeamLogo(champion.team?.id)));
+      const year=past[index].year;
+      if(result.status!=='fulfilled'){box.append(node('div',year+' · تعذر تحميل سجل البطولة.','fb-note'));return;}
+      if(isLeague){
+        const rows=((result.value.response||[])[0]?.league?.standings||[]).flat().sort((a,b)=>(a.rank||99)-(b.rank||99));
+        if(!rows.length){box.append(node('div',year+' · لا يوجد جدول نهائي متاح.','fb-note'));return;}
+        const champion=rows[0];
+        box.append(archiveRow('بطل '+leagueName+' · '+year+' · '+(champion.team?.name||'غير متاح'),(champion.points??'—')+' نقطة في الترتيب النهائي',archiveTeamLogo(champion.team?.id)));
+      }else{
+        const fixtures=result.value.response||[];
+        const completed=fixtures.filter(match=>['FT','AET','PEN'].includes(match.fixture?.status?.short));
+        const final=completed.find(match=>/final/i.test(match.league?.round||'')&&(match.teams?.home?.winner||match.teams?.away?.winner))
+          ||completed.find(match=>match.teams?.home?.winner||match.teams?.away?.winner);
+        const champion=final?(final.teams?.home?.winner?final.teams.home:final.teams.away):null;
+        if(!champion){box.append(node('div',year+' · لم يقدم المصدر نتيجة نهائية تحدد البطل بشكل موثوق.','fb-note'));return;}
+        box.append(archiveRow('بطل '+leagueName+' · '+year+' · '+champion.name,'النهائي: '+(final.teams?.home?.name||'—')+' '+(final.goals?.home??'—')+' : '+(final.goals?.away??'—')+' '+(final.teams?.away?.name||'—'),archiveTeamLogo(champion.id)));
+      }
     });
   }
   $('fbArchiveSearchBtn')?.addEventListener('click',()=>searchArchiveLeagues($('fbArchiveSearch').value));
