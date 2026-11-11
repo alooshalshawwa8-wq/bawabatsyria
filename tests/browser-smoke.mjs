@@ -33,8 +33,14 @@ try {
     }, section.id);
     const title = (await page.locator("#detailTitle").innerText()).trim();
     if (title !== section.title) throw new Error("Section title mismatch for " + section.id + ": " + title);
-    const workspace = await page.locator("#specialTool").innerText();
-    if (!workspace.trim()) throw new Error("Empty workspace for " + section.id);
+    const workspace = page.locator("#specialTool .bw-workspace");
+    await workspace.waitFor({ state: "visible", timeout: 5000 });
+    const workspaceTabs = workspace.getByRole("tab");
+    if (await workspaceTabs.count() !== 3) throw new Error("Expected tools/tasks/notes workspace tabs for " + section.id);
+    const aiHelper = page.locator("#specialTool .ai-helper");
+    await aiHelper.waitFor({ state: "visible", timeout: 5000 });
+    const workspaceText = await page.locator("#specialTool").innerText();
+    if (!workspaceText.trim()) throw new Error("Empty workspace for " + section.id);
   }
 
   const commandDialog = page.locator("#ofoq-command-overlay");
