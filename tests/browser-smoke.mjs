@@ -61,6 +61,16 @@ try {
   const lastVisitedTitle = (await page.locator("#detailTitle").innerText()).trim();
   await favoriteCurrent.click();
   if (await favoriteCurrent.getAttribute("aria-pressed") !== "true") throw new Error("Favorite toggle did not activate");
+  await page.keyboard.press("Control+k");
+  const nexusDialog = page.locator("#ofoq-command-overlay");
+  await nexusDialog.waitFor({ state: "visible", timeout: 5000 });
+  await nexusDialog.locator('[data-filter="favorites"]').click();
+  const nexusFavorites = nexusDialog.locator(".ofoq-command-result");
+  if (await nexusFavorites.count() !== 1) throw new Error("NEXUS favorites filter should return the one saved section");
+  if (!(await nexusFavorites.first().innerText()).includes(lastVisitedTitle)) throw new Error("NEXUS favorites filter returned the wrong section");
+  await nexusDialog.locator('[data-filter="recent"]').click();
+  if (await nexusDialog.locator(".ofoq-command-result").count() < 1) throw new Error("NEXUS recent filter returned no visited sections");
+  await page.keyboard.press("Escape");
   await personalSpace.locator('[data-ofoq-view="favorites"]').click();
   const favoriteTiles = page.locator("#sectionsGrid .tile:visible");
   if (await favoriteTiles.count() !== 1) throw new Error("Favorites filter should show exactly one saved section");
