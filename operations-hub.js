@@ -6,6 +6,39 @@ const prior=window.openSection;
 if(typeof prior!=="function"||prior.__ofoqOperationsWrapped)return;
 window.__OFOQ_OPERATIONS_HUB_V1__=true;
 const KEY="ofoq_operations_hub_v1";
+const SOURCE_KEYS={
+stock:"bawabatsyria_stock_v1",
+trade:"bawabatsyria_trade_ledger_v1",
+expenses:"bawabatsyria_trade_expenses_v1",
+settlements:"bawabatsyria_trade_settlements_v1",
+invoiceNumbers:"bawabatsyria_trade_invoice_numbers_v1",
+parties:"bawabatsyria_trade_parties_v1",
+career:"ofoq_career_applications_v1",
+ecommerceScenarios:"ofoq_ecommerce_scenarios_v1"
+};
+const ARCHIVE_KEY="ofoq_operations_recovery_archive_v1";
+const RECOVERY_KEY="ofoq_operations_hub_recovery_v1";
+const readSource=(key,valid,limit=20000)=>{
+try{const raw=localStorage.getItem(key);if(!raw)return[];const value=JSON.parse(raw);if(!Array.isArray(value))return[];return value.filter(valid).slice(-limit);}catch(_){return[];}
+};
+const sourceSnapshot=()=>({
+capturedAt:new Date().toISOString(),
+stock:readSource(SOURCE_KEYS.stock,x=>x&&typeof x.name==="string"&&Number.isFinite(Number(x.qty))&&Number(x.qty)>=0,10000),
+trade:readSource(SOURCE_KEYS.trade,x=>x&&typeof x.id==="string"&&["sale","purchase"].includes(x.type)&&Number.isFinite(Number(x.total))&&Number(x.total)>=0,20000),
+expenses:readSource(SOURCE_KEYS.expenses,x=>x&&typeof x.id==="string"&&Number.isFinite(Number(x.amount))&&Number(x.amount)>0,20000),
+settlements:readSource(SOURCE_KEYS.settlements,x=>x&&typeof x.transactionId==="string"&&Number.isFinite(Number(x.amount))&&Number(x.amount)>0,20000),
+parties:readSource(SOURCE_KEYS.parties,x=>x&&typeof x.name==="string",10000),
+career:readSource(SOURCE_KEYS.career,x=>x&&typeof x.id==="string",100),
+ecommerceScenarios:readSource(SOURCE_KEYS.ecommerceScenarios,x=>x&&typeof x==="object",100)
+});
+const sourceTotals=s=>{
+const sales=s.trade.filter(x=>x.type==="sale").reduce((n,x)=>n+Number(x.total||0),0);
+const purchases=s.trade.filter(x=>x.type==="purchase").reduce((n,x)=>n+Number(x.total||0),0);
+const expenses=s.expenses.reduce((n,x)=>n+Number(x.amount||0),0);
+const units=s.stock.reduce((n,x)=>n+Number(x.qty||0),0);
+return {sales,purchases,expenses,units};
+};
+
 const el=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n;};
 const btn=(txt,fn,cls="oph-btn")=>{const b=el("button",cls,txt);b.type="button";b.addEventListener("click",fn);return b;};
 const empty=()=>({version:1,projects:[],tasks:[],transactions:[]});
@@ -37,7 +70,7 @@ const tab=(id,label)=>{const t=btn(label,()=>activate(id),"oph-tab");t.dataset.p
 const field=(p,label,name,type="text",opts=[])=>{const w=el("label","oph-field",label);let x;if(type==="select"){x=el("select");opts.forEach(([v,l])=>{const o=el("option","",l);o.value=v;x.append(o);});}else{x=el("input");x.type=type;if(type==="number"){x.min="0";x.step="any";}}x.name=name;w.append(x);p.append(w);return x;};
 const actions=(p,...nodes)=>{const r=el("div","oph-actions");nodes.forEach(n=>r.append(n));p.append(r);};
 const showEmpty=(p,msg)=>p.append(el("div","oph-empty",msg));
-const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(data));render();status.textContent="تم الحفظ محلياً.";return true;}catch(_){status.textContent="تعذر الحفظ؛ صدّر نسخة احتياطية.";return false;}};
+const persist=()=>{try{const previous=localStorage.getItem(KEY);if(previous!==null){try{localStorage.setItem(RECOVERY_KEY,JSON.stringify({savedAt:new Date().toISOString(),data:JSON.parse(previous)}));}catch(_){status.textContent="تعذر إنشاء نقطة الاستعادة؛ لم يتم تغيير السجل الحالي.";return false;}}localStorage.setItem(KEY,JSON.stringify(data));render();status.textContent="تم الحفظ مع نقطة استعادة محلية.";return true;}catch(_){status.textContent="تعذر الحفظ؛ لم يتم تأكيد التغيير. صدّر نسخة احتياطية.";return false;}};
 const record=(title,detail,buttons)=>{const r=el("article","oph-item"),left=el("div","");left.append(el("strong","",title),el("small","",detail));r.append(left,buttons);return r;};
 const metric=(label,value)=>{const m=el("div","oph-metric");m.append(el("small","",label),el("strong","",value));metrics.append(m);};
 const projectList=el("div","oph-list"),taskList=el("div","oph-list"),txList=el("div","oph-list");
@@ -53,8 +86,8 @@ data.tasks.slice().reverse().forEach(x=>{const a=el("div","oph-actions");a.appen
 txList.replaceChildren();if(!data.transactions.length)showEmpty(txList,"دفتر الحركة المالية فارغ.");
 data.transactions.slice().reverse().forEach(x=>{const a=el("div","oph-actions");a.append(btn("حذف",()=>{data.transactions=data.transactions.filter(y=>y.id!==x.id);persist();},"oph-btn oph-danger"));txList.append(record((x.kind==="income"?"إيراد + ":"مصروف − ")+money(x.amount),x.category+" · "+x.note+" · "+x.date,a));});
 }
-tab("overview","◈ الملخص");tab("projects","▣ المشاريع");tab("tasks","✓ المهام");tab("ledger","＄ الدفتر المالي");tab("backup","⇧ النسخ الاحتياطي");
-const overview=pane("overview");overview.append(el("h3","","نبض الأعمال"),el("p","oph-note","المؤشرات مبنية على السجلات التي تدخلها هنا، ولا تُستورد تلقائياً من الأقسام الأخرى."));
+tab("overview","◈ الملخص");tab("projects","▣ المشاريع");tab("tasks","✓ المهام");tab("ledger","＄ الدفتر المالي");tab("linked","⇄ البيانات المرتبطة");tab("backup","⇧ النسخ الاحتياطي");
+const overview=pane("overview");overview.append(el("h3","","نبض الأعمال"),el("p","oph-note","تعرض المؤشرات سجلات مركز القيادة إلى جانب ملخصات قراءة مباشرة من دفاتر المتجر والمحاسبة والمسار المهني. السجلات المستوردة للعرض فقط ولا تُنسخ إلى دفترك المحلي لتجنب تضخيم الأرقام."));
 const quick=el("div","oph-grid");overview.append(quick);
 [["ecommerce_studio","استوديو المتجر"],["accounting_vip","المحاسبة والمخزون"],["jobs","الوظائف والسيرة الذاتية"],["freelance_vip","العمل الحر"],["trading_academy","أكاديمية التداول"],["personal_finance","التخطيط المالي"]].forEach(([id,label])=>quick.append(btn("فتح "+label,()=>{const s=(window.BAWABA_SECTIONS||[]).find(x=>x.id===id);if(s&&window.openSection)window.openSection(s);})));
 const projects=pane("projects");projects.append(el("h3","","إدارة المشاريع"));const pg=el("div","oph-grid");projects.append(pg);
@@ -66,12 +99,31 @@ tasks.append(taskList);actions(tasks,btn("إضافة مهمة",()=>{const title=
 const ledger=pane("ledger");ledger.append(el("h3","","دفتر الإيرادات والمصروفات"),el("p","oph-note","سجل تشغيلي مبسط، لا يمثل نظاماً محاسبياً قانونياً ولا يستبدل مراجعة الفواتير والضرائب."));
 const lg=el("div","oph-grid");ledger.append(lg);const lf={kind:field(lg,"نوع الحركة","lkind","select",[["income","إيراد"],["expense","مصروف"]]),amount:field(lg,"المبلغ","lamount","number"),category:field(lg,"التصنيف","lcat"),date:field(lg,"التاريخ","ldate","date"),note:field(lg,"ملاحظة","lnote")};
 ledger.append(txList);actions(ledger,btn("تسجيل الحركة",()=>{const n=Number(lf.amount.value);if(!lf.amount.value||!Number.isFinite(n)||n<=0||n>1e12){status.textContent="أدخل مبلغاً موجباً لا يتجاوز 1,000,000,000,000.";return;}if(data.transactions.length>=500){status.textContent="الحد الأقصى 500 حركة.";return;}data.transactions.push({id:uid(),kind:lf.kind.value,amount:n,category:lf.category.value.trim().slice(0,80)||"غير مصنف",date:lf.date.value||new Date().toISOString().slice(0,10),note:lf.note.value.trim().slice(0,160)});lf.amount.value="";persist();}));
-const backup=pane("backup");backup.append(el("h3","","نسخ البيانات واستعادتها"),el("p","oph-note","تشمل النسخة المشاريع والمهام والحركات المالية. احتفظ بها في مكان آمن؛ فقد تحتوي معلومات تجارية ومالية."));
+const linked=pane("linked");linked.append(el("h3","","مزامنة مصادر أُفُق"),el("p","oph-note","قراءة مباشرة من التخزين المحلي للأدوات المتصلة. لا يتم تعديل المصدر أو نقل السجلات أو تكرارها في دفتر مركز القيادة. افتح الأداة المصدر ثم اضغط تحديث لقراءة أحدث بياناتها."));
+const linkedSummary=el("div","oph-metrics"),linkedList=el("div","oph-list");
+const renderLinked=()=>{
+const snap=sourceSnapshot(),totals=sourceTotals(snap);linkedSummary.replaceChildren();linkedList.replaceChildren();
+[[ "أصناف المخزون",snap.stock.length],["وحدات المخزون",money(totals.units)],["عمليات البيع",snap.trade.filter(x=>x.type==="sale").length],["عمليات الشراء",snap.trade.filter(x=>x.type==="purchase").length],["المصروفات",snap.expenses.length],["التحصيلات والتسديدات",snap.settlements.length],["ملفات العملاء والموردين",snap.parties.length],["طلبات التوظيف",snap.career.length],["سيناريوهات المتجر",snap.ecommerceScenarios.length],["أرقام الفواتير",Object.keys((()=>{try{return JSON.parse(localStorage.getItem(SOURCE_KEYS.invoiceNumbers)||"{}")||{};}catch(_){return {};}})()).length]].forEach(([label,value])=>{const m=el("div","oph-metric");m.append(el("small","",label),el("strong","",String(value)));linkedSummary.append(m);});
+const add=(title,detail)=>linkedList.append(el("article","oph-item",""),el("small","",detail));
+const rows=[
+["المخزون",snap.stock.length+" صنف · "+money(totals.units)+" وحدة · المصدر: دفتر المخزون"],
+["المبيعات والمشتريات",snap.trade.length+" عملية · مبيعات "+money(totals.sales)+" · مشتريات "+money(totals.purchases)],
+["الفواتير",Object.keys((()=>{try{return JSON.parse(localStorage.getItem(SOURCE_KEYS.invoiceNumbers)||"{}")||{};}catch(_){return {};}})()).length+" رقم فاتورة مرتبط بمعاملات الدفتر"],
+["المصروفات",snap.expenses.length+" سجل · إجمالي "+money(totals.expenses)],
+["التحصيلات والتسديدات",snap.settlements.length+" حركة مرتبطة بمعرّفات المعاملات"],
+["العملاء والموردون",snap.parties.length+" ملف طرف محفوظ"],
+["طلبات المسار المهني",snap.career.length+" طلب توظيف محفوظ"],
+["استوديو المتجر",snap.ecommerceScenarios.length+" سيناريو محفوظ؛ لا توجد سجلات طلبات بيع إلكترونية مستقلة في هذا المصدر"]
+];
+rows.forEach(([title,detail])=>{const r=el("article","oph-item");r.append(el("div","",""),el("small","",detail));r.firstChild.append(el("strong","",title));linkedList.append(r);});
+};
+linked.append(linkedSummary,linkedList);actions(linked,btn("تحديث البيانات الآن",()=>{renderLinked();status.textContent="تم تحديث قراءة المصادر دون تعديلها.";}));
+const backup=pane("backup");backup.append(el("h3","","نسخ البيانات واستعادتها"),el("p","oph-note","تتضمن النسخة بيانات مركز القيادة ولقطة مؤرخة من مصادر المخزون والمبيعات والفواتير والمصروفات والتحصيلات والعملاء وطلبات العمل. اللقطة أرشيف مستقل ولا تستبدل بيانات الأدوات الأصلية عند الاستيراد."));
 const importFile=el("input","");importFile.type="file";importFile.accept=".json,application/json";importFile.hidden=true;
-actions(backup,btn("تنزيل نسخة JSON",()=>{const blob=new Blob([JSON.stringify({app:"ofoq-operations-hub",version:1,exportedAt:new Date().toISOString(),data},null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=el("a");a.href=url;a.download="ofoq-operations-backup.json";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);status.textContent="تم تجهيز النسخة الاحتياطية.";}),btn("استيراد نسخة JSON",()=>importFile.click()));
+actions(backup,btn("تنزيل نسخة JSON",()=>{const blob=new Blob([JSON.stringify({app:"ofoq-operations-hub",version:2,exportedAt:new Date().toISOString(),data,linkedSources:sourceSnapshot()},null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=el("a");a.href=url;a.download="ofoq-complete-operations-backup.json";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);status.textContent="تم تجهيز النسخة الاحتياطية.";}),btn("استيراد نسخة JSON",()=>importFile.click()));
 backup.append(importFile);
-importFile.addEventListener("change",async()=>{const file=importFile.files&&importFile.files[0];if(!file)return;try{if(file.size>1024*1024)throw new Error("الملف يتجاوز 1 ميغابايت.");const raw=JSON.parse(await file.text()),d=raw&&raw.data;if(!raw||raw.app!=="ofoq-operations-hub"||raw.version!==1||!d||!Array.isArray(d.projects)||!Array.isArray(d.tasks)||!Array.isArray(d.transactions))throw new Error("صيغة النسخة غير متوافقة.");if(d.projects.length>100||d.tasks.length>300||d.transactions.length>500)throw new Error("تجاوزت النسخة حدود السجلات.");if(!d.projects.every(x=>x&&typeof x.name==="string"&&x.name.length<=100&&["active","paused","done"].includes(x.status)))throw new Error("بيانات المشاريع غير صالحة.");if(!d.tasks.every(x=>x&&typeof x.title==="string"&&x.title.length<=160&&["open","done"].includes(x.status)))throw new Error("بيانات المهام غير صالحة.");if(!d.transactions.every(x=>x&&["income","expense"].includes(x.kind)&&Number.isFinite(x.amount)&&x.amount>0&&x.amount<=1e12&&typeof x.category==="string"))throw new Error("بيانات الدفتر المالي غير صالحة.");if(!confirm("سيستبدل الاستيراد بيانات مركز القيادة الحالية. هل تريد المتابعة؟"))return;data=clean(d);persist();status.textContent="تمت استعادة النسخة الاحتياطية.";}catch(e){status.textContent="تعذر الاستيراد: "+(e.message||"ملف غير صالح.");}finally{importFile.value="";}});
-root.append(style,head,metrics,tabs,panes,status);host.append(root);render();activate("overview");
+importFile.addEventListener("change",async()=>{const file=importFile.files&&importFile.files[0];if(!file)return;try{if(file.size>1024*1024)throw new Error("الملف يتجاوز 1 ميغابايت.");const raw=JSON.parse(await file.text()),d=raw&&raw.data;if(!raw||raw.app!=="ofoq-operations-hub"||![1,2].includes(raw.version)||!d||!Array.isArray(d.projects)||!Array.isArray(d.tasks)||!Array.isArray(d.transactions))throw new Error("صيغة النسخة غير متوافقة.");if(d.projects.length>100||d.tasks.length>300||d.transactions.length>500)throw new Error("تجاوزت النسخة حدود السجلات.");if(!d.projects.every(x=>x&&typeof x.name==="string"&&x.name.length<=100&&["active","paused","done"].includes(x.status)))throw new Error("بيانات المشاريع غير صالحة.");if(!d.tasks.every(x=>x&&typeof x.title==="string"&&x.title.length<=160&&["open","done"].includes(x.status)))throw new Error("بيانات المهام غير صالحة.");if(!d.transactions.every(x=>x&&["income","expense"].includes(x.kind)&&Number.isFinite(x.amount)&&x.amount>0&&x.amount<=1e12&&typeof x.category==="string"))throw new Error("بيانات الدفتر المالي غير صالحة.");if(!confirm("سيستبدل الاستيراد بيانات مركز القيادة الحالية. هل تريد المتابعة؟"))return;if(raw.version===2&&raw.linkedSources){const ls=raw.linkedSources;if(!ls||typeof ls!=="object"||!Array.isArray(ls.stock)||!Array.isArray(ls.trade)||!Array.isArray(ls.expenses)||!Array.isArray(ls.settlements)||ls.stock.length>10000||ls.trade.length>20000||ls.expenses.length>20000||ls.settlements.length>20000)throw new Error("لقطة المصادر المرتبطة غير صالحة أو تجاوزت الحدود.");try{localStorage.setItem(ARCHIVE_KEY,JSON.stringify({archivedAt:new Date().toISOString(),linkedSources:ls}));}catch(_){throw new Error("تعذر حفظ أرشيف المصادر؛ لم يتم استبدال بيانات مركز القيادة.");}}data=clean(d);if(!persist())throw new Error("لم تتم الاستعادة لأن الحفظ الآمن لم يكتمل.");status.textContent=raw.version===2?"تمت استعادة مركز القيادة وحفظ لقطة المصادر في أرشيف منفصل دون المساس بالأدوات الأصلية.":"تمت استعادة بيانات مركز القيادة.";}catch(e){status.textContent="تعذر الاستيراد: "+(e.message||"ملف غير صالح.");}finally{importFile.value="";}});
+root.append(style,head,metrics,tabs,panes,status);host.append(root);render();renderLinked();activate("overview");
 }
 const wrapped=async function(sec){await prior(sec);if(sec&&(sec.id==="business"||sec.id==="startup_lab"))mount(sec);};
 wrapped.__ofoqOperationsWrapped=true;window.openSection=wrapped;
