@@ -1909,11 +1909,15 @@ function renderSectionWorkspace(sec,tool){
   const head=document.createElement('div');head.className='bw-workspace-head';
   const title=document.createElement('h3');title.textContent='مساحة العمل الاحترافية · '+sec.title;
   const tag=document.createElement('span');tag.className='bw-small';tag.textContent='أدوات محلية قابلة للحفظ';head.append(title,tag);shell.append(style,head);
-  const tabs=document.createElement('div');tabs.className='bw-tabs';const panes=document.createElement('div');
-  const makeTab=(id,label)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.pane=id;if(!tabs.children.length)b.classList.add('active');b.addEventListener('click',()=>{tabs.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));panes.querySelectorAll('.bw-pane').forEach(x=>x.classList.toggle('active',x.dataset.pane===id));});tabs.appendChild(b);};
-  const toolPane=document.createElement('section');toolPane.className='bw-pane active';toolPane.dataset.pane='tools';original.forEach(n=>toolPane.appendChild(n));
-  const tasksPane=document.createElement('section');tasksPane.className='bw-pane';tasksPane.dataset.pane='tasks';
-  const notesPane=document.createElement('section');notesPane.className='bw-pane';notesPane.dataset.pane='notes';
+  const tabs=document.createElement('div');tabs.className='bw-tabs';tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','تبويبات مساحة العمل: '+sec.title);const panes=document.createElement('div');
+  const activateWorkspaceTab=id=>{
+    tabs.querySelectorAll('[role="tab"]').forEach(x=>{const active=x.dataset.pane===id;x.classList.toggle('active',active);x.setAttribute('aria-selected',String(active));x.tabIndex=active?0:-1;});
+    panes.querySelectorAll('[role="tabpanel"]').forEach(x=>{const active=x.dataset.pane===id;x.classList.toggle('active',active);x.hidden=!active;});
+  };
+  const makeTab=(id,label)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.pane=id;b.id='ofoq-tab-'+sec.id+'-'+id;b.setAttribute('role','tab');b.setAttribute('aria-controls','ofoq-pane-'+sec.id+'-'+id);b.setAttribute('aria-selected','false');b.tabIndex=-1;b.addEventListener('click',()=>activateWorkspaceTab(id));b.addEventListener('keydown',event=>{const list=Array.from(tabs.querySelectorAll('[role="tab"]'));const at=list.indexOf(b);let next=null;if(event.key==='ArrowLeft')next=list[(at+1)%list.length];else if(event.key==='ArrowRight')next=list[(at-1+list.length)%list.length];else if(event.key==='Home')next=list[0];else if(event.key==='End')next=list[list.length-1];if(next){event.preventDefault();activateWorkspaceTab(next.dataset.pane);next.focus();}});tabs.appendChild(b);return b;};
+  const toolPane=document.createElement('section');toolPane.className='bw-pane active';toolPane.dataset.pane='tools';toolPane.id='ofoq-pane-'+sec.id+'-tools';toolPane.setAttribute('role','tabpanel');toolPane.setAttribute('aria-labelledby','ofoq-tab-'+sec.id+'-tools');toolPane.tabIndex=0;original.forEach(n=>toolPane.appendChild(n));
+  const tasksPane=document.createElement('section');tasksPane.className='bw-pane';tasksPane.dataset.pane='tasks';tasksPane.id='ofoq-pane-'+sec.id+'-tasks';tasksPane.setAttribute('role','tabpanel');tasksPane.setAttribute('aria-labelledby','ofoq-tab-'+sec.id+'-tasks');tasksPane.tabIndex=0;tasksPane.hidden=true;
+  const notesPane=document.createElement('section');notesPane.className='bw-pane';notesPane.dataset.pane='notes';notesPane.id='ofoq-pane-'+sec.id+'-notes';notesPane.setAttribute('role','tabpanel');notesPane.setAttribute('aria-labelledby','ofoq-tab-'+sec.id+'-notes');notesPane.tabIndex=0;notesPane.hidden=true;
   const key='bawaba_workspace_v2_'+sec.id;const defaults={
     ecommerce_studio:['حدد المنتج والجمهور المستهدف','احسب التكلفة والرسوم وهامش الربح','اكتب وصفاً صادقاً وصوراً واضحة','راجع الشحن وسياسة الاستبدال قبل النشر'],
     design_lab:['حدد هدف الحملة والجمهور','ثبّت الألوان والخطوط ونبرة العلامة','جهّز نسخاً مناسبة لكل منصة','راجع حقوق الصور والشعارات قبل النشر'],
@@ -1935,7 +1939,7 @@ function renderSectionWorkspace(sec,tool){
   save.addEventListener('click',()=>{try{const state=JSON.parse(localStorage.getItem(key)||'{}');state.notes=notes.value;localStorage.setItem(key,JSON.stringify(state));noteStatus.textContent='انحفظت ملاحظاتك على هذا المتصفح فقط.';}catch(e){noteStatus.textContent='تعذر الحفظ؛ انسخ ملاحظاتك واحتفظ بها خارجياً.';}});
   exportBtn.addEventListener('click',()=>{const blob=new Blob([notes.value],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='bawaba-'+sec.id+'-notes.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
   noteActions.append(save,exportBtn);notesPane.append(notes,noteActions,noteStatus);
-  makeTab('tools','🧰 أدوات القسم');addOfoqKnowledgeStudio(sec,toolPane,panes,tabs,makeTab);makeTab('tasks','🗂️ خطة التنفيذ');makeTab('notes','📝 ملاحظاتي');
+  makeTab('tools','🧰 أدوات القسم');addOfoqKnowledgeStudio(sec,toolPane,panes,tabs,makeTab);makeTab('tasks','🗂️ خطة التنفيذ');makeTab('notes','📝 ملاحظاتي');activateWorkspaceTab('tools');
   panes.prepend(toolPane);panes.append(tasksPane,notesPane);shell.append(tabs,panes);tool.appendChild(shell);updateProgress();
 }
 
