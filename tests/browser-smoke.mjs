@@ -68,9 +68,31 @@ try {
   const personalSpace = page.locator("#ofoq-personal-space");
   await personalSpace.waitFor({ state: "visible", timeout: 5000 });
   const favoriteCurrent = page.locator("#ofoq-favorite-current");
-  await favoriteCurrent.waitFor({ state: "visible", timeout: 5000 });
+  await favoriteCurrent.waitFor({ state: "attached", timeout: 5000 });
+  await favoriteCurrent.scrollIntoViewIfNeeded();
+  const favoriteState = await favoriteCurrent.evaluate(element => {
+    const chain = [];
+    for (let node = element; node && node.nodeType === 1; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      const rect = node.getBoundingClientRect();
+      chain.push({
+        tag: node.tagName,
+        id: node.id || "",
+        className: typeof node.className === "string" ? node.className : "",
+        display: style.display,
+        visibility: style.visibility,
+        opacity: style.opacity,
+        hidden: node.hidden,
+        width: Math.round(rect.width),
+        height: Math.round(rect.height)
+      });
+    }
+    return chain;
+  });
+  const favoriteVisible = await favoriteCurrent.isVisible();
+  if (!favoriteVisible) throw new Error("Current-section favorite action is hidden: " + JSON.stringify(favoriteState));
   const lastVisitedTitle = (await page.locator("#detailTitle").innerText()).trim();
-  await favoriteCurrent.click();
+  await favoriteCurrent.click({ timeout: 10000 });
   if (await favoriteCurrent.getAttribute("aria-pressed") !== "true") throw new Error("Favorite toggle did not activate");
   await page.keyboard.press("Control+k");
   const nexusDialog = page.locator("#ofoq-command-overlay");
