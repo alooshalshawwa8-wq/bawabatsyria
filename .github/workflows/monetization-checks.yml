@@ -29,7 +29,7 @@ jobs:
       - name: Check portal inline JavaScript
         run: |
           python3 - <<'PY'
-          import re
+          import json, re
           from pathlib import Path
           html = Path("index.html").read_text(encoding="utf-8")
           script_tags = re.findall(r"<script\b([^>]*)>([\s\S]*?)</script>", html, re.I)
