@@ -2414,6 +2414,9 @@ const operationsStatus=document.createElement('p');operationsStatus.className='n
 const expenseList=document.createElement('div');expenseList.style.cssText='overflow-x:auto;margin-top:10px';
 operations.append(operationsTitle,operationsNote,invoiceRow,invoicePreview,expenseForm,settlementForm,operationsStatus,expenseList);
 const expenseKey='bawabatsyria_trade_expenses_v1',invoiceKey='bawabatsyria_trade_invoice_numbers_v1';
+const settlementKey='bawabatsyria_trade_settlements_v1';
+function readSettlements(){try{const v=JSON.parse(localStorage.getItem(settlementKey)||'[]');return Array.isArray(v)?v.filter(x=>x&&typeof x.transactionId==='string'&&Number.isFinite(x.amount)&&x.amount>0):[];}catch(e){return [];}}
+function saveSettlements(v){try{localStorage.setItem(settlementKey,JSON.stringify(v));return true;}catch(e){return false;}}
 function readExpenses(){try{const v=JSON.parse(localStorage.getItem(expenseKey)||'[]');return Array.isArray(v)?v.filter(x=>x&&typeof x.id==='string'&&Number.isFinite(x.amount)&&x.amount>0):[];}catch(e){return [];}}
 function saveExpenses(v){try{localStorage.setItem(expenseKey,JSON.stringify(v));return true;}catch(e){return false;}}
 function readInvoiceNumbers(){try{const v=JSON.parse(localStorage.getItem(invoiceKey)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}catch(e){return {};}}
@@ -2445,8 +2448,7 @@ if(!rows.length){expenseList.textContent='لا توجد مصروفات مسجل�
 }
 invoiceMake.addEventListener('click',renderInvoice);invoicePrint.addEventListener('click',printInvoice);
 expenseAdd.addEventListener('click',()=>{const amount=Number(expenseAmount.value),paidNow=Number(expensePaid.value||0);if(!expenseDate.value||!expenseName.value.trim()||!Number.isFinite(amount)||amount<=0||!Number.isFinite(paidNow)||paidNow<0||paidNow>amount){operationsStatus.textContent='تحقق من التاريخ والبيان والقيمة والمدفوع.';return;}const rows=readExpenses();rows.push({id:'ex_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),date:expenseDate.value,name:expenseName.value.trim(),category:expenseCategory.value,amount,paid:paidNow,createdAt:new Date().toISOString()});if(!saveExpenses(rows)){operationsStatus.textContent='تعذر حفظ المصروف.';return;}expenseName.value='';expenseAmount.value='';expensePaid.value='';operationsStatus.textContent='تم تسجيل المصروف.';renderExpenses();draw();makeReport();});
-settlementAdd.addEventListener('click',()=>{const rows=read(),i=rows.findIndex(x=>x.id===settlementSelect.value),amount=Number(settlementAmount.value);if(i<0||!Number.isFinite(amount)||amount<=0){operationsStatus.textContent='اختر عملية وأدخل دفعة صحيحة.';return;}const outstanding=Math.max(0,Number(rows[i].total)-Number(rows[i].paid));if(amount>outstanding){operationsStatus.textContent='الدفعة تتجاوز المبلغ المتبقي ('+fmt(outstanding)+').';return;}rows[i]={...rows[i],paid:Number(rows[i].paid)+amount,payment:rows[i].paid+amount>=rows[i].total?'paid':'partial',updatedAt:new Date().toISOString()};if(!save(rows)){operationsStatus.textContent='تعذر حفظ الدفعة.';return;}settlementAmount.value='';operationsStatus.textContent='تم تسجيل الدفعة وتحديث رصيد العملية.';draw();makeReport();renderDirectory();refreshOperationChoices();});
-refreshOperationChoices();
+settlementAdd.addEventListener('click',()=>{const rows=read(),i=rows.findIndex(x=>x.id===settlementSelect.value),amount=Number(settlementAmount.value);if(i<0||!Number.isFinite(amount)||amount<=0){operationsStatus.textContent='اختر عملية وأدخل دفعة صحيحة.';return;}const outstanding=Math.max(0,Number(rows[i].total)-Number(rows[i].paid));if(amount>outstanding){operationsStatus.textContent='الدفعة تتجاوز المبلغ المتبقي ('+fmt(outstanding)+').';return;}const event={id:'pay_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),transactionId:rows[i].id,date:new Date().toISOString().slice(0,10),amount,direction:rows[i].type==='sale'?'in':'out',createdAt:new Date().toISOString()};const paymentEvents=readSettlements();paymentEvents.push(event);if(!saveSettlements(paymentEvents)){operationsStatus.textContent='تعذر حفظ سجل الدفعة.';return;}rows[i]={...rows[i],paid:Number(rows[i].paid)+amount,payment:rows[i].paid+amount>=rows[i].total?'paid':'partial',updatedAt:new Date().toISOString()};if(!save(rows)){paymentEvents.pop();saveSettlements(paymentEvents);{operationsStatus.textContent='تعذر حفظ الدفعة.';return;}settlementAmount.value='';operationsStatus.textContent='تم تسجيل الدفعة وتحديث رصيد العملية.';draw();makeReport();renderDirectory();refreshOperationChoices();});
 
 
 const directory=document.createElement('section');directory.style.cssText='margin-top:18px;padding:15px;border:1px solid var(--line);border-radius:13px;background:rgba(4,18,31,.7)';
@@ -2545,7 +2547,9 @@ reportHeaders=['البند','القيمة'];reportRows=[['المبيعات',reve
 reportSummary.textContent='ملخص '+month+' · لا يشمل المصاريف العامة أو الضرائب أو السحوبات. لا تُعامل كل المشتريات كمصروف مبيعات.';
 }else if(reportType.value==='cash'){
 reportHeaders=['التاريخ','الحركة','الطرف','البيان','داخل','خارج'];
-reportRows=all.map(x=>[x.date||'',x.type==='sale'?'قبض من بيع':'دفع لمشتريات',x.party||'—',x.item+' × '+x.qty,x.type==='sale'?x.paid:0,x.type==='purchase'?x.paid:0]);
+const settlements=readSettlements(),basePaid=x=>Math.max(0,Number(x.paid||0)-settlements.filter(p=>p.transactionId===x.id).reduce((n,p)=>n+p.amount,0));
+reportRows=all.map(x=>[x.date||'',x.type==='sale'?'قبض من بيع':'دفع لمشتريات',x.party||'—',x.item+' × '+x.qty,x.type==='sale'?basePaid(x):0,x.type==='purchase'?basePaid(x):0]);
+settlements.filter(p=>String(p.date||'').slice(0,7)===month).forEach(p=>{const t=read().find(x=>x.id===p.transactionId);if(t)reportRows.push([p.date,'دفعة لاحقة',t.party||'—',t.item,p.direction==='in'?p.amount:0,p.direction==='out'?p.amount:0]);});
 readExpenses().filter(x=>String(x.date||'').slice(0,7)===month).forEach(x=>reportRows.push([x.date,'دفع مصروف',x.category,x.name,0,x.paid]));
 const incoming=reportRows.reduce((n,x)=>n+Number(x[4]),0),outgoing=reportRows.reduce((n,x)=>n+Number(x[5]),0);
 reportSummary.textContent='حركة '+month+' · المقبوض '+fmtNum(incoming)+' · المدفوع '+fmtNum(outgoing)+' · صافي الحركة '+fmtNum(incoming-outgoing)+'. لا يتضمن رصيداً افتتاحياً.';
@@ -2589,7 +2593,7 @@ if(!save(rows)){saveStock(before);status.textContent='تعذر حفظ العمل
 status.textContent='حُفظت العملية وتم تحديث رصيد المخزون.';qty.value='';party.value='';paid.value='0';refreshItems();renderStock();draw();
 });
 period.addEventListener('change',draw);
-refreshItems();draw();
+refreshItems();draw();refreshOperationChoices();
 })();
 }
 
