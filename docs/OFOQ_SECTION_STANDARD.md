@@ -258,3 +258,5 @@ All inventory data remains in browser localStorage on the current device. No API
 - Order entry deliberately does not deduct stock or imply payment confirmation. Product deletion is blocked while a non-cancelled order references it. These are merchant-entered local records, not a live storefront, payment gateway, or marketplace integration.
 - Operations Hub reads product and order summaries, includes them in local and optional cloud backup snapshots, and keeps the source records read-only.
 - Browser regression suite now creates a temporary product and order, then checks the linked dashboard. PWA cache advanced to v32.
+
+- Merchant safety refinement: catalogue records can be edited; non-cancelled orders reserve the entered stock quantity for validation, and an order that would exceed the recorded available stock is rejected. Cancelled orders release that reservation. Stock is still not auto-decremented, preserving manual reconciliation with the accounting inventory ledger. PWA cache advanced to v33.
