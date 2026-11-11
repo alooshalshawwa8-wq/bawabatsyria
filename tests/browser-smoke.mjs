@@ -204,7 +204,7 @@ try {
     await window.openSection(accounting);
   });
   await page.getByText("دفتر المبيعات والمشتريات").waitFor({ state: "visible", timeout: 10000 });
-  await page.getByLabel("الكمية").fill("1");
+  await page.locator("#mQty").fill("1");
   await page.getByLabel("سعر الوحدة").fill("1.239");
   await page.getByLabel("المبلغ المدفوع").fill("0");
   await page.getByLabel("حالة الدفع").selectOption("unpaid");
