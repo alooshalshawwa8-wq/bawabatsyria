@@ -1027,7 +1027,7 @@ function renderFootballModule(tool){
   async function loadStudioReport(id){if(!id)return;studioStatus.textContent='جارٍ جمع بيانات المباراة من API-Football…';studioReport.hidden=true;try{const data=await footballRequest('studio',{fixture:id});renderStudio(data);studioStatus.textContent='اكتمل تحليل المباراة · '+(data.cached?'من الذاكرة المؤقتة':'بيانات محدثة')+'.';}catch(e){studioStatus.textContent=e.message||'تعذر إنشاء التحليل.';}}
   $('fbStudioFind')?.addEventListener('click',()=>loadStudioFixtures('date'));$('fbStudioLive')?.addEventListener('click',()=>loadStudioFixtures('live'));
   wrap.querySelectorAll('.fb-tab[data-tab="studio"]').forEach(btn=>btn.addEventListener('click',()=>loadStudioFixtures('date')));
-  $('fbGoStudio')?.addEventListener('click',()=>{openFootballBranch('studio','tab');loadStudioFixtures('date');});
+  $('fbGoStudio')?.addEventListener('click',()=>openFootballBranch('studio','tab'));
   function showPane(name,skipLoad=false){
     wrap.querySelectorAll('.fb-tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===name));
     wrap.querySelectorAll('.fb-pane').forEach(x=>x.classList.toggle('active',x.dataset.pane===name));
@@ -1590,6 +1590,7 @@ function renderFootballModule(tool){
     wrap.querySelectorAll('.fb-extra-pane').forEach(x=>x.classList.toggle('active',x===pane));
     studio.hidden=true;backToStudio.hidden=false;
     if(id==='matches'&&!matchesLoaded)loadFixtures('date');
+    if(id==='studio')loadStudioFixtures('date');
     pane.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});return true;
   }
   $('fbGoArchive')?.addEventListener('click',()=>openFootballBranch('archive','tab'));
