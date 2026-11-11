@@ -1,0 +1,114 @@
+/* OFOQ Career & Freelance Studio v1 — local-first career workspace. */
+(function(){
+ 'use strict';
+ if(window.__OFOQ_CAREER_STUDIO_V1__)return;
+ const previous=window.openSection;
+ if(typeof previous!=="function"||previous.__ofoqCareerWrapped)return;
+ window.__OFOQ_CAREER_STUDIO_V1__=true;
+ const STORE="ofoq_career_applications_v1";
+ const el=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n;};
+ const btn=(txt,fn)=>{const b=el("button","ofc-btn",txt);b.type="button";b.addEventListener("click",fn);return b;};
+ const safeRead=()=>{try{const x=JSON.parse(localStorage.getItem(STORE)||"[]");return Array.isArray(x)?x.filter(v=>v&&typeof v.id==="string").slice(-100):[];}catch(_){return[];}};
+ const safeWrite=x=>{try{localStorage.setItem(STORE,JSON.stringify(x));return true;}catch(_){return false;}};
+ const fmt=n=>Number(n).toLocaleString("en-US",{maximumFractionDigits:2});
+ function mount(sec){
+  const host=document.getElementById("specialTool");if(!host||host.querySelector(".ofc-studio"))return;
+  const freelance=sec.id==="freelance_vip";
+  const root=el("section","ofc-studio");
+  const style=el("style");
+  style.textContent=`
+  .ofc-studio{margin:22px 0;padding:18px;border:1px solid #38677a;border-radius:22px;background:radial-gradient(ellipse at 90% 0%,#16445a 0,transparent 45%),linear-gradient(145deg,#0a1c2e,#10152b);color:#edf6ff;box-shadow:0 20px 55px #0006}
+  .ofc-head{border-bottom:1px solid #315368;padding:7px 4px 16px}.ofc-kicker{color:#7debd8;font-size:10px;letter-spacing:.16em;font-weight:900}.ofc-head h2{font-size:clamp(22px,4vw,31px);margin:8px 0;color:#f0fffd}.ofc-head p,.ofc-note{font-size:12px;line-height:1.9;color:#b4cbd9}
+  .ofc-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.ofc-btn,.ofc-tab{border:1px solid #42677a;border-radius:11px;background:#102a40;color:#e4f7ff;padding:10px 13px;font:inherit;font-size:12px;cursor:pointer}.ofc-tab[aria-selected=true]{background:linear-gradient(120deg,#087f86,#37bba8);color:#06272b;border-color:#8ef3df;font-weight:900}
+  .ofc-btn:focus-visible,.ofc-tab:focus-visible,.ofc-studio input:focus-visible,.ofc-studio textarea:focus-visible,.ofc-studio select:focus-visible{outline:2px solid #91f3df;outline-offset:2px}
+  .ofc-pane[hidden]{display:none}.ofc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:11px}.ofc-field{display:grid;gap:6px;font-size:12px;color:#c6dce8}.ofc-field input,.ofc-field textarea,.ofc-field select{width:100%;box-sizing:border-box;border:1px solid #36586c;border-radius:10px;background:#071827;color:#f5fbff;padding:11px;font:inherit}.ofc-field textarea{min-height:88px;resize:vertical;line-height:1.7}.ofc-actions{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.ofc-output{white-space:pre-wrap;overflow-wrap:anywhere;background:#0b2b36;border:1px solid #397a79;border-radius:13px;padding:14px;margin-top:12px;line-height:1.9;color:#e2fff8;font-size:13px}.ofc-output:empty{display:none}.ofc-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px;margin:12px 0}.ofc-metric{padding:12px;background:#0c2031;border:1px solid #315369;border-radius:12px}.ofc-metric small{display:block;color:#9ebbc9;font-size:10px}.ofc-metric strong{display:block;color:#8df0dc;font-size:19px;margin-top:6px}.ofc-list{display:grid;gap:8px}.ofc-row{display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap;padding:10px;border:1px solid #315064;border-radius:10px;background:#0b1d2c;font-size:12px}.ofc-row small{display:block;color:#9eb7c5}.ofc-row select{background:#081b29;color:#eaf7ff;border:1px solid #3c6073;padding:7px;border-radius:8px}.ofc-muted{font-size:11px;color:#a4bdca;line-height:1.8;margin:10px 0}
+  @media(max-width:560px){.ofc-studio{padding:13px}.ofc-grid{grid-template-columns:1fr 1fr}.ofc-tab{flex:1 1 42%}}@media(prefers-reduced-motion:reduce){.ofc-studio *{scroll-behavior:auto!important}}
+  `;
+  const head=el("header","ofc-head");head.append(el("div","ofc-kicker","OFOQ CAREER INTELLIGENCE · PRIVATE LOCAL WORKSPACE"),el("h2","",freelance?"مختبر المستقلين والعمل الرقمي":"مركز المسار المهني والوظائف"),el("p","",freelance?"حوّل مهارتك إلى خدمة واضحة وعرض سعر مدروس وملف أعمال ومتابعة عملاء — أدواتك تحفظ محلياً على جهازك.":"أنشئ سيرة ذاتية منظمة، تدرب على المقابلات، وجهّز طلبات التوظيف وتابع مراحل التقديم من لوحة واحدة."));
+  const tabs=el("div","ofc-tabs");tabs.setAttribute("role","tablist");tabs.setAttribute("aria-label","أدوات المسار المهني");const panes=el("div","");
+  const tab=(id,label)=>{const t=btn(label,()=>activate(id));t.className="ofc-tab";t.dataset.id=id;t.setAttribute("role","tab");t.setAttribute("aria-controls","ofc-"+id);t.setAttribute("aria-selected","false");t.tabIndex=-1;t.addEventListener("keydown",e=>{const all=[...tabs.children],i=all.indexOf(t);let n;if(e.key==="ArrowRight")n=all[(i+1)%all.length];if(e.key==="ArrowLeft")n=all[(i-1+all.length)%all.length];if(e.key==="Home")n=all[0];if(e.key==="End")n=all.at(-1);if(n){e.preventDefault();activate(n.dataset.id);n.focus();}});tabs.append(t);};
+  const pane=id=>{const p=el("section","ofc-pane");p.id="ofc-"+id;p.setAttribute("role","tabpanel");p.hidden=true;panes.append(p);return p;};
+  function activate(id){[...tabs.children].forEach(t=>{const on=t.dataset.id===id;t.setAttribute("aria-selected",String(on));t.tabIndex=on?0:-1;});[...panes.children].forEach(p=>p.hidden=p.id!=="ofc-"+id);}
+  const field=(parent,label,id,kind="text",placeholder="")=>{const w=el("label","ofc-field",label);let x;if(kind==="textarea"){x=el("textarea");x.rows=3;x.maxLength=1200;}else if(kind==="select"){x=el("select");}else{x=el("input");x.type=kind;x.maxLength=kind==="number"?undefined:180;if(kind==="number"){x.min="0";x.step="any";x.value="0";}}x.name=id;x.id="ofc-"+id;if(placeholder)x.placeholder=placeholder;w.append(x);parent.append(w);return x;};
+  const selectOptions=(x,opts)=>opts.forEach((v,i)=>{const o=el("option","",v);o.value=v;x.append(o);});
+  const actions=p=>{const a=el("div","ofc-actions");p.append(a);return a;};
+  const out=p=>{const x=el("div","ofc-output");x.setAttribute("aria-live","polite");p.append(x);return x;};
+  const note=(p,s)=>p.append(el("p","ofc-note",s));
+  const download=(name,text,type="text/plain")=>{const u=URL.createObjectURL(new Blob([text],{type})),a=el("a");a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);};
+  const copy=async(text,status)=>{try{await navigator.clipboard.writeText(text);status.textContent="تم النسخ."; }catch(_){status.textContent="تعذر النسخ التلقائي؛ حدد النص وانسخه يدوياً.";}};
+  if(!freelance){
+   tab("cv","📄 منشئ السيرة الذاتية");tab("interview","🎙️ محاكي المقابلات");tab("tracker","🗂️ متابع التقديمات");
+   const cv=pane("cv");cv.append(el("h3","","ابنِ مسودة سيرتك الذاتية"));
+   note(cv,"اكتب معلومات دقيقة وقابلة للتحقق. أنشئ نسخة نصية أولية ثم راجعها وعدّلها قبل التقديم. لا تضع بيانات حساسة غير لازمة.");
+   const g=el("div","ofc-grid");cv.append(g);
+   const f={name:field(g,"الاسم المهني","cv-name","text","الاسم كما تريد عرضه"),role:field(g,"المسمى أو التخصص المستهدف","cv-role","text","مثلاً: محلل بيانات"),email:field(g,"البريد المهني","cv-email","text","name@example.com"),location:field(g,"المدينة / البلد","cv-location"),summary:field(g,"نبذة مهنية موجزة","cv-summary","textarea","خبرتك وقيمتك المهنية"),skills:field(g,"المهارات","cv-skills","textarea","افصل المهارات بفواصل"),experience:field(g,"الخبرات والإنجازات","cv-experience","textarea","المسمى، الجهة، المدة، إنجازات قابلة للقياس"),education:field(g,"التعليم والشهادات","cv-education","textarea","المؤهل، المؤسسة، السنة"),languages:field(g,"اللغات","cv-languages","text","اللغة ومستوى الإتقان"),links:field(g,"روابط الأعمال أو LinkedIn","cv-links","text","روابط عامة فقط")};
+   const cvOut=out(cv),status=el("p","ofc-muted","");const a=actions(cv);a.append(btn("إنشاء السيرة الذاتية",()=>{if(!f.name.value.trim()||!f.role.value.trim()){cvOut.textContent="أدخل الاسم المهني والتخصص المستهدف.";return;}const sections=[f.name.value.trim(),f.role.value.trim(),f.location.value.trim(),f.email.value.trim(),"
+الملخص المهني
+"+f.summary.value.trim(),"
+المهارات
+"+f.skills.value.trim(),"
+الخبرات والإنجازات
+"+f.experience.value.trim(),"
+التعليم والشهادات
+"+f.education.value.trim(),"
+اللغات
+"+f.languages.value.trim(),"
+روابط مهنية
+"+f.links.value.trim()];cvOut.textContent=sections.filter(Boolean).join("
+");}),btn("تنزيل TXT",()=>download("ofoq-cv-draft.txt",cvOut.textContent)),btn("نسخ",()=>copy(cvOut.textContent,status)));cv.append(status);
+   const interview=pane("interview");interview.append(el("h3","","تدريب المقابلة الوظيفية"));
+   const ig=el("div","ofc-grid");interview.append(ig);const role=field(ig,"المسمى الوظيفي","interview-role","text","مثلاً: مدير مبيعات"),level=field(ig,"مستوى الخبرة","interview-level","select");selectOptions(level,["مبتدئ","متوسط","خبير","إدارة وقيادة"]);const bank=[
+    ["عرّفنا بنفسك خلال 60 ثانية.","لماذا تريد هذه الوظيفة تحديداً؟","ما إنجاز مهني تفخر به؟","اذكر موقفاً واجهت فيه تحدياً وكيف تعاملت معه.","ما المهارة التي تعمل على تطويرها؟","كيف ترتب الأولويات عند ضغط المواعيد؟","ما الذي ستضيفه للفريق خلال أول 90 يوماً؟"],
+    ["اشرح قراراً اتخذته اعتماداً على بيانات.","كيف تتعامل مع اختلاف الأولويات مع مديرك؟","صف مشروعاً تجاوزت فيه توقعات العميل.","كيف تقيس جودة عملك؟","اذكر خطأً مهنياً تعلمت منه.","كيف تتعامل مع نقد مباشر؟","ما خطتك لأول 90 يوماً؟"],
+    ["كيف تقود التغيير وتكسب دعم أصحاب المصلحة؟","كيف تبني مؤشرات أداء قابلة للقياس؟","صف قراراً صعباً اتخذته بمعلومات ناقصة.","كيف تطور أداء عضو ضعيف الأداء؟","كيف تدير مخاطر مشروع استراتيجي؟","كيف توازن بين النمو والجودة؟","ما رؤيتك للفريق بعد عام؟"]
+   ];let current=[];const qout=out(interview),qaStatus=el("p","ofc-muted","");const ia=actions(interview);ia.append(btn("ولّد جولة أسئلة",()=>{const n=level.selectedIndex;current=[...bank[n]].sort(()=>Math.random()-.5).slice(0,5);qout.textContent="مقابلة: "+(role.value.trim()||"الدور المستهدف")+"
+المستوى: "+level.value+"
+
+"+current.map((q,i)=>(i+1)+". "+q+"
+إجابة المتدرب: ______________________________").join("
+
+")+"
+
+تدرب باستخدام طريقة STAR: الموقف، المهمة، الإجراء، النتيجة. هذه أسئلة تدريبية عامة وليست توقعاً لأسئلة جهة توظيف بعينها.";qaStatus.textContent="اكتب إجاباتك بصوت مرتفع وسجّل الزمن ثم حسّن الأمثلة بالأرقام.";}),btn("تنزيل الأسئلة",()=>download("ofoq-interview-practice.txt",qout.textContent)));interview.append(qaStatus);
+   const tracker=pane("tracker");tracker.append(el("h3","","لوحة متابعة طلبات الوظائف"));note(tracker,"سجل اسم الجهة والدور وتاريخ التقديم والحالة. البيانات محلية على هذا المتصفح ويمكن تصديرها.");const tg=el("div","ofc-grid");tracker.append(tg);const company=field(tg,"الشركة / الجهة","job-company"),job=field(tg,"المسمى الوظيفي","job-title"),date=field(tg,"تاريخ التقديم","job-date","date"),link=field(tg,"رابط الإعلان (اختياري)","job-link","text","https://");const list=el("div","ofc-list");tracker.append(list);const msg=el("p","ofc-muted","");const ta=actions(tracker);ta.append(btn("إضافة طلب",()=>{if(!company.value.trim()||!job.value.trim()){msg.textContent="أدخل الجهة والمسمى الوظيفي.";return;}const rows=safeRead();rows.push({id:"job_"+Date.now().toString(36),company:company.value.trim(),job:job.value.trim(),date:date.value||new Date().toISOString().slice(0,10),link:link.value.trim(),status:"تم التقديم",createdAt:new Date().toISOString()});if(!safeWrite(rows)){msg.textContent="تعذر الحفظ؛ مساحة التخزين ممتلئة.";return;}company.value="";job.value="";link.value="";render();msg.textContent="حُفظ الطلب محلياً."; }),btn("تصدير CSV",()=>{const rows=safeRead(),csv=["الشركة,الوظيفة,التاريخ,الحالة,الرابط",...rows.map(r=>[r.company,r.job,r.date,r.status,r.link].map(v=>'"'+String(v||"").replace(/"/g,'""')+'"').join(","))].join("
+");download("ofoq-job-applications.csv","﻿"+csv,"text/csv;charset=utf-8");}));tracker.append(msg);
+   function render(){list.replaceChildren();const rows=safeRead();if(!rows.length){list.append(el("p","ofc-muted","لا توجد طلبات محفوظة."));return;}rows.slice().reverse().forEach(r=>{const line=el("div","ofc-row");const info=el("div","");info.append(el("strong","",r.company+" · "+r.job),el("small","",r.date+(r.link?" · "+r.link:"")));const sel=el("select");selectOptions(sel,["تم التقديم","قيد المراجعة","مقابلة أولى","مقابلة نهائية","عرض عمل","مرفوض","انسحبت"]);sel.value=r.status;sel.addEventListener("change",()=>{const all=safeRead(),item=all.find(x=>x.id===r.id);if(item){item.status=sel.value;safeWrite(all);}});const del=btn("حذف",()=>{safeWrite(safeRead().filter(x=>x.id!==r.id));render();});line.append(info,sel,del);list.append(line);});}render();
+  }else{
+   tab("offer","💼 تسعير الخدمات");tab("proposal","📝 عرض العميل");tab("portfolio","✨ ملف الأعمال");
+   const offer=pane("offer");offer.append(el("h3","","حاسبة تسعير الخدمة المستقلة"));note(offer,"احسب سعر مشروعك انطلاقاً من ساعات العمل والتكاليف والرسوم واحتياطي المراجعات. العملة تختارها أنت؛ الأداة لا تجلب أسعار صرف.");const g=el("div","ofc-grid");offer.append(g);
+   const h=field(g,"ساعات التنفيذ المقدرة","freelance-hours","number"),rate=field(g,"سعرك المستهدف للساعة","freelance-rate","number"),cost=field(g,"تكاليف مباشرة للمشروع","freelance-cost","number"),fee=field(g,"عمولة المنصة / الدفع %","freelance-fee","number"),buffer=field(g,"احتياطي مراجعات ومخاطر %","freelance-buffer","number"),currency=field(g,"رمز العملة","freelance-currency","text","USD / EUR / SAR");
+   const metrics=el("div","ofc-metrics");offer.append(metrics);const oo=out(offer);const oa=actions(offer);oa.append(btn("احسب عرض السعر",()=>{const v=[h,rate,cost,fee,buffer].map(x=>Number(x.value)),[hours,hourRate,direct,fees,reserve]=v;if(!v.every(Number.isFinite)||v.some(x=>x<0)||fees>=100||reserve>=100){oo.textContent="تحقق من المدخلات؛ النسب يجب أن تكون غير سالبة وأقل من 100%.";return;}const base=hours*hourRate+direct,price=base/(1-fees/100)/(1-reserve/100),net=price*(1-fees/100)*(1-reserve/100)-direct;metrics.replaceChildren();[[ "تكلفة وقتك",fmt(hours*hourRate)],["السعر المقترح",fmt(price)+" "+(currency.value||"")],["المتبقي بعد الرسوم والاحتياطي",fmt(net)+" "+(currency.value||"")],["الساعات المقدرة",fmt(hours)+" ساعة"]].forEach(([k,v])=>{const m=el("div","ofc-metric");m.append(el("small","",k),el("strong","",v));metrics.append(m);});oo.textContent="سعر حسابي إرشادي: "+fmt(price)+" "+(currency.value||"")+".\nوثّق نطاق العمل والتسليمات وعدد جولات التعديل وموعد الدفع قبل الاتفاق. السعر لا يضمن قبول العميل ولا يشمل ضرائب غير مدخلة."; }));
+   const proposal=pane("proposal");proposal.append(el("h3","","منشئ عرض مشروع مخصص"));note(proposal,"اكتب ما فهمته من احتياج العميل وما ستسلمه فعلياً. لا تضف خبرات أو نتائج غير حقيقية.");const pg=el("div","ofc-grid");proposal.append(pg);const pf={client:field(pg,"اسم العميل / الشركة","proposal-client"),need:field(pg,"المشكلة أو الهدف","proposal-need","textarea","ما الذي يريد العميل تحقيقه؟"),approach:field(pg,"منهجية التنفيذ","proposal-approach","textarea","الخطوات التي ستنفذها"),deliverables:field(pg,"التسليمات المحددة","proposal-deliverables","textarea","ملفات، صفحات، تقارير..."),timeline:field(pg,"المدة المتوقعة","proposal-timeline","text","مثلاً: 7 أيام عمل"),price:field(pg,"السعر والعملة","proposal-price","text","المبلغ والعملة"),proof:field(pg,"خبرة أو نموذج أعمال حقيقي","proposal-proof","textarea","رابط أو مثال موثق")};const po=out(proposal),ps=el("p","ofc-muted","");const pa=actions(proposal);pa.append(btn("صياغة العرض",()=>{if(!pf.need.value.trim()||!pf.deliverables.value.trim()){po.textContent="أدخل احتياج العميل والتسليمات قبل إنشاء العرض.";return;}po.textContent=["عرض تنفيذ مشروع",pf.client.value.trim()?"إلى: "+pf.client.value.trim():"", "
+فهم الاحتياج
+"+pf.need.value.trim(),"
+خطة التنفيذ
+"+pf.approach.value.trim(),"
+التسليمات
+"+pf.deliverables.value.trim(),"
+الجدول الزمني
+"+pf.timeline.value.trim(),"
+الاستثمار
+"+pf.price.value.trim(),"
+خبرة ذات صلة
+"+pf.proof.value.trim(),"
+الخطوة التالية
+يسعدني مناقشة التفاصيل وتأكيد نطاق العمل قبل البدء."].filter(Boolean).join("
+");}),btn("تنزيل العرض",()=>download("ofoq-project-proposal.txt",po.textContent)),btn("نسخ",()=>copy(po.textContent,ps)));proposal.append(ps);
+   const portfolio=pane("portfolio");portfolio.append(el("h3","","بطاقة دراسة حالة لملف الأعمال"));note(portfolio,"استخدم مشروعاً حقيقياً أو اكتب بوضوح أنه مشروع تجريبي. لا تنسب نتائج أو أعمالاً لم تنفذها.");const fg=el("div","ofc-grid");portfolio.append(fg);const ff={title:field(fg,"عنوان المشروع","case-title"),type:field(fg,"نوع المشروع","case-type","text","تجريبي / عميل حقيقي"),challenge:field(fg,"التحدي","case-challenge","textarea"),role:field(fg,"دورك ومسؤولياتك","case-role","textarea"),process:field(fg,"خطوات العمل والأدوات","case-process","textarea"),result:field(fg,"النتيجة المثبتة أو ما تعلمته","case-result","textarea"),url:field(fg,"رابط عام للمشروع","case-url","text","https://")};const fo=out(portfolio),fa=actions(portfolio);fa.append(btn("إنشاء دراسة الحالة",()=>{if(!ff.title.value.trim()||!ff.role.value.trim()){fo.textContent="أدخل عنوان المشروع ودورك الفعلي.";return;}fo.textContent=[ff.title.value.trim(),"التصنيف: "+(ff.type.value||"غير محدد"),"
+التحدي
+"+ff.challenge.value,"
+دوري
+"+ff.role.value,"
+المنهجية والأدوات
+"+ff.process,"
+النتيجة والتعلم
+"+ff.result,"
+الرابط
+"+ff.url.value].join("
+");}),btn("تنزيل TXT",()=>download("ofoq-portfolio-case-study.txt",fo.textContent)));
+  }
+  root.append(style,head,tabs,panes);host.append(root);activate(freelance?"offer":"cv");
+ }
+ const wrapped=async function(sec){await previous(sec);if(sec&&(sec.id==="jobs"||sec.id==="freelance_vip"))mount(sec);};
+ wrapped.__ofoqCareerWrapped=true;window.openSection=wrapped;
+})();
