@@ -897,7 +897,7 @@ function renderFootballModule(tool){
       const data=await footballRequest('catalog',values);
       const rows=Array.isArray(data.response)?data.response:[];
       rawBox.textContent=JSON.stringify(data,null,2);
-      status.textContent='اكتمل الاستعلام · '+(data.results??rows.length)+' نتيجة · '+(data.cached?'من الذاكرة المؤقتة':'استجابة جديدة')+' · '+new Date(data.fetchedAt||Date.now()).toLocaleString('ar-SY');
+      status.textContent='اكتمل الاستعلام · '+(data.results??rows.length)+' نتيجة · '+(data.stale?'نسخة محفوظة احتياطياً':(data.cached?'من الذاكرة المؤقتة':'استجابة جديدة'))+' · '+new Date(data.fetchedAt||Date.now()).toLocaleString('ar-SY');
       if(!rows.length){results.append(node('div','لم يُرجع المصدر بيانات لهذا الاستعلام. جرّب تغيير المعرّف أو الموسم، أو تحقق من تغطية البطولة وخطتك.','fb-note'));return;}
       rows.slice(0,60).forEach((item,index)=>{
         const title=item.league?.name||item.team?.name||item.player?.name||item.name||item.country?.name||item.venue?.name||item.fixture?.id||item.id||('نتيجة '+(index+1));
