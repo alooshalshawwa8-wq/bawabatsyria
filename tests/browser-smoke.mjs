@@ -90,7 +90,11 @@ try {
     return chain;
   });
   if (!favoriteVisibleBeforeScroll) throw new Error("Current-section favorite action is hidden before scrolling: " + JSON.stringify(favoriteState));
-  await favoriteCurrent.scrollIntoViewIfNeeded({ timeout: 10000 });
+  // Earlier section opens use smooth scrolling; stop any in-flight scroll before the
+  // favorite interaction so Playwright does not mistake the moving viewport for a hidden control.
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  await favoriteCurrent.evaluate(element => element.scrollIntoView({ block: "center", inline: "nearest", behavior: "instant" }));
+  await page.waitForTimeout(150);
   const lastVisitedTitle = (await page.locator("#detailTitle").innerText()).trim();
   await favoriteCurrent.click({ timeout: 10000 });
   if (await favoriteCurrent.getAttribute("aria-pressed") !== "true") throw new Error("Favorite toggle did not activate");
