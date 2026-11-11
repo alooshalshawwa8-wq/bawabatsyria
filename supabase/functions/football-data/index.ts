@@ -68,7 +68,7 @@ async function persistentCacheSet(key: string, endpoint: string, payload: unknow
 }
 async function recordProviderUsage(row: {
   endpoint: string; cacheKey: string; status: number; errors?: unknown;
-  responseCount?: number; remaining?: number | null; limit?: number | null; minuteRemaining?: number | null; minuteLimit?: number | null; durationMs: number;
+  responseCount?: number; remaining?: number | null; limit?: number | null; minuteRemaining?: number | null; minuteLimit?: number | null; providerPlan?: string | null; durationMs: number;
 }) {
   try {
     await dbRest("football_api_usage", {
@@ -79,7 +79,7 @@ async function recordProviderUsage(row: {
         provider_errors: row.errors ?? null, response_count: row.responseCount ?? null,
         requests_remaining: row.remaining ?? null, requests_limit: row.limit ?? null,
         minute_remaining: row.minuteRemaining ?? null, minute_limit: row.minuteLimit ?? null,
-        duration_ms: row.durationMs
+        provider_plan: row.providerPlan ?? null, duration_ms: row.durationMs
       })
     });
   } catch (error) { console.error("Football usage log failed", String(error).slice(0,160)); }
@@ -346,18 +346,25 @@ Deno.serve(async (request: Request) => {
             headers: { "x-apisports-key": apiKey, "Accept": "application/json" }
           });
           const statusData = await statusResponse.json().catch(() => ({}));
-          const dailyRemaining = statusResponse.headers.get("x-ratelimit-requests-remaining");
-          const dailyLimit = statusResponse.headers.get("x-ratelimit-requests-limit");
-          const minuteRemaining = statusResponse.headers.get("x-ratelimit-remaining");
-          const minuteLimit = statusResponse.headers.get("x-ratelimit-limit");
+          const statusAccount = statusData?.response ?? {};
+          const requestStats = statusAccount?.requests ?? {};
+          const dailyRemainingHeader = statusResponse.headers.get("x-ratelimit-requests-remaining");
+          const dailyLimitHeader = statusResponse.headers.get("x-ratelimit-requests-limit");
+          const minuteRemainingHeader = statusResponse.headers.get("x-ratelimit-remaining");
+          const minuteLimitHeader = statusResponse.headers.get("x-ratelimit-limit");
+          const dailyLimit = dailyLimitHeader === null ? Number(requestStats.limit_day) : Number(dailyLimitHeader);
+          const dailyRemaining = dailyRemainingHeader === null
+            ? (Number.isFinite(dailyLimit) && Number.isFinite(Number(requestStats.current)) ? Math.max(0, dailyLimit - Number(requestStats.current)) : null)
+            : Number(dailyRemainingHeader);
           await recordProviderUsage({
             endpoint: "status", cacheKey: "provider-status", status: statusResponse.status,
             errors: hasProviderErrors(statusData?.errors) ? statusData.errors : null,
-            responseCount: Array.isArray(statusData?.response) ? statusData.response.length : 0,
-            remaining: dailyRemaining === null ? null : Number(dailyRemaining),
-            limit: dailyLimit === null ? null : Number(dailyLimit),
-            minuteRemaining: minuteRemaining === null ? null : Number(minuteRemaining),
-            minuteLimit: minuteLimit === null ? null : Number(minuteLimit),
+            responseCount: Number(statusData?.results ?? 0),
+            remaining: Number.isFinite(dailyRemaining) ? dailyRemaining : null,
+            limit: Number.isFinite(dailyLimit) ? dailyLimit : null,
+            minuteRemaining: minuteRemainingHeader === null ? null : Number(minuteRemainingHeader),
+            minuteLimit: minuteLimitHeader === null ? null : Number(minuteLimitHeader),
+            providerPlan: typeof statusAccount?.subscription?.plan === "string" ? statusAccount.subscription.plan : null,
             durationMs: Date.now() - statusStarted
           });
         } catch (statusError) {
