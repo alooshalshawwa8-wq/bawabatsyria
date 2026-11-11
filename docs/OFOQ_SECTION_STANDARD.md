@@ -191,3 +191,15 @@ All inventory data remains in browser localStorage on the current device. No API
 - Each explicit send remains exactly one Gemini request. No automatic requests, background refreshes, browser-side API keys, new provider integrations, API-Football calls, or quota increases were introduced.
 - Conversation context remains in memory for the open section session only; clearing the conversation removes the visible in-session context. Export is user-initiated.
 - Verification: source changes committed to GitHub main. GitHub Actions syntax validation and Pages deployment are required before calling this release deployed. Browser-level interaction and real Gemini calls remain untested; no provider quota was consumed during implementation.
+
+
+## 2026-11-11 — AI quota source-of-truth and automated contract tests
+
+- Audited the live Supabase `site-assistant` Edge Function (version 17) against the GitHub source. The live function already reserves one shared Gemini request through `public.reserve_ai_provider_request('gemini', 30)` before contacting Google; the RPC is backed by `public.ai_provider_daily_usage` and is executable only by `service_role` and `postgres`.
+- The GitHub copy was stale and omitted the live quota guard and specialist profile routing. Synchronized `supabase/functions/site-assistant/index.ts` from the active deployed version so the repository now represents the live backend. No Edge Function redeployment was needed for this source sync.
+- Verified the quota RPC with an isolated database test: the first reservation at a test limit of 1 succeeded, the second was rejected, and the temporary test row was deleted. No Gemini or API-Football provider request was made.
+- Confirmed `ai_provider_daily_usage` has RLS enabled and no direct grants to `anon` or `authenticated`; its data is accessible to the backend service role only. The quota RPC is not executable by public roles.
+- Added `scripts/validate_ofoq.py`, a dependency-free CI contract suite covering section/priority integrity, Gemini frontend safety, absence of server secrets in browser code, frontend/backend profile alignment, the shared 30/day reservation guard, keyboard-accessible command navigation, and PWA shell metadata.
+- Added the contract suite to both GitHub Pages deployment validation and the portal/membership validation workflow. The new checks will run on the next CI execution.
+- Supabase Security Advisor also reports the existing leaked-password protection setting as disabled, plus informational RLS-without-policy notices on internal tables. These are recorded for a separate Auth/database security review; no unrelated Auth or football configuration was changed.
+- Browser-level interaction testing and a live Gemini request remain intentionally unperformed to avoid spending the shared provider quota.
