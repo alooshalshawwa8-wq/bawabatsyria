@@ -277,3 +277,15 @@ All inventory data remains in browser localStorage on the current device. No API
 - Browser smoke coverage now checks a known-section search result, Escape from both inside and outside the dialog, and favorites/recent result filtering.
 - The offline shell cache was advanced to `ofoq-shell-v40` so returning users can receive the updated navigation after the service worker refreshes.
 - This is a shared navigation milestone, not a claim that all 78 section-specific workflows are complete. The section-by-section functional verification remains in progress.
+
+
+## Expanded acceptance coverage — 2026-11-11
+
+The browser smoke suite now opens each catalogue entry and asserts:
+- Correct section title and non-empty section content.
+- The shared workspace is mounted with exactly three tabs (tools, execution plan, notes).
+- Each of the three tabs can be activated and reports `aria-selected=true`.
+- The section-aware helper panel is present.
+- The NEXUS search can find a known section; Escape closes the dialog even when focus is outside it; favorites and recent filters return the expected local sections.
+
+The suite blocks requests to external hosts, so routine UI regression coverage does not consume external AI or sports-data quotas. These are automated acceptance checks; the full live run result still needs to be confirmed from GitHub Actions after the latest commits.
