@@ -669,9 +669,10 @@ function renderFootballModule(tool){
     '<div id="fbArchiveResults" class="fb-archive-results"></div>'+
     '<div id="fbArchiveDetail" hidden>'+
     '<div class="fb-archive-heading" id="fbArchiveLeagueHeading"></div>'+
+    '<section class="fb-archive-panel fb-archive-wide" style="margin-bottom:12px"><h4>📚 بطاقة تاريخ البطولة ومواعيد الموسم</h4><div id="fbArchiveHistory" class="fb-archive-list"></div></section>'+
     '<div class="fb-archive-season-row"><label for="fbArchiveSeason">اختر الموسم</label><select id="fbArchiveSeason"></select><button class="btn secondary" id="fbArchiveLoadSeason" type="button">اعرض الموسم</button></div>'+
     '<div class="fb-archive-grid">'+
-    '<section class="fb-archive-panel"><h4>👑 أبرز المتصدرين والمرشحين إحصائياً</h4><div id="fbArchiveContenders" class="fb-archive-list"></div><p class="fb-note">هذا ترتيب تنافسي حالي من الجدول، وليس توقعاً مؤكداً للفائز.</p></section>'+
+    '<section class="fb-archive-panel"><h4>👑 أبرز المنافسين وفق أرقام الموسم</h4><div id="fbArchiveContenders" class="fb-archive-list"></div><p class="fb-note">هذا ترتيب تنافسي حالي من الجدول، وليس توقعاً مؤكداً للفائز.</p></section>'+
     '<section class="fb-archive-panel"><h4>🛡️ الفرق المشاركة</h4><div id="fbArchiveTeams" class="fb-archive-list"></div></section>'+
     '<section class="fb-archive-panel fb-archive-wide"><h4>📅 المباريات القادمة والنتائج · نطاق 60 يوماً</h4><div id="fbArchiveFixtures" class="fb-archive-list"></div><button class="btn secondary" id="fbArchiveMore" type="button" hidden>تحميل مباريات إضافية</button></section>'+
     '<section class="fb-archive-panel fb-archive-wide"><h4>🏅 سجل الأبطال في المواسم السابقة</h4><div id="fbArchiveWinners" class="fb-archive-list"></div><p class="fb-note">يُعرض بطل الموسم السابق من الترتيب النهائي للمسابقات التي توفر جدول دوري. بطولات الكؤوس تحتاج إلى سجل نهائيات موثق؛ لن نخمن أسماء أبطالها.</p></section>'+
@@ -870,6 +871,29 @@ function renderFootballModule(tool){
       status.textContent='جدول '+leagueName+' · موسم '+season+' · المصدر API-Football.';
     }catch(error){status.textContent=error.message||'تعذر تحميل جدول الترتيب.';}
   }
+  const archiveHistoryFacts=[
+    {keys:['premier league'],year:1992,label:'انطلقت أول نسخة من الدوري الإنجليزي الممتاز بصيغته الحالية عام 1992',source:'Premier League الرسمي'},
+    {keys:['la liga','primera division','laliga'],year:1929,label:'انطلقت الدرجة الإسبانية الأولى عام 1929',source:'السجل التاريخي للمسابقة'},
+    {keys:['bundesliga'],year:1963,label:'بدأ موسم البوندسليغا الأول في 1963/64',source:'Bundesliga الرسمي'},
+    {keys:['ligue 1','ligue1'],year:1932,label:'بدأت المسابقة الفرنسية الاحترافية الأولى عام 1932',source:'السجل التاريخي للمسابقة'},
+    {keys:['champions league','uefa champions'],year:1955,label:'انطلقت كأس الأندية الأوروبية البطلة عام 1955؛ واعتمد اسم دوري أبطال أوروبا لاحقاً في 1992',source:'UEFA الرسمي'},
+    {keys:['world cup','fifa world cup'],year:1930,label:'أقيمت النسخة الأولى من كأس العالم عام 1930',source:'تاريخ كأس العالم'},
+    {keys:['european championship','uefa euro'],year:1960,label:'أقيمت النسخة الأولى من بطولة أمم أوروبا عام 1960',source:'UEFA / Bundesliga'},
+    {keys:['asian cup','afc asian'],year:1956,label:'أقيمت النسخة الأولى من كأس آسيا عام 1956',source:'السجل التاريخي للبطولة'}
+  ];
+  function renderArchiveHistory(season){
+    const box=$('fbArchiveHistory');if(!box)return;box.replaceChildren();
+    const name=(archiveLeague?.name||'').toLowerCase();
+    const fact=archiveHistoryFacts.find(item=>item.keys.some(key=>name.includes(key)));
+    if(fact)box.append(archiveRow('تاريخ الانطلاق · '+fact.year,fact.label+' · '+fact.source));
+    else box.append(node('div','تاريخ التأسيس/أول نسخة لهذه البطولة غير متوفر في قاعدة التاريخ الموثقة لدينا بعد؛ لن نعرض سنة تخمينية.','fb-note'));
+    if(season){
+      const dates=[season.start,season.end].filter(Boolean);
+      const label=season.current?'الموسم الحالي':('موسم '+season.year);
+      box.append(archiveRow('مواعيد '+label,dates.length===2?'من '+season.start+' إلى '+season.end:dates.length===1?dates[0]:'لم يحدد مزود البيانات تاريخي البداية والنهاية'));
+    }
+    box.append(archiveRow('مرجع البيانات','مواعيد الموسم والفرق والنتائج من API-Football؛ معلومات التاريخ تعرض مع مصدرها عند توفره'));
+  }
   // Competition archive: live seasons, participating teams, standings and scheduled fixtures.
   let archiveLeague=null;
   let archiveSeasons=[];
@@ -913,9 +937,10 @@ function renderFootballModule(tool){
     heading.append(copy);
     const select=$('fbArchiveSeason');select.replaceChildren();
     const sorted=[...archiveSeasons].sort((a,b)=>b.year-a.year);
-    sorted.forEach(season=>{const option=node('option',(season.year||'')+(season.current?' · الموسم الحالي':''));option.value=String(season.year);select.append(option);});
+    sorted.forEach(season=>{const dates=season.start&&season.end?' · '+season.start+' → '+season.end:'';const option=node('option',(season.year||'')+(season.current?' · الموسم الحالي':'')+dates);option.value=String(season.year);select.append(option);});
     const current=sorted.find(x=>x.current)||sorted[0];
     if(current)select.value=String(current.year);
+    renderArchiveHistory(current);
     $('fbArchiveWinners').replaceChildren();
     if(!sorted.length){archiveStatus.textContent='لا تتوفر مواسم لهذه البطولة في المصدر.';return;}
     archiveStatus.textContent='تم اختيار '+archiveLeague.name+'. جارٍ تحميل بيانات الموسم…';
@@ -942,7 +967,7 @@ function renderFootballModule(tool){
     const standings=(tableData?.response||[])[0]?.league?.standings||[];
     const leaders=standings.flat().slice(0,5);
     if(leaders.length){
-      leaders.forEach(row=>contenders.append(archiveRow((row.rank||'')+'. '+(row.team?.name||'—'),(row.points??'—')+' نقطة · لعب '+(row.all?.played??'—')+' · فارق '+(row.goalsDiff??'—'),archiveTeamLogo(row.team?.id))));
+      leaders.forEach(row=>contenders.append(archiveRow((row.rank||'')+'. '+(row.team?.name||'—'),(row.points??'—')+' نقطة · لعب '+(row.all?.played??'—')+' · فارق '+(row.goalsDiff??'—')+(row.form?' · آخر النتائج '+row.form:''),archiveTeamLogo(row.team?.id))));
     }else contenders.append(node('div',jobs[0].status==='rejected'?(jobs[0].reason?.message||'تعذر جلب الترتيب.'):'لا يتوفر جدول ترتيب لهذه المسابقة أو الموسم.','fb-note'));
     const teamsData=jobs[1].status==='fulfilled'?jobs[1].value:null;
     const teams=teamsData?.response||[];
@@ -959,8 +984,11 @@ function renderFootballModule(tool){
   }
   async function loadArchiveFixturesPage(season,page,replace){
     const box=$('fbArchiveFixtures');
-    const now=new Date();const from=new Date(now.getTime()-7*86400000).toISOString().slice(0,10);
-    const toDate=new Date(now.getTime()+60*86400000).toISOString().slice(0,10);
+    const now=new Date();
+    const selected=archiveSeasons.find(item=>Number(item.year)===Number(season));
+    const isCurrent=Boolean(selected?.current);
+    const from=isCurrent?new Date(now.getTime()-7*86400000).toISOString().slice(0,10):(selected?.start||'');
+    const toDate=isCurrent?new Date(now.getTime()+60*86400000).toISOString().slice(0,10):(selected?.end||'');
     const data=await footballRequest('fixtures',{mode:'season',league:archiveLeague.id,season,from,to:toDate,page});
     if(replace)box.replaceChildren();
     const fixtures=data.response||[];
@@ -972,7 +1000,7 @@ function renderFootballModule(tool){
       const row=archiveRow((teams.home?.name||'—')+'  '+score+'  '+(teams.away?.name||'—'),date+' · '+state+(league.round?' · '+league.round:'')+(fixture.venue?.name?' · '+fixture.venue.name:''),league.logo||archiveLogo(archiveLeague.id));
       box.append(row);
     });
-    if(!fixtures.length&&page===1)box.append(node('div','لا توجد مباريات مسجلة في نطاق الستين يوماً القادماً لهذا الموسم. يمكنك اختيار موسم آخر أو تحديث البيانات لاحقاً.','fb-note'));
+    if(!fixtures.length&&page===1)box.append(node('div',isCurrent?'لا توجد مباريات في نطاق الأيام المحدد لهذا الموسم حالياً.':'لم يعثر المصدر على مباريات ضمن تواريخ الموسم المختار.','fb-note'));
     archiveHasMore=Boolean(data.paging&&data.paging.current<data.paging.total);
     $('fbArchiveMore').hidden=!archiveHasMore;
     archiveFixturePage=page;
