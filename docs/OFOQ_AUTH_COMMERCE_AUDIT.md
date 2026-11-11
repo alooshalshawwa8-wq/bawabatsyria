@@ -60,3 +60,13 @@ The existing browser smoke suite also blocks external requests during its run. T
 2. Confirm password length/complexity, MFA policy, JWT lifetime, Site URL and redirect allow-list in Auth settings.
 3. Confirm the deployed Edge Function environment still keeps `PAYMENTS_ENABLED` unset/false.
 4. Keep all external provider integrations blocked until quota and readiness checks are complete.
+
+## Follow-up inventory allocation defect and fix
+
+A source-level review found that order quantities were counted as reserved only while an order status was `new`, `processing`, or `shipped`. Moving an order to `delivered` therefore released its reservation even though the product's on-hand quantity was not decremented by this local order workflow. That could make the same units available for a later order.
+
+Fix committed in `ecommerce-studio.js`: every order except `cancelled` remains allocated against available stock, including `delivered` orders. This matches the existing workflow's explicit behavior that recording an order does not automatically decrement physical stock; the reservation remains until the operator reconciles stock or cancels the order. This avoids silent double-selling without pretending that delivery automatically changed physical inventory.
+
+Regression assertion committed in `tests/browser-smoke.mjs`: mark the first order delivered, then attempt another order whose quantity would exceed the original stock once the delivered order is still counted. The test expects the same insufficient-stock validation.
+
+The updated source and test were fetched back from GitHub and their expected code markers were verified. The browser test itself has not yet been run in this session.
