@@ -249,3 +249,12 @@ All inventory data remains in browser localStorage on the current device. No API
 
 - Free-tier guardrail: a database trigger keeps only the latest 20 cloud snapshots per user. The trigger runs as SECURITY INVOKER and deletes only rows visible to the authenticated owner through RLS. A transactional smoke test inserted 21 temporary snapshots and confirmed exactly 20 remained before rollback.
 - Retention migration: `20261111161225_bound_workspace_backup_retention.sql`; the PWA cache is v31.
+
+
+## 2026-11-11 — Merchant catalogue and order desk
+
+- E-commerce Studio now includes a local product catalogue (up to 500 products) with SKU, category, unit cost, selling price and manually entered stock quantity.
+- Added a manual order register (up to 1,000 orders) with unique order numbers, product snapshot, quantity, total and editable lifecycle status (new, processing, shipped, delivered, cancelled).
+- Order entry deliberately does not deduct stock or imply payment confirmation. Product deletion is blocked while a non-cancelled order references it. These are merchant-entered local records, not a live storefront, payment gateway, or marketplace integration.
+- Operations Hub reads product and order summaries, includes them in local and optional cloud backup snapshots, and keeps the source records read-only.
+- Browser regression suite now creates a temporary product and order, then checks the linked dashboard. PWA cache advanced to v32.
