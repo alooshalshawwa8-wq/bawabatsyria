@@ -102,3 +102,11 @@ All inventory data remains in browser localStorage on the current device. No API
 - No API, Supabase, Gemini, API-Football, provider keys, or quotas were changed. Source-level implementation only; no live browser/device or end-to-end test, and no GitHub Pages deployment verification.
 
 - Added a separate version-1 JSON export/import for the transaction ledger, with a 2 MB file cap, strict record validation, and duplicate-ID filtering on merge. It does not overwrite existing transactions or alter the inventory backup.
+
+
+## Merchant financial dashboard — 2026-11-11
+
+- Added a month-filtered financial summary for recorded sales and purchases, receipts, supplier payments, customer receivables, supplier payables, inventory cost valuation, and inventory retail-value estimate.
+- New sales records capture the current inventory unit cost as `costAtSale`, allowing an indicative gross-profit calculation for transactions with that snapshot. Legacy transactions without this field are excluded from the known gross-profit figure.
+- The dashboard explicitly notes that it excludes general overhead, taxes, and owner withdrawals; figures are operational estimates, not formal financial statements or bank reconciliation.
+- No external APIs, Supabase, Gemini, API-Football, provider keys, or quotas were changed. Front-end localStorage only; browser/device testing and live Pages deployment remain unverified.
