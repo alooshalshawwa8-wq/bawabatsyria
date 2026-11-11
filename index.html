@@ -2448,7 +2448,7 @@ if(!rows.length){expenseList.textContent='لا توجد مصروفات مسجل�
 }
 invoiceMake.addEventListener('click',renderInvoice);invoicePrint.addEventListener('click',printInvoice);
 expenseAdd.addEventListener('click',()=>{const amount=Number(expenseAmount.value),paidNow=Number(expensePaid.value||0);if(!expenseDate.value||!expenseName.value.trim()||!Number.isFinite(amount)||amount<=0||!Number.isFinite(paidNow)||paidNow<0||paidNow>amount){operationsStatus.textContent='تحقق من التاريخ والبيان والقيمة والمدفوع.';return;}const rows=readExpenses();rows.push({id:'ex_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),date:expenseDate.value,name:expenseName.value.trim(),category:expenseCategory.value,amount,paid:paidNow,createdAt:new Date().toISOString()});if(!saveExpenses(rows)){operationsStatus.textContent='تعذر حفظ المصروف.';return;}expenseName.value='';expenseAmount.value='';expensePaid.value='';operationsStatus.textContent='تم تسجيل المصروف.';renderExpenses();draw();makeReport();});
-settlementAdd.addEventListener('click',()=>{const rows=read(),i=rows.findIndex(x=>x.id===settlementSelect.value),amount=Number(settlementAmount.value);if(i<0||!Number.isFinite(amount)||amount<=0){operationsStatus.textContent='اختر عملية وأدخل دفعة صحيحة.';return;}const outstanding=Math.max(0,Number(rows[i].total)-Number(rows[i].paid));if(amount>outstanding){operationsStatus.textContent='الدفعة تتجاوز المبلغ المتبقي ('+fmt(outstanding)+').';return;}const event={id:'pay_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),transactionId:rows[i].id,date:new Date().toISOString().slice(0,10),amount,direction:rows[i].type==='sale'?'in':'out',createdAt:new Date().toISOString()};const paymentEvents=readSettlements();paymentEvents.push(event);if(!saveSettlements(paymentEvents)){operationsStatus.textContent='تعذر حفظ سجل الدفعة.';return;}rows[i]={...rows[i],paid:Number(rows[i].paid)+amount,payment:rows[i].paid+amount>=rows[i].total?'paid':'partial',updatedAt:new Date().toISOString()};if(!save(rows)){paymentEvents.pop();saveSettlements(paymentEvents);{operationsStatus.textContent='تعذر حفظ الدفعة.';return;}settlementAmount.value='';operationsStatus.textContent='تم تسجيل الدفعة وتحديث رصيد العملية.';draw();makeReport();renderDirectory();refreshOperationChoices();});
+settlementAdd.addEventListener('click',()=>{const rows=read(),i=rows.findIndex(x=>x.id===settlementSelect.value),amount=Number(settlementAmount.value);if(i<0||!Number.isFinite(amount)||amount<=0){operationsStatus.textContent='اختر عملية وأدخل دفعة صحيحة.';return;}const outstanding=Math.max(0,Number(rows[i].total)-Number(rows[i].paid));if(amount>outstanding){operationsStatus.textContent='الدفعة تتجاوز المبلغ المتبقي ('+fmt(outstanding)+').';return;}const event={id:'pay_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),transactionId:rows[i].id,date:new Date().toISOString().slice(0,10),amount,direction:rows[i].type==='sale'?'in':'out',createdAt:new Date().toISOString()};const paymentEvents=readSettlements();paymentEvents.push(event);if(!saveSettlements(paymentEvents)){operationsStatus.textContent='تعذر حفظ سجل الدفعة.';return;}rows[i]={...rows[i],paid:Number(rows[i].paid)+amount,payment:rows[i].paid+amount>=rows[i].total?'paid':'partial',updatedAt:new Date().toISOString()};if(!save(rows)){paymentEvents.pop();saveSettlements(paymentEvents);operationsStatus.textContent='تعذر حفظ الدفعة.';return;}settlementAmount.value='';operationsStatus.textContent='تم تسجيل الدفعة وتحديث رصيد العملية.';draw();makeReport();renderDirectory();refreshOperationChoices();});
 
 
 const directory=document.createElement('section');directory.style.cssText='margin-top:18px;padding:15px;border:1px solid var(--line);border-radius:13px;background:rgba(4,18,31,.7)';
@@ -2504,7 +2504,6 @@ partyLedger.append(foot,table);
 partySave.addEventListener('click',()=>{const name=partyName.value.trim();if(!name){partyStatus.textContent='أدخل اسم الطرف.';return;}const list=readParties(),existing=list.findIndex(x=>x.name.toLocaleLowerCase('ar')===name.toLocaleLowerCase('ar'));const profile={name,role:partyRole.value,phone:partyPhone.value.trim(),address:partyAddress.value.trim(),notes:partyNotes.value.trim(),updatedAt:new Date().toISOString()};if(existing>=0)list[existing]=profile;else list.push(profile);if(!saveParties(list)){partyStatus.textContent='تعذر الحفظ؛ قد تكون مساحة التخزين ممتلئة.';return;}activeParty=name;partyStatus.textContent='تم حفظ ملف '+name+'.';renderDirectory();partySelect.value=name;renderPartyStatement(name);});
 partySelect.addEventListener('change',()=>{activeParty=partySelect.value;renderPartyStatement(activeParty);});
 partySearch.addEventListener('input',renderDirectory);
-renderDirectory();
 
 
 
@@ -2593,7 +2592,7 @@ if(!save(rows)){saveStock(before);status.textContent='تعذر حفظ العمل
 status.textContent='حُفظت العملية وتم تحديث رصيد المخزون.';qty.value='';party.value='';paid.value='0';refreshItems();renderStock();draw();
 });
 period.addEventListener('change',draw);
-refreshItems();draw();refreshOperationChoices();
+refreshItems();draw();refreshOperationChoices();renderDirectory();
 })();
 }
 
