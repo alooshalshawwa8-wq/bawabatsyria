@@ -2578,28 +2578,30 @@ renderDirectory();
 type.addEventListener('change',refreshItems);item.addEventListener('change',()=>{const x=readStock()[Number(item.value)];if(x)unit.value=type.value==='sale'?x.sale:x.cost;});
 exportLedger.addEventListener('click',()=>{const payload={app:'ofoq-trade-ledger',version:2,createdAt:new Date().toISOString(),transactions:read(),parties:readParties(),expenses:readExpenses(),settlements:readSettlements(),invoiceNumbers:readInvoiceNumbers()};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='ofoq-trade-ledger-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);status.textContent='تم تجهيز نسخة دفتر العمليات. احفظها في مكان آمن.';});
 importLedger.addEventListener('click',()=>ledgerFile.click());
-ledgerFile.addEventListener('change',async()=>{const file=ledgerFile.files&&ledgerFile.files[0];if(!file)return;try{
+ledgerFile.addEventListener('change',async()=>{const file=ledgerFile.files&&ledgerFile.files[0];if(!file)return;const keys=['bawabatsyria_trade_ledger_v1',partyKey,expenseKey,settlementKey,invoiceKey],snapshot=keys.map(k=>localStorage.getItem(k));try{
 if(file.size>2*1024*1024)throw new Error('حجم الملف يتجاوز 2 ميغابايت.');
 const data=JSON.parse(await file.text());
 if(!data||data.app!=='ofoq-trade-ledger'||![1,2].includes(data.version)||!Array.isArray(data.transactions)||data.transactions.length>20000)throw new Error('ملف دفتر العمليات غير صالح.');
 const valid=data.transactions.every(x=>x&&typeof x.id==='string'&&['sale','purchase'].includes(x.type)&&/^\d{4}-\d{2}-\d{2}$/.test(x.date)&&typeof x.item==='string'&&x.item.length<=60&&Number.isInteger(x.qty)&&x.qty>0&&Number.isFinite(x.unitPrice)&&x.unitPrice>=0&&Number.isFinite(x.total)&&x.total>=0&&Math.abs(x.total-x.qty*x.unitPrice)<0.000001&&Number.isFinite(x.paid)&&x.paid>=0&&x.paid<=x.total&&typeof x.party==='string');
 if(!valid)throw new Error('تحتوي النسخة على سجل غير صالح؛ لم يتم استيرادها.');
 const current=read(),ids=new Set(current.map(x=>x.id)),incoming=data.transactions.filter(x=>!ids.has(x.id));
-if(!save(current.concat(incoming)))throw new Error('تعذر حفظ العمليات؛ تحقق من مساحة المتصفح.');
-let added={transactions:incoming.length,parties:0,expenses:0,settlements:0};
+let oldParties=readParties(),newParties=[],newExpenses=readExpenses(),newSettlements=readSettlements(),numbers=readInvoiceNumbers();
 if(data.version===2){
 if(!Array.isArray(data.parties)||!Array.isArray(data.expenses)||!Array.isArray(data.settlements)||!data.invoiceNumbers||typeof data.invoiceNumbers!=='object'||Array.isArray(data.invoiceNumbers))throw new Error('بيانات الملفات الإضافية غير صالحة.');
 if(!data.parties.every(x=>x&&typeof x.name==='string'&&x.name.length<=80&&['customer','supplier','both'].includes(x.role)))throw new Error('ملفات الأطراف غير صالحة.');
 if(!data.expenses.every(x=>x&&typeof x.id==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x.date)&&typeof x.name==='string'&&Number.isFinite(x.amount)&&x.amount>0&&Number.isFinite(x.paid)&&x.paid>=0&&x.paid<=x.amount))throw new Error('سجلات المصروفات غير صالحة.');
 if(!data.settlements.every(x=>x&&typeof x.id==='string'&&typeof x.transactionId==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x.date)&&Number.isFinite(x.amount)&&x.amount>0&&['in','out'].includes(x.direction)))throw new Error('سجلات التحصيل غير صالحة.');
+const partyNames=new Set(oldParties.map(x=>x.name.toLocaleLowerCase('ar')));newParties=data.parties.filter(x=>!partyNames.has(x.name.toLocaleLowerCase('ar')));
 const merge=(a,b)=>{const seen=new Set(a.map(x=>x.id));return a.concat(b.filter(x=>!seen.has(x.id)));};
-const oldParties=readParties(),partyNames=new Set(oldParties.map(x=>x.name.toLocaleLowerCase('ar'))),newParties=data.parties.filter(x=>!partyNames.has(x.name.toLocaleLowerCase('ar')));
-const newExpenses=merge(readExpenses(),data.expenses),newSettlements=merge(readSettlements(),data.settlements);
-if(!saveParties(oldParties.concat(newParties))||!saveExpenses(newExpenses)||!saveSettlements(newSettlements))throw new Error('تعذر حفظ بعض الملفات الإضافية؛ راجع مساحة المتصفح.');
-const numbers=readInvoiceNumbers();Object.entries(data.invoiceNumbers).forEach(([k,v])=>{if(typeof v==='string'&&!numbers[k])numbers[k]=v;});localStorage.setItem(invoiceKey,JSON.stringify(numbers));
-added.parties=newParties.length;added.expenses=newExpenses.length-readExpenses().length+0;added.settlements=newSettlements.length-readSettlements().length+0;
+const mergedExpenses=merge(newExpenses,data.expenses),mergedSettlements=merge(newSettlements,data.settlements);
+newExpenses=mergedExpenses;newSettlements=mergedSettlements;
+Object.entries(data.invoiceNumbers).forEach(([k,v])=>{if(typeof v==='string'&&v.length<=40&&!numbers[k])numbers[k]=v;});
 }
-status.textContent='اكتمل الاستيراد: '+added.transactions+' عملية جديدة و'+added.parties+' ملف طرف. تم دمج المصروفات والتحصيلات وأرقام الفواتير دون استبدال السجلات الموجودة.';
+try{
+if(!save(current.concat(incoming))||!saveParties(oldParties.concat(newParties))||!saveExpenses(newExpenses)||!saveSettlements(newSettlements))throw new Error('تعذر حفظ بعض الملفات؛ تحقق من مساحة المتصفح.');
+localStorage.setItem(invoiceKey,JSON.stringify(numbers));
+}catch(writeError){keys.forEach((k,i)=>{try{if(snapshot[i]===null)localStorage.removeItem(k);else localStorage.setItem(k,snapshot[i]);}catch(e){}});throw new Error(writeError.message||'تعذر الحفظ؛ تمت محاولة استعادة الحالة السابقة.');}
+status.textContent='اكتمل الاستيراد: '+incoming.length+' عملية، '+newParties.length+' ملف طرف، '+(newExpenses.length-readExpenses().length)+' مصروف، وبيانات التحصيل والفواتير. تم دمج النسخة دون استبدال السجلات الموجودة.';
 draw();makeReport();renderDirectory();refreshOperationChoices();
 }catch(error){status.textContent=error.message||'تعذر استيراد الدفتر.';}finally{ledgerFile.value='';}});
 add.addEventListener('click',()=>{
