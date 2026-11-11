@@ -120,3 +120,11 @@ The local merchant ledger backup importer now performs cross-record checks befor
 - The static contract validator requires these checks; PWA shell cache is `ofoq-shell-v43`.
 
 The validator passed on commit `952d0052e80791b6adb80a7b7f9896d31bb129a1`. The Pages/browser workflow for the latest commit is being checked separately.
+
+## Treasury and settlement-ledger follow-up
+
+The treasury workspace now applies a consistent two-decimal monetary boundary to opening balances, cash movements, transfers, asset cost/current value, obligations, obligation payments and reconciliation balances. Payment totals are updated in integer minor units; reconciliation differences are rounded to the same currency precision. Inputs use a 0.01 step and validation feedback explains the limit.
+
+The trade backup importer also validates the merged state, not only the incoming file: settlement events are rechecked against the final merged transaction set, direction and total paid amount. This prevents an imported event from attaching to an existing local transaction in a way that would overstate its reconciled payments.
+
+Static validation now checks the backup reconciliation and treasury precision contracts. The offline shell cache was advanced to `ofoq-shell-v45`. Browser-level verification of the latest backup-import regression is still pending until the current Pages workflow completes.
