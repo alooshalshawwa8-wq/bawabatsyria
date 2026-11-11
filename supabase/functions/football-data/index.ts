@@ -679,14 +679,14 @@ Deno.serve(async (request: Request) => {
       const value = url.searchParams.get(key);
       if (value !== null && value.trim() !== "") params.set(key, value.trim().slice(0, 120));
     }
-    if (["standings","scorers","assists","yellow_cards","red_cards"].includes(dataset) && (!params.has("league") || !params.has("season"))) {
+    if (["standings","scorers","assists","yellow_cards","red_cards","rounds"].includes(dataset) && (!params.has("league") || !params.has("season"))) {
       return reply({ error: "يتطلب هذا القسم league و season، مثال league=39&season=2025." }, 400);
     }
     if (dataset === "team_stats" && (!params.has("team") || !params.has("league") || !params.has("season"))) {
       return reply({ error: "إحصاءات الفريق تتطلب team و league و season." }, 400);
     }
     if (dataset === "team_seasons" && !params.has("team")) return reply({ error: "أدخل team لمعرف النادي." }, 400);
-    if (["team_countries","team_list"].includes(dataset) && !params.has("team") && !params.has("id") && !params.has("league") && !params.has("search") && !params.has("country") && !params.has("name") && !params.has("venue")) {
+    if (dataset === "team_list" && !params.has("team") && !params.has("id") && !params.has("league") && !params.has("search") && !params.has("country") && !params.has("name") && !params.has("venue")) {
       return reply({ error: "أدخل مُعرّفاً أو معيار بحث صالحاً لهذا القسم." }, 400);
     }
     if (["players","player_seasons","squads","coaches","transfers","sidelined","injuries","venues","odds_bets","bookmakers"].includes(dataset) && params.size === 0) {
