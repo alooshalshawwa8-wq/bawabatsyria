@@ -728,7 +728,7 @@ function renderFootballModule(tool){
 <div class="notice" id="fbApiStatus" role="status">اختر مجموعة بيانات وأدخل المعايير المناسبة لبدء الاستعلام.</div>
 <div class="fb-card" style="margin:12px 0">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-    <div><strong>مركز مراقبة مفتاح API-Football</strong><small>قياس طلبات المزود الفعلية خلال آخر 24 ساعة، مع تمييز البيانات المخزنة مؤقتاً عن الطلبات الجديدة</small></div>
+    <div><strong>مركز مراقبة مفتاح API-Football — للمالك فقط</strong><small>الاستهلاك الفعلي، الحصة اليومية الآمنة، توزيع الميزانية، وسرعة الاستهلاك</small></div>
     <button class="btn secondary" id="fbUsageRefresh" type="button">تحديث مؤشرات الاستهلاك</button>
   </div>
   <div class="fb-grid" id="fbUsageMetrics" style="margin-top:12px"><div class="fb-note">اضغط تحديث لقراءة لوحة الاستهلاك من سجل الخادم.</div></div>
@@ -842,9 +842,11 @@ function renderFootballModule(tool){
     const url=new URL(footballApi);
     url.searchParams.set('action',action);
     Object.entries(values).forEach(([key,value])=>{if(value!==undefined&&value!==null&&String(value)!=='')url.searchParams.set(key,String(value));});
-    const response=await fetch(url.toString(),{headers:{apikey:window.BAWABA_SUPABASE_ANON_KEY,accept:'application/json'}});
+    const headers={apikey:window.BAWABA_SUPABASE_ANON_KEY,accept:'application/json'};
+    try{const token=await refreshMembershipSession();if(token)headers.authorization='Bearer '+token;}catch(_error){}
+    const response=await fetch(url.toString(),{headers});
     const data=await response.json().catch(()=>({}));
-    if(!response.ok)throw new Error(data.error||'تعذر جلب البيانات الرياضية.');
+    if(!response.ok){const error=new Error(data.error||'تعذر جلب البيانات الرياضية.');error.code=data.code||'';error.status=response.status;throw error;}
     return data;
   }
   async function refreshFootballUsage(){
@@ -855,21 +857,33 @@ function renderFootballModule(tool){
     list.replaceChildren();
     try{
       const u=await footballRequest('usage');
+      const b=u.budget||{};
       const cards=[
         ['طلبات المزود خلال 24 ساعة',Number(u.requests_24h||0).toLocaleString('ar')],
         ['الطلبات الناجحة',Number(u.successful_24h||0).toLocaleString('ar')],
         ['الطلبات المتعثرة',Number(u.failed_24h||0).toLocaleString('ar')],
         ['متوسط زمن الاستجابة',Number(u.avg_duration_ms||0).toLocaleString('ar')+' ms'],
-        ['المتبقي من الحصة',u.last_remaining==null?'غير متاح من الترويسات':Number(u.last_remaining).toLocaleString('ar')],
-        ['حد الحصة المعلن',u.last_limit==null?'غير متاح من الترويسات':Number(u.last_limit).toLocaleString('ar')]
+        ['الحد اليومي الآمن',Number(b.dailyLimit||0).toLocaleString('ar')],
+        ['المستخدم اليوم',Number(b.usedToday||0).toLocaleString('ar')],
+        ['المتبقي الآمن',Number(b.remaining||0).toLocaleString('ar')],
+        ['المتاح وفق التوزيع الزمني',Number(b.allowedSoFar||0).toLocaleString('ar')],
+        ['المتبقي المعلن من المزود',b.providerRemaining==null?'لم يصلنا ترويس بعد':Number(b.providerRemaining).toLocaleString('ar')],
+        ['مصدر تحديد الحد',b.limitSource==='provider_header'?'ترويسات API-Football':b.limitSource==='manual_override'?'حد مضبوط يدوياً':'احتياطياً: 100 طلب يومياً']
       ];
       metrics.replaceChildren();
       cards.forEach(([label,value])=>{const card=node('div',undefined,'fb-card');card.append(node('strong',String(value)),node('small',label));metrics.appendChild(card);});
       const endpoints=Array.isArray(u.by_endpoint)?u.by_endpoint:[];
       if(!endpoints.length)list.appendChild(node('div','لم تُسجّل طلبات مباشرة للمزود بعد؛ الطلبات التي تأتي من الكاش لا تخصم من الحصة.','fb-note'));
       endpoints.forEach(item=>{const row=node('div',undefined,'fb-row');row.append(node('span',String(item.endpoint)),node('strong',Number(item.requests||0).toLocaleString('ar')+' طلب · '+Number(item.failures||0).toLocaleString('ar')+' تعثر'));list.appendChild(row);});
+      const buckets=b.buckets||{},targets=b.bucketTargets||{};
+      [['البيانات الأساسية','core'],['المباشر','live'],['الاحتياطي','emergency']].forEach(([label,key])=>{
+        const row=node('div',undefined,'fb-row');
+        row.append(node('span',label),node('strong',Number(buckets[key]||0).toLocaleString('ar')+' / '+Number(targets[key]||0).toLocaleString('ar')));
+        list.appendChild(row);
+      });
       const stamp=u.last_request_at?new Date(u.last_request_at).toLocaleString('ar-SY'):'لا يوجد';
-      list.appendChild(node('small','آخر اتصال فعلي بالمزود: '+stamp,'fb-muted'));
+      list.appendChild(node('small','آخر اتصال فعلي بالمزود: '+stamp+' · إعادة ضبط الحصة: '+(b.resetAt?new Date(b.resetAt).toLocaleString('ar-SY'):'غير متاحة'),'fb-muted'));
+      list.appendChild(node('p','حارس الحصة يعمل قبل كل اتصال جديد: يوزّع الطلبات على مدار اليوم، يحجز ميزانية للمباشر والاحتياط، ويقدّم نسخة مخزنة عند بلوغ الحد بدلاً من استنزاف الحصة.','fb-muted'));
     }catch(error){metrics.replaceChildren(node('div',error.message||'تعذر تحميل لوحة الاستهلاك.','fb-note'));}
     finally{if(button)button.disabled=false;}
   }
