@@ -124,7 +124,7 @@ require("security invoker" in retention_sql and "limit 19" in retention_sql and 
 backup_sql = backup_migration.read_text(encoding="utf-8")
 for token in ("enable row level security", "Users read own workspace backups", "Users create own workspace backups", "Users delete own workspace backups", "revoke all on public.user_workspace_backups from anon"):
     require(token in backup_sql, "cloud backup database security contract missing: " + token)
-require("./operations-hub.js" in worker and "ofoq-shell-v46" in worker, "operations hub missing from offline shell or cache not refreshed")
+require("./operations-hub.js" in worker and "ofoq-shell-v47" in worker, "operations hub missing from offline shell or cache not refreshed")
 
 # Merchant catalogue and order desk: local records, no storefront or payment claims.
 for token in ("ofoq_ecommerce_products_v1", "ofoq_ecommerce_orders_v1", "📦 المنتجات والمخزون", "🧾 الطلبات", "إضافة منتج", "إضافة طلب", "لا خصم تلقائي للمخزون"):
