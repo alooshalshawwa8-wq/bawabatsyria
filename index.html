@@ -871,7 +871,7 @@ function renderFootballModule(tool){
         ['المتبقي خلال آخر 60 ثانية',Number(b.minuteRemaining||0).toLocaleString('ar')],
         ['خطة API-Football الفعلية',u.provider_plan||'بانتظار قراءة حالة الاشتراك'],
         ['المتبقي المعلن من المزود',b.providerRemaining==null?'لم يصلنا ترويس بعد':Number(b.providerRemaining).toLocaleString('ar')],
-        ['حد الدقيقة المعلن من المزود',b.providerMinuteRemaining==null?'لم يصلنا بعد':Number(b.providerMinuteRemaining).toLocaleString('ar')+' طلب'],
+        ['المتبقي المعلن من المزود خلال الدقيقة',b.providerMinuteRemaining==null?'لم يصلنا بعد':Number(b.providerMinuteRemaining).toLocaleString('ar')+' طلب'],
         ['مصدر تحديد الحد',b.limitSource==='provider_header'?'ترويسات API-Football':b.limitSource==='manual_override'?'حد مضبوط يدوياً':'احتياطياً: 100 طلب يومياً']
       ];
       metrics.replaceChildren();
