@@ -673,7 +673,12 @@ function renderFootballModule(tool){
     '<div class="fb-archive-season-row"><label for="fbArchiveSeason">اختر الموسم</label><select id="fbArchiveSeason"></select><button class="btn secondary" id="fbArchiveLoadSeason" type="button">اعرض الموسم</button></div>'+
     '<div class="fb-archive-grid">'+
     '<section class="fb-archive-panel"><h4>👑 أبرز المنافسين وفق أرقام الموسم</h4><div id="fbArchiveContenders" class="fb-archive-list"></div><p class="fb-note">هذا ترتيب تنافسي حالي من الجدول، وليس توقعاً مؤكداً للفائز.</p></section>'+
-    '<section class="fb-archive-panel"><h4>🛡️ الفرق المشاركة</h4><div id="fbArchiveTeams" class="fb-archive-list"></div></section>'+
+    '<section class="fb-archive-panel"><h4>🛡️ الفرق المشاركة والملاعب</h4><div id="fbArchiveTeams" class="fb-archive-list"></div></section>'+
+    '<section class="fb-archive-panel"><h4>🥇 هدافو البطولة</h4><div id="fbArchiveScorers" class="fb-archive-list"></div></section>'+
+    '<section class="fb-archive-panel"><h4>🎯 صانعو الأهداف</h4><div id="fbArchiveAssists" class="fb-archive-list"></div></section>'+
+    '<section class="fb-archive-panel"><h4>🧠 صناعة الفرص والتمريرات المفتاحية</h4><div id="fbArchiveKeyPasses" class="fb-archive-list"></div><p class="fb-note">يعرض أفضل ما توفر في صفحة اللاعبين التي يعيدها المصدر، وقد لا يغطي كامل المسابقة إذا تعددت الصفحات.</p></section>'+
+    '<section class="fb-archive-panel"><h4>🟨🟥 سجل البطاقات</h4><div id="fbArchiveCards" class="fb-archive-list"></div></section>'+
+    '<section class="fb-archive-panel fb-archive-wide"><h4>🎥 مركز تفاصيل المباراة</h4><div id="fbArchiveMatchDetail" class="fb-archive-list"><p class="fb-note">اضغط «تحليل المباراة» بجوار أي مواجهة لعرض التشكيلات والأحداث والتقييمات والإحصاءات.</p></div></section>'+
     '<section class="fb-archive-panel fb-archive-wide"><h4>📅 المباريات القادمة والنتائج · نطاق 60 يوماً</h4><div id="fbArchiveFixtures" class="fb-archive-list"></div><button class="btn secondary" id="fbArchiveMore" type="button" hidden>تحميل مباريات إضافية</button></section>'+
     '<section class="fb-archive-panel fb-archive-wide"><h4>🏅 سجل الأبطال في المواسم السابقة</h4><div id="fbArchiveWinners" class="fb-archive-list"></div><p class="fb-note">يُعرض بطل الموسم السابق من الترتيب النهائي للمسابقات التي توفر جدول دوري. بطولات الكؤوس تحتاج إلى سجل نهائيات موثق؛ لن نخمن أسماء أبطالها.</p></section>'+
     '</div><p class="fb-archive-updated" id="fbArchiveUpdated"></p></div></section>'+
@@ -972,15 +977,80 @@ function renderFootballModule(tool){
     const teamsData=jobs[1].status==='fulfilled'?jobs[1].value:null;
     const teams=teamsData?.response||[];
     if(teams.length){
-      teams.slice(0,48).forEach(item=>teamsBox.append(archiveRow(item.team?.name||'فريق',item.venue?.city||'',item.team?.logo||archiveTeamLogo(item.team?.id))));
+      teams.slice(0,48).forEach(item=>{const v=item.venue||{};const info=[v.name,v.city,v.capacity?'السعة '+Number(v.capacity).toLocaleString('ar'):null,v.surface?'السطح '+v.surface:null].filter(Boolean).join(' · ')||'تفاصيل الملعب غير متاحة في المصدر';teamsBox.append(archiveRow(item.team?.name||'فريق',info,item.team?.logo||archiveTeamLogo(item.team?.id)));});
       if(teams.length>48)teamsBox.append(node('div','يعرض '+48+' فريقاً من أصل '+teams.length+'.','fb-note'));
     }else teamsBox.append(node('div',jobs[1].status==='rejected'?(jobs[1].reason?.message||'تعذر جلب الفرق.'):'لا تتوفر قائمة الفرق لهذا الموسم ضمن التغطية الحالية.','fb-note'));
     if(jobs[2].status==='rejected')fixturesBox.append(node('div',jobs[2].reason?.message||'تعذر جلب المباريات.','fb-note'));
     const currentSeason=archiveSeasons.find(x=>x.current)?.year;
     const candidateLabel=season===currentSeason?'الموسم الحالي':'الموسم المحدد';
     if(leaders.length){const note=node('div','أعلى الفرق ترتيباً في '+candidateLabel+'؛ المؤشر مبني على جدول المصدر ولا يمثل توقعاً للفائز.','fb-note');contenders.append(note);}
+    await loadArchiveLeaders(season);
     $('fbArchiveUpdated').textContent='آخر طلب بيانات: '+new Date().toLocaleString('ar-SY')+' · المصدر: API-Football'+(tableData?.cached?' · بيانات مخزنة مؤقتاً':'');
     archiveStatus.textContent='تم تحميل ما توفر من بيانات '+archiveLeague.name+' لموسم '+season+'.';
+  }
+  function archiveStatRow(title,sub='',logo=''){
+    return archiveRow(title,sub,logo);
+  }
+  async function loadArchiveLeaders(season){
+    const targets=[['scorers',$('fbArchiveScorers'),'scorers','الهدافون'],['assists',$('fbArchiveAssists'),'assists','صانعو الأهداف'],['keypasses',$('fbArchiveKeyPasses'),'keypasses','التمريرات المفتاحية'],['cards',$('fbArchiveCards'),'cards','البطاقات']];
+    targets.forEach(([,box])=>{if(box)box.replaceChildren(node('div','جارٍ تحميل الإحصاءات…','fb-note'));});
+    const requests=await Promise.allSettled([
+      footballRequest('leaders',{league:archiveLeague.id,season,type:'scorers'}),
+      footballRequest('leaders',{league:archiveLeague.id,season,type:'assists'}),
+      footballRequest('leaders',{league:archiveLeague.id,season,type:'keypasses'}),
+      Promise.all([
+        footballRequest('leaders',{league:archiveLeague.id,season,type:'yellow'}),
+        footballRequest('leaders',{league:archiveLeague.id,season,type:'red'})
+      ])
+    ]);
+    const render=(box,result,kind)=>{
+      if(!box)return;box.replaceChildren();
+      if(result.status!=='fulfilled'){box.append(node('div','تعذر جلب '+kind+'؛ قد لا تشملها تغطية البطولة أو الخطة.','fb-note'));return;}
+      let rows=result.value.response||[];
+      if(kind==='التمريرات المفتاحية'){
+        rows=rows.map(x=>({player:x.player,statistics:x.statistics||[]})).sort((a,b)=>Number(b.statistics?.[0]?.passes?.key||0)-Number(a.statistics?.[0]?.passes?.key||0)).slice(0,20);
+      }
+      if(!rows.length){box.append(node('div','لا تتوفر بيانات '+kind+' لهذا الموسم.','fb-note'));return;}
+      rows.slice(0,20).forEach((item,index)=>{
+        const p=item.player||{},s=(item.statistics||[])[0]||{},g=s.goals||{},passes=s.passes||{},cards=s.cards||{};
+        let value=kind==='الهدافون'?(g.total??'—')+' هدف':kind==='صانعو الأهداف'?(g.assists??'—')+' تمريرة حاسمة':kind==='التمريرات المفتاحية'?(passes.key??'—')+' تمريرة مفتاحية':(cards.yellow??'—')+' أصفر · '+(cards.red??'—')+' أحمر';
+        const row=archiveStatRow((index+1)+'. '+(p.name||'لاعب'),(s.team?.name||'')+' · '+value,p.id?'https://media.api-sports.io/football/players/'+p.id+'.png':'');
+        if(p.id){const awards=node('button','جوائز اللاعب','fb-archive-action');awards.type='button';awards.addEventListener('click',()=>loadPlayerTrophies(p.id,p.name||'اللاعب',row));row.append(awards);}
+        box.append(row);
+      });
+    };
+    render($('fbArchiveScorers'),requests[0],'الهدافون');
+    render($('fbArchiveAssists'),requests[1],'صانعو الأهداف');
+    render($('fbArchiveKeyPasses'),requests[2],'التمريرات المفتاحية');
+    const cardBox=$('fbArchiveCards');if(cardBox){cardBox.replaceChildren();const labels=[['البطاقات الصفراء',requests[3].status==='fulfilled'?requests[3].value[0]:requests[3]],['البطاقات الحمراء',requests[3].status==='fulfilled'?requests[3].value[1]:requests[3]]];labels.forEach(([label,result])=>{const holder=node('div',undefined,'fb-match-detail-block');holder.append(node('h5',label));if(result.status!=='fulfilled'){holder.append(node('p','غير متاحة من المصدر.','fb-note'));}else{const rows=result.value.response||[];if(!rows.length)holder.append(node('p','لا توجد بيانات متاحة.','fb-note'));rows.slice(0,10).forEach((item,i)=>{const p=item.player||{},s=(item.statistics||[])[0]||{};holder.append(node('p',(i+1)+'. '+(p.name||'لاعب')+' · '+(s.cards?.yellow??0)+' أصفر · '+(s.cards?.red??0)+' أحمر));});}cardBox.append(holder);});}
+  }
+  async function loadPlayerTrophies(playerId,playerName,row){
+    const existing=row.querySelector('.fb-player-trophies');if(existing){existing.remove();return;}
+    const box=node('div',undefined,'fb-player-trophies');box.style.cssText='flex-basis:100%;padding:8px;border-top:1px solid #ffffff20;font-size:12px';
+    box.append(node('span','جارٍ تحميل سجل الجوائز…','fb-note'));row.append(box);
+    try{const data=await footballRequest('trophies',{player:playerId});box.replaceChildren();const items=data.response||[];if(!items.length){box.append(node('span','لا توجد جوائز فردية مسجلة لهذا اللاعب في قاعدة المصدر.','fb-note'));return;}items.forEach(t=>box.append(node('div',[t.league||'جائزة',t.season||'',t.country||''].filter(Boolean).join(' · '))));}
+    catch(error){box.replaceChildren(node('span',error.message||'تعذر تحميل الجوائز.','fb-note'));}
+  }
+  async function loadArchiveMatch(fixtureId,matchName){
+    const box=$('fbArchiveMatchDetail');if(!box)return;box.replaceChildren(node('p','جارٍ تحميل '+matchName+'…','fb-note'));
+    try{
+      const data=await footballRequest('match',{fixture:fixtureId});box.replaceChildren();
+      const section=(title)=>{const el=node('section',undefined,'fb-match-detail-block');el.append(node('h5',title));box.append(el);return el;};
+      const events=section('⏱️ أحداث المباراة والإنذارات والتبديلات');
+      if(data.events?.length){data.events.forEach(e=>{const minute=(e.time?.elapsed??'')+(e.time?.extra?'+ '+e.time.extra:'');events.append(node('div',minute+'′ · '+(e.team?.name||'')+' · '+(e.player?.name||'')+' · '+(e.type||'')+' / '+(e.detail||'')+(e.assist?.name?' · صناعة '+e.assist.name:''),'fb-match-player'));});}
+      else events.append(node('p','لا توجد أحداث مسجلة أو أن تغطية هذه المباراة لا توفرها.','fb-note'));
+      const tactics=section('🧩 التشكيلات وخطط المدربين');
+      if(data.lineups?.length){const grid=node('div',undefined,'fb-match-detail-grid');data.lineups.forEach(team=>{const col=node('div');col.append(node('strong',(team.team?.name||'الفريق')+' · '+(team.formation||'الخطة غير مسجلة')));if(team.coach?.name)col.append(node('p','المدرب: '+team.coach.name));(team.startXI||[]).forEach(p=>col.append(node('div',(p.player?.number??'')+' · '+(p.player?.name||'لاعب')+' · '+(p.player?.pos||''),'fb-match-player')));col.append(node('small','البدلاء'));(team.substitutes||[]).forEach(p=>col.append(node('div',(p.player?.number??'')+' · '+(p.player?.name||'لاعب'),'fb-match-player')));grid.append(col);});tactics.append(grid);}
+      else tactics.append(node('p','التشكيلات غير متاحة لهذه المباراة أو لم تُعلن بعد.','fb-note'));
+      const ratings=section('⭐ تقييمات اللاعبين وإحصاءاتهم');
+      if(data.players?.length){data.players.forEach(team=>{ratings.append(node('strong',team.team?.name||'الفريق'));(team.players||[]).forEach(item=>{const p=item.player||{},s=(item.statistics||[])[0]||{},g=s.games||{},goals=s.goals||{},passes=s.passes||{};ratings.append(node('div',(p.name||'لاعب')+' · '+(g.position||'')+' · '+(g.minutes??'—')+' د · أهداف '+(goals.total??0)+' · تمريرات حاسمة '+(goals.assists??0)+' · تمريرات مفتاحية '+(passes.key??'—')+' · تقييم '+(g.rating??'غير متاح'),'fb-match-player'));});});}
+      else ratings.append(node('p','تقييمات اللاعبين غير متاحة من المصدر لهذه المباراة.','fb-note'));
+      const stats=section('📊 إحصاءات الفريقين');
+      if(data.statistics?.length){const grid=node('div',undefined,'fb-match-detail-grid');data.statistics.forEach(team=>{const col=node('div');col.append(node('strong',team.team?.name||'الفريق'));(team.statistics||[]).forEach(item=>col.append(node('div',(item.type||'إحصائية')+' · '+(item.value??'—'),'fb-match-player')));grid.append(col);});stats.append(grid);}
+      else stats.append(node('p','إحصاءات الفريقين غير متاحة.','fb-note'));
+      const note=node('p','المصدر: API-Football · قد تختلف التغطية من بطولة إلى أخرى.','fb-note');box.append(note);
+      box.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }catch(error){box.replaceChildren(node('p',error.message||'تعذر تحميل تفاصيل المباراة.','fb-note'));}
   }
   async function loadArchiveFixturesPage(season,page,replace){
     const box=$('fbArchiveFixtures');
@@ -999,6 +1069,7 @@ function renderFootballModule(tool){
       const state=status.long||'موعد غير محدد';
       const score=(goals.home??'–')+' : '+(goals.away??'–');
       const row=archiveRow((teams.home?.name||'—')+'  '+score+'  '+(teams.away?.name||'—'),date+' · '+state+(league.round?' · '+league.round:'')+(fixture.venue?.name?' · '+fixture.venue.name:''),league.logo||archiveLogo(archiveLeague.id));
+      if(fixture.id){const detailBtn=node('button','تحليل المباراة','fb-archive-action');detailBtn.type='button';detailBtn.addEventListener('click',()=>loadArchiveMatch(fixture.id,(teams.home?.name||'الفريق الأول')+' × '+(teams.away?.name||'الفريق الثاني')));row.append(detailBtn);}
       box.append(row);
     });
     if(!fixtures.length&&page===1)box.append(node('div',isCurrent?'لا توجد مباريات في نطاق الأيام المحدد لهذا الموسم حالياً.':'لم يعثر المصدر على مباريات ضمن تواريخ الموسم المختار.','fb-note'));
@@ -1061,6 +1132,15 @@ function renderFootballModule(tool){
       .fb-archive-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.fb-archive-panel{min-width:0;padding:13px;border:1px solid var(--line);border-radius:13px;background:rgba(9,21,37,.78)}.fb-archive-panel h4{margin:0 0 10px;color:var(--gold2);font-size:15px}.fb-archive-wide{grid-column:1/-1}
       .fb-archive-list{display:grid;gap:7px}.fb-archive-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;border-radius:9px;background:rgba(255,255,255,.045);font-size:13px}.fb-archive-row img{width:25px;height:25px;object-fit:contain}.fb-archive-row strong{font-weight:700}.fb-archive-row small{color:var(--muted)}
       .fb-archive-updated{color:var(--muted);font-size:11px;margin:12px 0}.fb-archive-more{margin-top:8px}
+      .fb-archive-action{border:1px solid var(--gold2);background:#b98b3820;color:var(--gold2);border-radius:8px;padding:6px 9px;font:inherit;font-size:11px;cursor:pointer;white-space:nowrap}
+      .fb-archive-row{flex-wrap:wrap}.fb-archive-row>button{flex-shrink:0}
+      .fb-match-detail-block{padding:10px;margin:8px 0;border:1px solid var(--line);border-radius:10px;background:#081629}
+      .fb-match-detail-block h5{margin:0 0 8px;color:var(--gold2);font-size:14px}
+      .fb-match-detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px}
+      .fb-match-player{display:flex;justify-content:space-between;gap:8px;padding:6px;border-bottom:1px solid #ffffff12;font-size:12px}
+      .fb-match-rating{color:var(--gold2);font-weight:800}
+      .fb-archive-action:hover{background:#b98b3840}
+
       @media(max-width:640px){.fb-archive-search{grid-template-columns:1fr}.fb-archive-grid{grid-template-columns:1fr}.fb-archive-wide{grid-column:auto}.fb-archive-season-row{align-items:stretch}.fb-archive-season-row select{max-width:none;flex:1}}
       .fb-extra-tabs{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}
       .fb-extra-pane{display:none;border:1px solid var(--line);border-radius:14px;background:rgba(10,22,39,.72);padding:14px;margin:10px 0}
