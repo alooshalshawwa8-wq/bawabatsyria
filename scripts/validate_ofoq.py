@@ -197,7 +197,7 @@ for token in ("ofoq_personal_space_v1", "getFavorites", "getRecent", "toggleFavo
         continue
     require(token in core, "OFOQ personal space feature missing: " + token)
 require("fetch(" not in core and "XMLHttpRequest" not in core, "OFOQ personal space must remain local-only")
-require("./ofoq-core.js" in worker and "ofoq-shell-v45" in worker, "OFOQ core missing from offline shell or cache not refreshed")
+require("./ofoq-core.js" in worker and "ofoq-shell-v47" in worker, "OFOQ core missing from offline shell or cache not refreshed")
 
 # PWA and shell integrity.
 require((ROOT / "manifest.json").is_file(), "manifest missing")
