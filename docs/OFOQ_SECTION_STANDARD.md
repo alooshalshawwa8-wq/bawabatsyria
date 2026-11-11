@@ -203,3 +203,13 @@ All inventory data remains in browser localStorage on the current device. No API
 - Added the contract suite to both GitHub Pages deployment validation and the portal/membership validation workflow. The new checks will run on the next CI execution.
 - Supabase Security Advisor also reports the existing leaked-password protection setting as disabled, plus informational RLS-without-policy notices on internal tables. These are recorded for a separate Auth/database security review; no unrelated Auth or football configuration was changed.
 - Browser-level interaction testing and a live Gemini request remain intentionally unperformed to avoid spending the shared provider quota.
+
+
+## 2026-11-11 — Career and freelance studios
+
+- Added `career-studio.js`, loaded as a separate module and mounted only when opening `jobs` or `freelance_vip`; existing section content remains available.
+- Jobs workspace: structured CV draft builder with TXT export/copy, role/experience-level interview practice using STAR guidance, and a local job-application tracker with status updates and CSV export.
+- Freelance workspace: project quote calculator from estimated hours, target hourly rate, direct costs, platform/payment fees and revision reserve; client proposal builder; and portfolio case-study builder that prompts users to distinguish real work from demo projects.
+- Application records are stored locally (up to 100 entries) and can be exported by the user. No network requests, AI calls, third-party analytics, or provider quotas are used by this module.
+- Added the script to the PWA offline app shell and advanced the cache version to v26. Both CI workflows now syntax-check the module; the contract suite verifies both career sections, core features, API-free operation and offline-shell inclusion.
+- Automated checks verify source structure only; actual interaction, clipboard permissions and mobile layout still require browser/device testing.
