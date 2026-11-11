@@ -2401,17 +2401,19 @@ const partyAddress=document.createElement('input');partyAddress.placeholder='ا�
 const partyNotes=document.createElement('input');partyNotes.placeholder='ملاحظات (اختياري)';partyNotes.maxLength=240;
 const partySave=document.createElement('button');partySave.type='button';partySave.className='btn';partySave.textContent='حفظ ملف الطرف';
 const partyStatus=document.createElement('p');partyStatus.className='notice';partyStatus.setAttribute('aria-live','polite');
+const partyAlerts=document.createElement('p');partyAlerts.className='notice';partyAlerts.setAttribute('aria-live','polite');
 const partyCards=document.createElement('div');partyCards.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px';
 const partySelect=document.createElement('select');const partySearch=document.createElement('input');partySearch.placeholder='ابحث بالاسم أو الهاتف';partySearch.maxLength=80;
 const partyLedger=document.createElement('div');partyLedger.style.cssText='overflow-x:auto;margin-top:10px';
 directoryForm.append(partyRole,partyName,partyPhone,partyAddress,partyNotes,partySave);
-directory.append(directoryTitle,directoryNote,directoryForm,partyStatus,partySearch,partyCards,partySelect,partyLedger);
+directory.append(directoryTitle,directoryNote,directoryForm,partyStatus,partyAlerts,partySearch,partyCards,partySelect,partyLedger);
 let activeParty='';
 const partyKey='bawabatsyria_trade_parties_v1';
 function readParties(){try{const v=JSON.parse(localStorage.getItem(partyKey)||'[]');return Array.isArray(v)?v.filter(x=>x&&typeof x.name==='string'):[];}catch(e){return [];}}
 function saveParties(v){try{localStorage.setItem(partyKey,JSON.stringify(v));return true;}catch(e){return false;}}
 function renderDirectory(){
 const profiles=readParties(),tx=read(),names=[...new Set(tx.map(x=>(x.party||'').trim()).filter(Boolean))];
+const dueTx=tx.filter(x=>Math.max(0,Number(x.total||0)-Number(x.paid||0))>0),dueIn=dueTx.filter(x=>x.type==='sale').reduce((n,x)=>n+Math.max(0,x.total-x.paid),0),dueOut=dueTx.filter(x=>x.type==='purchase').reduce((n,x)=>n+Math.max(0,x.total-x.paid),0);partyAlerts.textContent='تنبيه الذمم المسجلة: '+dueTx.length+' عملية غير مسددة بالكامل · مستحق لك '+fmt(dueIn)+' · مستحق عليك '+fmt(dueOut)+'. لا توجد تواريخ استحقاق محددة في الدفتر الحالي.';
 const allNames=[...new Set([...profiles.map(x=>x.name),...names])].sort((a,b)=>a.localeCompare(b,'ar'));
 const q=partySearch.value.trim().toLocaleLowerCase('ar');partyCards.replaceChildren();partySelect.replaceChildren();
 const choose=document.createElement('option');choose.value='';choose.textContent='اختر ملفاً لعرض كشف الحساب';partySelect.appendChild(choose);
