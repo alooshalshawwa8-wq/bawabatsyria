@@ -2366,7 +2366,12 @@ const add=document.createElement('button');add.type='button';add.className='btn'
 const status=document.createElement('p');status.className='notice';status.setAttribute('aria-live','polite');
 const summary=document.createElement('div');summary.className='notice';
 const history=document.createElement('div');history.style.cssText='overflow-x:auto;margin-top:12px';
-box.append(h,note,form,add,status,summary,history);tool.appendChild(box);
+const backupRow=document.createElement('div');backupRow.className='calc';backupRow.style.marginTop='10px';
+const exportLedger=document.createElement('button');exportLedger.type='button';exportLedger.className='btn secondary';exportLedger.textContent='تنزيل نسخة دفتر العمليات';
+const importLedger=document.createElement('button');importLedger.type='button';importLedger.className='btn secondary';importLedger.textContent='استيراد دفتر عمليات';
+const ledgerFile=document.createElement('input');ledgerFile.type='file';ledgerFile.accept='application/json,.json';ledgerFile.hidden=true;
+backupRow.append(exportLedger,importLedger,ledgerFile);
+box.append(h,note,form,add,status,summary,history);box.appendChild(backupRow);tool.appendChild(box);
 const fmt=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits:2});
 function refreshItems(){const old=item.value;item.replaceChildren();readStock().forEach((x,i)=>{const o=document.createElement('option');o.value=String(i);o.textContent=x.name+' · '+x.qty;item.appendChild(o);});if(old!==''&&Number(old)<item.options.length)item.value=old;const x=readStock()[Number(item.value)];if(x)unit.value=type.value==='sale'?x.sale:x.cost;}
 function draw(){
@@ -2378,6 +2383,9 @@ const table=document.createElement('table');table.style.cssText='width:100%;min-
 rows.slice().reverse().forEach(x=>{const tr=document.createElement('tr');[x.date,x.type==='sale'?'مبيعات':'مشتريات',x.item,x.party||'—',String(x.qty),fmt(x.total),fmt(x.paid),fmt(Math.max(0,x.total-x.paid))].forEach(v=>{const td=document.createElement('td');td.textContent=v;td.style.cssText='padding:8px;border-bottom:1px solid var(--line)';tr.appendChild(td);});table.appendChild(tr);});history.appendChild(table);
 }
 type.addEventListener('change',refreshItems);item.addEventListener('change',()=>{const x=readStock()[Number(item.value)];if(x)unit.value=type.value==='sale'?x.sale:x.cost;});
+exportLedger.addEventListener('click',()=>{const payload={app:'ofoq-trade-ledger',version:1,createdAt:new Date().toISOString(),transactions:read()};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='ofoq-trade-ledger-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);status.textContent='تم تجهيز نسخة دفتر العمليات. احفظها في مكان آمن.';});
+importLedger.addEventListener('click',()=>ledgerFile.click());
+ledgerFile.addEventListener('change',async()=>{const file=ledgerFile.files&&ledgerFile.files[0];if(!file)return;try{if(file.size>2*1024*1024)throw new Error('حجم الملف يتجاوز 2 ميغابايت.');const data=JSON.parse(await file.text());if(!data||data.app!=='ofoq-trade-ledger'||data.version!==1||!Array.isArray(data.transactions)||data.transactions.length>20000)throw new Error('ملف دفتر العمليات غير صالح.');const valid=data.transactions.every(x=>x&&typeof x.id==='string'&&['sale','purchase'].includes(x.type)&&/^\\d{4}-\\d{2}-\\d{2}$/.test(x.date)&&typeof x.item==='string'&&x.item.length<=60&&Number.isInteger(x.qty)&&x.qty>0&&Number.isFinite(x.unitPrice)&&x.unitPrice>=0&&Number.isFinite(x.total)&&x.total>=0&&Math.abs(x.total-x.qty*x.unitPrice)<0.000001&&Number.isFinite(x.paid)&&x.paid>=0&&x.paid<=x.total&&typeof x.party==='string');if(!valid)throw new Error('تحتوي النسخة على سجل غير صالح؛ لم يتم استيرادها.');const current=read(),ids=new Set(current.map(x=>x.id)),incoming=data.transactions.filter(x=>!ids.has(x.id));if(!save(current.concat(incoming)))throw new Error('تعذر الحفظ؛ تحقق من مساحة المتصفح.');status.textContent='استوردنا '+incoming.length+' عملية جديدة؛ السجلات المتكررة لم تُضف مرة أخرى.';draw();}catch(error){status.textContent=error.message||'تعذر استيراد الدفتر.';}finally{ledgerFile.value='';}});
 add.addEventListener('click',()=>{
 const before=readStock(),i=Number(item.value),x=before[i],n=Number(qty.value),p=Number(unit.value),total=n*p,amount=Number(paid.value);
 if(!x||!date.value||!Number.isInteger(n)||n<=0||!Number.isFinite(p)||p<0||!Number.isFinite(total)||!Number.isFinite(amount)||amount<0||amount>total){status.textContent='تحقق من الصنف والتاريخ والكمية والسعر والمبلغ المدفوع.';return;}
