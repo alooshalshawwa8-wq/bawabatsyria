@@ -303,9 +303,9 @@ try {
   if (download.suggestedFilename() !== "ofoq-complete-operations-backup.json") throw new Error("Unexpected backup filename");
 
   await hub.getByRole("button", { name: "إنشاء نسخة سحابية الآن" }).click();
-  await hub.getByText(/سجّل الدخول أولاً/).waitFor({ state: "visible" });
-  await hub.getByRole("button", { name: "تسجيل الدخول" }).click();
-  await hub.getByText(/أدخل البريد الإلكتروني وكلمة المرور/).waitFor({ state: "visible" });
+  await hub.locator(".oph-cloud-panel .oph-status").getByText(/سجّل الدخول أولاً/).waitFor({ state: "visible" });
+  await hub.locator(".oph-cloud-panel").getByRole("button", { name: "تسجيل الدخول" }).click();
+  await hub.locator(".oph-cloud-panel .oph-status").getByText(/أدخل البريد الإلكتروني وكلمة المرور/).waitFor({ state: "visible" });
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => window.scrollTo(0, 0));
