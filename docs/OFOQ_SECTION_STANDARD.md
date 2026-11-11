@@ -79,3 +79,15 @@ Added first-match specialized knowledge profiles ahead of the broad category pro
 - Business/startup/freelance/jobs/directory/marketplace sections receive a dedicated customer, revenue-model, acquisition, and operations profile.
 
 Implementation is front-end content only. No API, Supabase, database, provider key, quota, or external request behavior changed. Existing utility modules and tools were not replaced. The specialized profiles use the existing knowledge-studio renderer and local workspace. Validation is source-level only; no live browser, accessibility, or end-to-end tests were run. GitHub Pages deployment is not asserted.
+
+
+## Merchant inventory controls — 2026-11-11
+
+Extended the existing `accounting_vip` local inventory ledger without replacing its pricing calculator or backup format:
+- Added an optional per-item reorder/low-stock threshold (legacy records and version-1 backups without the field remain supported and default to zero).
+- Added low-stock status and a summary listing items at or below their configured threshold.
+- Added per-item stock-in and stock-out controls with positive-integer validation and prevention of negative balances.
+- Added an accounting workspace checklist covering item entry, reorder thresholds, stock movements, and regular backups.
+- Existing JSON backup export/import remains additive; imported items are validated and merged rather than replacing current records.
+
+All inventory data remains in browser localStorage on the current device. No API, Supabase, Gemini, API-Football, provider keys, or quotas were changed. Source-level checks only; no live browser/device test or GitHub Pages deployment verification was performed.
