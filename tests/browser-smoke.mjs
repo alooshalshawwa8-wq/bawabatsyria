@@ -213,6 +213,26 @@ try {
   if (unchangedTradeCount !== 1) throw new Error("Invalid settlement backup changed the local trade ledger");
 
   await page.evaluate(async () => {
+    const accounting = window.BAWABA_SECTIONS.find(item => item.id === "accounting_vip");
+    await window.openSection(accounting);
+  });
+  const treasuryBackup = {
+    app: "ofoq-treasury", version: 2, createdAt: new Date().toISOString(),
+    accounts: [], movements: [], assets: [],
+    obligations: [{ id: "obl_import_test", name: "OFOQ import test", date: "2026-11-11", amount: 10, paid: 1 }],
+    payments: [{ id: "pay_import_test", obligationId: "obl_import_test", date: "2026-11-11", amount: 1.01 }],
+    reconciliations: []
+  };
+  const treasuryBefore = await page.evaluate(() => localStorage.getItem("bawabatsyria_treasury_obligations_v1"));
+  await page.getByLabel("استيراد نسخة الخزينة").setInputFiles({
+    name: "overpaid-treasury-backup.json", mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(treasuryBackup))
+  });
+  await page.getByText(/مجموع دفعات الالتزام يتجاوز إجمالي المبلغ المدفوع/).waitFor({ state: "visible" });
+  const treasuryAfter = await page.evaluate(() => localStorage.getItem("bawabatsyria_treasury_obligations_v1"));
+  if (treasuryAfter !== treasuryBefore) throw new Error("Invalid overpaid treasury backup changed local obligations");
+
+  await page.evaluate(async () => {
     const business = window.BAWABA_SECTIONS.find(item => item.id === "business");
     await window.openSection(business);
   });
