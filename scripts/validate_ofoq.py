@@ -10,6 +10,7 @@ html = (ROOT / "index.html").read_text(encoding="utf-8")
 assistant = (ROOT / "supabase/functions/site-assistant/index.ts").read_text(encoding="utf-8")
 worker = (ROOT / "service-worker.js").read_text(encoding="utf-8")
 ecommerce = (ROOT / "ecommerce-studio.js").read_text(encoding="utf-8")
+career = (ROOT / "career-studio.js").read_text(encoding="utf-8")
 manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
 
 def require(condition, message):
@@ -90,6 +91,13 @@ for token in ("ofoq-ecom-studio", "calculatePrice", "ROAS", "ofoq_ecommerce_scen
     require(token in ecommerce, "e-commerce studio feature missing: " + token)
 require("fetch(" not in ecommerce and "XMLHttpRequest" not in ecommerce and "site-assistant" not in ecommerce, "e-commerce studio must remain local-first and API-free")
 require("./ecommerce-studio.js" in worker, "e-commerce studio missing from offline app shell")
+
+# Career and freelance studios are isolated, local-first workspaces with tested contracts.
+require("career-studio.js" in html, "career studio script not loaded by the portal")
+for token in ("jobs", "freelance_vip", "ofoq-studio", "cv-applications", "ofoq_career_applications_v1", "STAR", "portfolio", "proposal"):
+    require(token in career, "career studio feature missing: " + token)
+require("fetch(" not in career and "XMLHttpRequest" not in career and "site-assistant" not in career, "career studio must remain local-first and API-free")
+require("./career-studio.js" in worker, "career studio missing from offline app shell")
 
 # PWA and shell integrity.
 require((ROOT / "manifest.json").is_file(), "manifest missing")
