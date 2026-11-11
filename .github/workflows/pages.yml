@@ -30,6 +30,7 @@ jobs:
           test -f index.html
           test -f manifest.json
           test -f service-worker.js
+          test -f ofoq-core.js
           python3 - <<'PY'
           import json, re
           from html.parser import HTMLParser
@@ -110,6 +111,7 @@ jobs:
           print(f"Section audit passed: {len(ids)} unique sections, {len(priority)} priority entries, all sections mapped to a renderer and shared workspace.")
           PY
           node --check service-worker.js
+          node --check ofoq-core.js
           node --check tests/browser-smoke.mjs
       - name: Check e-commerce studio JavaScript
         run: node --check ecommerce-studio.js
