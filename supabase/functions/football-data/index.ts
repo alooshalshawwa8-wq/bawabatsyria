@@ -648,9 +648,16 @@ Deno.serve(async (request: Request) => {
 
   try {
     const data = await providerFetch(endpoint, Object.fromEntries(params.entries()), ttl, tracker, (action === "fixtures" && url.searchParams.get("mode") === "live") || (action === "catalog" && ["odds_live","fixture_events","fixture_stats","fixture_players"].includes(url.searchParams.get("dataset") ?? "")) ? "live" : "core");
-    return reply({ ...data, cacheHits: tracker.cacheHits, staleHits: tracker.staleHits, staleData: tracker.staleHits > 0, upstreamCalls: tracker.upstreamCalls, usageTracked: true });
+    return reply({ ...data, cacheHits: tracker.cacheHits, staleHits: tracker.staleHits, staleData: tracker.staleHits > 0, upstreamCalls: tracker.upstreamCalls, budgetLimitedRequests: tracker.budgetBlocked, quotaWarning: tracker.budgetBlocked > 0, usageTracked: true });
   } catch (error) {
     const status = Number((error as any)?.status ?? 502);
+    const message = (error as any)?.message ?? "";
+    if (status === 429 && message === "FOOTBALL_DAILY_BUDGET_LIMIT") {
+      return reply({ error: "وصلنا إلى الحد الوقائي المسموح لاستهلاك بيانات كرة القدم حالياً. سنستأنف التحديث تلقائياً مع توفر ميزانية جديدة، وقد نعرض نسخة محفوظة إن توفرت.", code: "FOOTBALL_BUDGET_LIMIT", budget: (error as any)?.budget ?? null }, 429);
+    }
+    if (status === 503 && message === "FOOTBALL_BUDGET_GUARD_UNAVAILABLE") {
+      return reply({ error: "حارس الحصة غير متاح مؤقتاً؛ أوقفنا الاتصال بمزود البيانات لحماية المفتاح.", code: "FOOTBALL_BUDGET_GUARD_UNAVAILABLE" }, 503);
+    }
     return reply({ error: "تعذر جلب البيانات من مزود كرة القدم أو أن الخطة لا تغطي هذا الطلب.", providerStatus: status }, status === 429 ? 429 : 502);
   }
 });
