@@ -1015,7 +1015,7 @@ function renderFootballModule(tool){
         const p=item.player||{},s=(item.statistics||[])[0]||{},g=s.goals||{},passes=s.passes||{},cards=s.cards||{};
         let value=kind==='الهدافون'?(g.total??'—')+' هدف':kind==='صانعو الأهداف'?(g.assists??'—')+' تمريرة حاسمة':kind==='التمريرات المفتاحية'?(passes.key??'—')+' تمريرة مفتاحية':(cards.yellow??'—')+' أصفر · '+(cards.red??'—')+' أحمر';
         const row=archiveStatRow((index+1)+'. '+(p.name||'لاعب'),(s.team?.name||'')+' · '+value,p.id?'https://media.api-sports.io/football/players/'+p.id+'.png':'');
-        if(p.id){const awards=node('button','جوائز اللاعب','fb-archive-action');awards.type='button';awards.addEventListener('click',()=>loadPlayerTrophies(p.id,p.name||'اللاعب',row));row.append(awards);}
+        if(p.id){const awards=node('button','سجل ألقاب اللاعب','fb-archive-action');awards.type='button';awards.addEventListener('click',()=>loadPlayerTrophies(p.id,p.name||'اللاعب',row));row.append(awards);}
         box.append(row);
       });
     };
@@ -1028,7 +1028,7 @@ function renderFootballModule(tool){
     const existing=row.querySelector('.fb-player-trophies');if(existing){existing.remove();return;}
     const box=node('div',undefined,'fb-player-trophies');box.style.cssText='flex-basis:100%;padding:8px;border-top:1px solid #ffffff20;font-size:12px';
     box.append(node('span','جارٍ تحميل سجل الجوائز…','fb-note'));row.append(box);
-    try{const data=await footballRequest('trophies',{player:playerId});box.replaceChildren();const items=data.response||[];if(!items.length){box.append(node('span','لا توجد جوائز فردية مسجلة لهذا اللاعب في قاعدة المصدر.','fb-note'));return;}items.forEach(t=>box.append(node('div',[t.league||'جائزة',t.season||'',t.country||''].filter(Boolean).join(' · '))));}
+    try{const data=await footballRequest('trophies',{player:playerId});box.replaceChildren();const items=data.response||[];if(!items.length){box.append(node('span','لا توجد جوائز فردية مسجلة لهذا اللاعب في قاعدة المصدر.','fb-note'));return;}items.forEach(t=>box.append(node('div',[t.league||'بطولة',t.season||'',t.country||'',t.place||''].filter(Boolean).join(' · '))));box.append(node('p','هذا سجل البطولات والمراكز التي حصل عليها اللاعب حسب المصدر، وليس سجلاً شاملاً لجوائز مثل الكرة الذهبية وجوائز الاتحادات.','fb-note'));}
     catch(error){box.replaceChildren(node('span',error.message||'تعذر تحميل الجوائز.','fb-note'));}
   }
   async function loadArchiveMatch(fixtureId,matchName){
