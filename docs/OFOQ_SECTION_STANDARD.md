@@ -100,3 +100,5 @@ All inventory data remains in browser localStorage on the current device. No API
 - Added a summary and transaction history. Inventory and transaction data use separate localStorage keys; the existing version-1 inventory backup format remains unchanged.
 - This is a local operating ledger, not a bank reconciliation or complete accounting statement. Data stays on the current browser/device and should be backed up externally.
 - No API, Supabase, Gemini, API-Football, provider keys, or quotas were changed. Source-level implementation only; no live browser/device or end-to-end test, and no GitHub Pages deployment verification.
+
+- Added a separate version-1 JSON export/import for the transaction ledger, with a 2 MB file cap, strict record validation, and duplicate-ID filtering on merge. It does not overwrite existing transactions or alter the inventory backup.
