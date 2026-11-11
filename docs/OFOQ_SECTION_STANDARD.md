@@ -110,3 +110,11 @@ All inventory data remains in browser localStorage on the current device. No API
 - New sales records capture the current inventory unit cost as `costAtSale`, allowing an indicative gross-profit calculation for transactions with that snapshot. Legacy transactions without this field are excluded from the known gross-profit figure.
 - The dashboard explicitly notes that it excludes general overhead, taxes, and owner withdrawals; figures are operational estimates, not formal financial statements or bank reconciliation.
 - No external APIs, Supabase, Gemini, API-Football, provider keys, or quotas were changed. Front-end localStorage only; browser/device testing and live Pages deployment remain unverified.
+
+
+## Merchant reports center — 2026-11-11
+
+- Added period-based report generation for an operational profit-and-loss summary, recorded cash movements, and individual customer/supplier transaction statements.
+- Added CSV export with spreadsheet-formula injection mitigation, plus browser print action for the current report.
+- Cash movement reports use recorded paid amounts only and explicitly do not infer an opening cash balance. Party statements are based on exact party-name matches and the selected month. Profit summary distinguishes known cost-at-sale snapshots and does not misclassify all purchases as cost of goods sold.
+- Reports are local projections of the existing transaction ledger; they do not include expenses, taxes, owner withdrawals, opening balances, or external bank reconciliation. No APIs, Supabase, Gemini, API-Football, keys, or quotas changed. No live browser/device test or Pages deployment verification.
