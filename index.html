@@ -2322,12 +2322,12 @@ try{
 const response=await fetch(membershipApi+'/api/plans',{headers:{accept:'application/json'}});
 if(!response.ok)throw new Error('تعذر تحميل الخطط');
 const data=await response.json();
-const descriptions={pro_monthly:['أدوات احترافية موسعة','صلاحيات pro_access','دعم استخدام أعلى وفق السياسة'],vip_monthly:['ميزات VIP للأقسام المؤهلة','كل مزايا الاحترافية','صلاحيات vip_access'],business_monthly:['للشركات والفرق','ميزات VIP والاحترافية','صلاحيات business_access']};
+const descriptions={free:['مواعيد المباريات والنتائج','جداول ترتيب الدوريات والبطولات','صفحات الأندية والملاعب'],pro_monthly:['كل مزايا الخطة المجانية','الهدافون وصناعة الأهداف والبطاقات','ملفات اللاعبين وتقييماتهم','التشكيلات والخطط والتبديلات','إحصاءات متقدمة واستوديو تحليل المباراة'],vip_monthly:['كل مزايا أُفُق برو','المواجهات المباشرة والسجل التاريخي','الإصابات والتوقعات المتاحة من المزود','تقارير وتحليلات موسعة'],business_monthly:['خطة مخصصة للمؤسسات والفرق','تنبيهات وقوائم متابعة متقدمة — قيد التطوير','تحليلات موسعة وتصدير التقارير — قيد التطوير']};
 for(const plan of data.plans||[]){
 const card=membershipNode('article',undefined,'membership-card');
 card.append(membershipNode('h3',plan.name));
 const isFree=plan.id==='free';
-card.append(membershipNode('p',isFree?'مجانية — لا تحتاج إلى دفع.':(plan.checkoutEnabled?'الاشتراك الشهري — السعر النهائي يظهر في صفحة الدفع الآمنة.':'سيُعلن السعر بعد اعتماد التسعير وتفعيل الدفع الإلكتروني.')));
+card.append(membershipNode('p',isFree?'مجانية — لا تحتاج إلى دفع.':(plan.id==='business_monthly'?'باقة مستقبلية للمؤسسات — بعض ميزاتها قيد التطوير.':(plan.checkoutEnabled?'الاشتراك الشهري — السعر النهائي يظهر في صفحة الدفع الآمنة.':'سيُعلن السعر بعد اعتماد التسعير وتفعيل الدفع الإلكتروني.'))));
 const list=membershipNode('ul');(descriptions[plan.id]||[]).forEach(item=>list.append(membershipNode('li',item)));card.append(list);
 const button=membershipNode('button',isFree?'الخطة المجانية':'اشترك الآن','btn');button.type='button';button.disabled=isFree||!plan.checkoutEnabled||!membershipToken();
 if(isFree)button.textContent='متاحة مجاناً';
@@ -2335,7 +2335,7 @@ else if(!plan.checkoutEnabled)button.textContent='الدفع غير متاح ح�
 else if(!membershipToken())button.textContent='سجّل الدخول أولاً';
 button.addEventListener('click',()=>startMembershipCheckout(plan.id));card.append(button);membershipPlans.append(card);
 }
-membershipStatus.textContent='تم الاتصال بالخادم. تفعيل العضوية يتم بعد تأكيد Stripe، وليس بمجرد العودة من صفحة الدفع.';
+membershipStatus.textContent='الإطلاق التجريبي: جميع ميزات كرة القدم متاحة مجاناً للجميع. الباقات والأسعار مجهّزة للمرحلة التجارية، لكن الدفع وتقييد الميزات المدفوعة متوقفان حتى استكمال التسجيل القانوني وتجهيز بوابة الدفع.';
 if(!membershipToken()){membershipWallet.textContent='لم يتم ربط جلسة تسجيل الدخول بعد؛ لذلك لا يمكن عرض رصيد شخصي أو بدء اشتراك. لا تُحفظ النقاط محلياً.';return;}
 const meResponse=await fetch(membershipApi+'/api/me',{headers:{authorization:'Bearer '+membershipToken(),accept:'application/json'}});
 if(!meResponse.ok)throw new Error('تعذر التحقق من حسابك');
