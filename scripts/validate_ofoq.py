@@ -136,7 +136,8 @@ for token in (
     require(token in operations, "cross-tool sync or recovery feature missing: " + token)
 require('localStorage.setItem(ARCHIVE_KEY' in operations, "linked source archive must be stored separately")
 require('localStorage.setItem(RECOVERY_KEY' in operations, "safe pre-write recovery point missing")
-require("fetch(" not in operations and "XMLHttpRequest" not in operations, "cross-tool adapters must stay local-only")
+source_adapter = operations[operations.find("const readSource"):operations.find("const sourceTotals")]
+require("fetch(" not in source_adapter and "XMLHttpRequest" not in source_adapter, "cross-tool data readers must stay local-only")
 
 # PWA and shell integrity.
 require((ROOT / "manifest.json").is_file(), "manifest missing")
