@@ -2217,6 +2217,139 @@ function renderPremiumCatalogModule(sec,tool){
   }
 }
 
+
+function renderTradingAcademy(tool){
+  const key='ofoq_trading_journal_v1';
+  const read=()=>{try{const v=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(v)?v.filter(x=>x&&typeof x.id==='string').slice(0,200):[];}catch(_){return [];}};
+  const save=rows=>{try{localStorage.setItem(key,JSON.stringify(rows.slice(0,200)));return true;}catch(_){return false;}};
+  const fmt=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits:4});
+  tool.innerHTML=`
+  <style>
+  .ta-shell{margin:12px 0 20px;border:1px solid #2e7180;border-radius:22px;overflow:hidden;background:linear-gradient(145deg,#0c263b,#091827 70%);box-shadow:0 22px 65px #0006}
+  .ta-cover{position:relative;min-height:245px;padding:26px;display:flex;flex-direction:column;justify-content:end;background:linear-gradient(90deg,#041321ed,#08263bcc 62%,#06202b88),url('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1800&q=85') center/cover}
+  .ta-cover small{color:#75f0db;letter-spacing:.16em;font-weight:900}.ta-cover h2{font-size:clamp(27px,5vw,43px);margin:10px 0;color:#f1fffc}.ta-cover p{max-width:780px;color:#c8e0e8;line-height:1.9;margin:0}
+  .ta-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;padding:14px}
+  .ta-metric{padding:12px;border:1px solid #2a5365;border-radius:13px;background:#0d2032}.ta-metric strong{display:block;color:#8ef2df;font-size:19px}.ta-metric span{font-size:11px;color:#a9c2d0}
+  .ta-tabs{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 14px}.ta-tabs button{border:1px solid #31556a;border-radius:30px;background:#0b1b2b;color:#d7e8ef;padding:9px 13px;cursor:pointer}.ta-tabs button[aria-selected=true]{background:linear-gradient(135deg,#087e83,#43cbb9);border-color:#91f5e7;color:#03252a;font-weight:900}
+  .ta-pane{display:none;padding:16px;border-top:1px solid #21465b}.ta-pane.active{display:block}.ta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:11px}.ta-field{display:grid;gap:6px;color:#b5cbd6;font-size:12px}.ta-field input,.ta-field select,.ta-field textarea{width:100%;padding:11px;border:1px solid #31546a;border-radius:10px;background:#071827;color:#f4fbff;font:inherit;min-width:0}.ta-field textarea{min-height:88px;resize:vertical}
+  .ta-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}.ta-result{margin-top:13px;padding:13px;border:1px solid #387e7b;border-radius:12px;background:#0b2b32;color:#d7fff4;line-height:1.9;white-space:pre-wrap}.ta-note{font-size:12px;color:#a9c1cf;line-height:1.85}.ta-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:12px}.ta-card{padding:14px;border:1px solid #294b60;border-radius:13px;background:linear-gradient(145deg,#102a40,#0b1b2b)}.ta-card h4{margin:0 0 7px;color:#8cebdc}.ta-card p{margin:0;color:#c0d2dc;font-size:12px;line-height:1.8}
+  .ta-journal-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:12px;border:1px solid #294b60;border-radius:11px;background:#0b1c2c;margin-top:8px}.ta-journal-row strong{color:#e7f5f5}.ta-journal-row small{display:block;color:#a9c1cf;margin-top:5px;line-height:1.7}.ta-check{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid #294b60;border-radius:10px;background:#0b1c2c;color:#d5e5ec}.ta-check input{margin-top:4px;accent-color:#4dd4c1}
+  @media(max-width:650px){.ta-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.ta-cover{padding:19px;min-height:220px}.ta-pane{padding:12px}.ta-journal-row{grid-template-columns:1fr}.ta-journal-row button{justify-self:start}}
+  </style>
+  <section class="ta-shell">
+    <div class="ta-cover"><small>OFOQ · TRADING INTELLIGENCE ACADEMY</small><h2>التداول بعقلية المحترف</h2><p>مختبر تعليمي لإدارة المخاطر، فهم بنية السوق، اختبار السيناريوهات، وتوثيق قراراتك قبل أن تتحول إلى عادات. لا توصيات شراء أو بيع ولا اتصال بمنصات التداول.</p></div>
+    <div class="ta-metrics"><div class="ta-metric"><strong>01</strong><span>إدارة رأس المال</span></div><div class="ta-metric"><strong>02</strong><span>قراءة بنية السوق</span></div><div class="ta-metric"><strong>03</strong><span>سجل تجريبي</span></div><div class="ta-metric"><strong>04</strong><span>انضباط القرار</span></div></div>
+    <div class="ta-tabs" role="tablist" aria-label="مختبرات أكاديمية التداول">
+      <button type="button" role="tab" data-ta-tab="overview" aria-selected="true">نظرة عامة</button>
+      <button type="button" role="tab" data-ta-tab="risk" aria-selected="false">حاسبة المخاطرة</button>
+      <button type="button" role="tab" data-ta-tab="rr" aria-selected="false">العائد / المخاطرة</button>
+      <button type="button" role="tab" data-ta-tab="journal" aria-selected="false">دفتر الصفقات</button>
+      <button type="button" role="tab" data-ta-tab="discipline" aria-selected="false">خطة الانضباط</button>
+    </div>
+    <section class="ta-pane active" data-ta-pane="overview">
+      <h3 style="color:#8cebdc;margin-top:0">مسار المتداول المنضبط</h3>
+      <p class="ta-note">ابدأ بالتعلم على حساب تجريبي. لا توجد استراتيجية تضمن الربح؛ الأولوية هي فهم الخسارة المحتملة، حماية رأس المال، وتقييم الأداء على عينة كافية من الصفقات.</p>
+      <div class="ta-cards">
+        <article class="ta-card"><h4>📈 بنية السوق</h4><p>ميّز بين الاتجاه والتذبذب والنطاق العرضي. سجّل القمم والقيعان ومناطق السيولة كفرضيات تحتاج تأكيداً، لا كإشارات مؤكدة.</p></article>
+        <article class="ta-card"><h4>🛡️ إدارة المخاطر</h4><p>حدد نقطة إبطال الفكرة قبل الدخول، واحسب حجم المركز من مقدار الخسارة المقبولة والمسافة إلى وقف الخسارة.</p></article>
+        <article class="ta-card"><h4>🧪 الاختبار التجريبي</h4><p>اختبر قواعد واضحة على بيانات تاريخية أو حساب ورقي، واحتسب الرسوم والانزلاق والتحيزات قبل الحكم على النتائج.</p></article>
+        <article class="ta-card"><h4>🧠 علم نفس المتداول</h4><p>راقب الخوف والطمع والانتقام من السوق والثقة المفرطة. لا تضاعف المخاطرة لتعويض خسارة سابقة.</p></article>
+      </div>
+      <div class="ta-result">قاعدة الأكاديمية: لا تدخل صفقة لا تستطيع شرح سببها، ومستوى إبطالها، وخسارتها القصوى النظرية، وخطة الخروج منها.</div>
+    </section>
+    <section class="ta-pane" data-ta-pane="risk">
+      <h3 style="color:#8cebdc;margin-top:0">حاسبة حجم المركز والمخاطرة</h3>
+      <p class="ta-note">الحساب يفترض أن قيمة النقطة/الوحدة تساوي فرق السعر لكل وحدة. في العقود ذات المضاعف أو قيمة النقطة المختلفة يجب تعديل النتيجة وفق مواصفات الوسيط.</p>
+      <div class="ta-grid">
+        <label class="ta-field">رأس المال<input id="taCapital" type="number" min="0.01" step="any" value="1000"></label>
+        <label class="ta-field">المخاطرة على الصفقة %<input id="taRiskPct" type="number" min="0.01" max="100" step="any" value="1"></label>
+        <label class="ta-field">سعر الدخول<input id="taEntry" type="number" min="0.00000001" step="any" placeholder="مثال: 65000"></label>
+        <label class="ta-field">وقف الخسارة<input id="taStop" type="number" min="0.00000001" step="any" placeholder="مثال: 64200"></label>
+        <label class="ta-field">الاتجاه<select id="taSide"><option value="long">شراء / Long</option><option value="short">بيع / Short</option></select></label>
+        <label class="ta-field">قيمة المضاعف لكل وحدة<input id="taMultiplier" type="number" min="0.00000001" step="any" value="1"></label>
+      </div>
+      <div class="ta-actions"><button class="btn" id="taRiskCalc" type="button">احسب حجم المركز</button></div><div class="ta-result" id="taRiskResult" role="status">أدخل الدخول والوقف لحساب كمية نظرية وفق المخاطرة المحددة.</div>
+    </section>
+    <section class="ta-pane" data-ta-pane="rr">
+      <h3 style="color:#8cebdc;margin-top:0">مختبر العائد إلى المخاطرة</h3>
+      <div class="ta-grid">
+        <label class="ta-field">سعر الدخول<input id="taRREntry" type="number" min="0.00000001" step="any"></label>
+        <label class="ta-field">وقف الخسارة<input id="taRRStop" type="number" min="0.00000001" step="any"></label>
+        <label class="ta-field">الهدف السعري<input id="taTarget" type="number" min="0.00000001" step="any"></label>
+        <label class="ta-field">الاتجاه<select id="taRRSide"><option value="long">شراء / Long</option><option value="short">بيع / Short</option></select></label>
+      </div>
+      <div class="ta-actions"><button class="btn" id="taRRCalc" type="button">حلّل النسبة</button></div><div class="ta-result" id="taRRResult" role="status">أدخل مستويات السيناريو الثلاثة.</div>
+      <p class="ta-note">النسبة لا تعني احتمال نجاح الصفقة. النتيجة الفعلية تتأثر بالتنفيذ والرسوم والانزلاق والفجوات.</p>
+    </section>
+    <section class="ta-pane" data-ta-pane="journal">
+      <h3 style="color:#8cebdc;margin-top:0">دفتر الصفقات التجريبي</h3>
+      <p class="ta-note">يُحفظ السجل في المتصفح على هذا الجهاز فقط. لا تضع مفاتيح API أو كلمات مرور أو بيانات حسابك لدى الوسيط.</p>
+      <div class="ta-grid">
+        <label class="ta-field">الأصل / الزوج<input id="taAsset" maxlength="40" placeholder="BTC/USD أو EUR/USD"></label>
+        <label class="ta-field">نوع السيناريو<select id="taDirection"><option>Long</option><option>Short</option><option>مراقبة فقط</option></select></label>
+        <label class="ta-field">الدخول<input id="taJEntry" type="number" min="0" step="any"></label>
+        <label class="ta-field">وقف الخسارة<input id="taJStop" type="number" min="0" step="any"></label>
+        <label class="ta-field">الهدف<input id="taJTarget" type="number" min="0" step="any"></label>
+        <label class="ta-field">الحالة<select id="taOutcome"><option>خطة تجريبية</option><option>مغلقة بربح</option><option>مغلقة بخسارة</option><option>تعادل</option><option>أُلغيت</option></select></label>
+        <label class="ta-field" style="grid-column:1/-1">سبب الفكرة والملاحظات<textarea id="taNotes" maxlength="1200" placeholder="ما شروط السيناريو؟ ما الذي يبطل الفكرة؟ ما الذي تعلمته؟"></textarea></label>
+      </div>
+      <div class="ta-actions"><button class="btn" id="taSaveTrade" type="button">احفظ في الدفتر</button><button class="btn secondary" id="taExportJournal" type="button">تصدير نسخة JSON</button></div>
+      <div id="taJournalStatus" class="ta-note" role="status" style="margin-top:10px"></div><div id="taJournalList"></div>
+    </section>
+    <section class="ta-pane" data-ta-pane="discipline">
+      <h3 style="color:#8cebdc;margin-top:0">قائمة التحقق قبل أي صفقة</h3>
+      <p class="ta-note">ضع علامة على كل بند بعد التحقق منه فعلياً. تحفظ الحالة محلياً لتعود إليها لاحقاً.</p>
+      <div id="taChecklist" class="ta-cards"></div><div id="taChecklistStatus" class="ta-result" role="status"></div>
+    </section>
+  </section>`;
+  const $=id=>tool.querySelector('#'+id);
+  const tabs=[...tool.querySelectorAll('[data-ta-tab]')],panes=[...tool.querySelectorAll('[data-ta-pane]')];
+  const activate=id=>{tabs.forEach(b=>{const on=b.dataset.taTab===id;b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1;});panes.forEach(p=>{const on=p.dataset.taPane===id;p.classList.toggle('active',on);p.hidden=!on;});};
+  tabs.forEach((b,i)=>{b.tabIndex=i===0?0:-1;b.addEventListener('click',()=>activate(b.dataset.taTab));b.addEventListener('keydown',e=>{let n=null;if(e.key==='ArrowLeft')n=tabs[(i+1)%tabs.length];if(e.key==='ArrowRight')n=tabs[(i-1+tabs.length)%tabs.length];if(e.key==='Home')n=tabs[0];if(e.key==='End')n=tabs[tabs.length-1];if(n){e.preventDefault();activate(n.dataset.taTab);n.focus();}});});
+  $('taRiskCalc').addEventListener('click',()=>{
+    const c=Number($('taCapital').value),r=Number($('taRiskPct').value),e=Number($('taEntry').value),s=Number($('taStop').value),m=Number($('taMultiplier').value),side=$('taSide').value;
+    if(![c,r,e,s,m].every(Number.isFinite)||c<=0||r<=0||r>100||e<=0||s<=0||m<=0||e===s||(side==='long'&&s>=e)||(side==='short'&&s<=e)){ $('taRiskResult').textContent='تحقق من القيم: وقف الشراء يجب أن يكون دون الدخول، ووقف البيع فوقه، وجميع القيم موجبة.';return;}
+    const risk=c*r/100,perUnit=Math.abs(e-s)*m,units=risk/perUnit;
+    $('taRiskResult').textContent='المخاطرة النقدية المحددة: '+fmt(risk)+'\nالمسافة إلى الوقف: '+fmt(Math.abs(e-s))+' ('+(Math.abs(e-s)/e*100).toFixed(3)+'%)\nحجم المركز النظري: '+fmt(units)+' وحدة\nالقيمة الاسمية التقريبية: '+fmt(units*e)+'\n\nلا يشمل الحساب الرسوم أو التمويل أو الانزلاق أو اختلاف مواصفات العقد؛ تحقّق من قيمة النقطة لدى الوسيط.';
+  });
+  $('taRRCalc').addEventListener('click',()=>{
+    const e=Number($('taRREntry').value),s=Number($('taRRStop').value),t=Number($('taTarget').value),side=$('taRRSide').value;
+    if(![e,s,t].every(Number.isFinite)||e<=0||s<=0||t<=0||e===s||(side==='long'&&(s>=e||t<=e))||(side==='short'&&(s<=e||t>=e))){$('taRRResult').textContent='المستويات غير منطقية لهذا الاتجاه. في Long يكون الوقف أسفل الدخول والهدف أعلاه، والعكس في Short.';return;}
+    const risk=Math.abs(e-s),reward=Math.abs(t-e),ratio=reward/risk;
+    $('taRRResult').textContent='المخاطرة السعرية: '+fmt(risk)+'\nالعائد السعري المحتمل: '+fmt(reward)+'\nنسبة العائد إلى المخاطرة: 1 : '+ratio.toFixed(2)+'\nنقطة التعادل النظرية قبل التكاليف: '+(100/(1+ratio)).toFixed(1)+'% من الصفقات\n\nهذه النسبة لا تتنبأ بالنجاح ولا تشمل تكاليف التنفيذ.';
+  });
+  const drawJournal=()=>{
+    const rows=read(),box=$('taJournalList');box.replaceChildren();
+    $('taJournalStatus').textContent='عدد السجلات المحفوظة: '+rows.length+' من 200 · التخزين محلي على هذا الجهاز.';
+    if(!rows.length){box.textContent='لا توجد صفقات مسجلة بعد.';return;}
+    rows.slice().reverse().forEach(row=>{
+      const item=document.createElement('article');item.className='ta-journal-row';
+      const info=document.createElement('div'),title=document.createElement('strong');title.textContent=row.asset+' · '+row.direction+' · '+row.outcome;
+      const meta=document.createElement('small');meta.textContent=new Date(row.createdAt).toLocaleString('ar')+' · دخول '+(row.entry||'—')+' · وقف '+(row.stop||'—')+' · هدف '+(row.target||'—')+(row.notes?'\n'+row.notes:'');
+      info.append(title,meta);const del=document.createElement('button');del.type='button';del.className='btn secondary';del.textContent='حذف السجل';del.addEventListener('click',()=>{if(save(read().filter(x=>x.id!==row.id)))drawJournal();else $('taJournalStatus').textContent='تعذر تحديث التخزين المحلي.';});item.append(info,del);box.append(item);
+    });
+  };
+  $('taSaveTrade').addEventListener('click',()=>{
+    const asset=$('taAsset').value.trim(),direction=$('taDirection').value,outcome=$('taOutcome').value,entry=$('taJEntry').value.trim(),stop=$('taJStop').value.trim(),target=$('taJTarget').value.trim(),notes=$('taNotes').value.trim();
+    if(!asset){$('taJournalStatus').textContent='أدخل اسم الأصل أو الزوج أولاً.';return;}
+    for(const [label,value] of [['الدخول',entry],['الوقف',stop],['الهدف',target]])if(value&&(!Number.isFinite(Number(value))||Number(value)<0)){$('taJournalStatus').textContent='تحقق من قيمة '+label+'.';return;}
+    const rows=read();if(rows.length>=200){$('taJournalStatus').textContent='وصل الدفتر إلى 200 سجل؛ صدّر نسخة واحذف سجلات قديمة قبل الإضافة.';return;}
+    rows.push({id:'ta_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),asset,direction,entry,stop,target,outcome,notes,createdAt:new Date().toISOString()});
+    if(!save(rows)){$('taJournalStatus').textContent='تعذر الحفظ. صدّر ملاحظاتك أو تحقق من مساحة المتصفح.';return;}
+    ['taAsset','taJEntry','taJStop','taJTarget','taNotes'].forEach(id=>$(id).value='');drawJournal();
+  });
+  $('taExportJournal').addEventListener('click',()=>{
+    const blob=new Blob([JSON.stringify({app:'OFOQ_TRADING_JOURNAL',version:1,exportedAt:new Date().toISOString(),trades:read()},null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='ofoq-trading-journal-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  });
+  const checks=['أفهم سبب الدخول وشروط تحقق السيناريو','حددت نقطة إبطال الفكرة ووقف الخسارة مسبقاً','حسبت حجم المركز من المخاطرة لا من الطمع','راجعت الأخبار والأحداث عالية التأثير','تحققت من السيولة وفارق السعر والرسوم','لا أحاول تعويض خسارة سابقة بصفقة متسرعة','أقبل احتمال خسارة المبلغ المحدد دون تغييره'];
+  const checklist=$('taChecklist'),checkKey='ofoq_trading_checklist_v1';
+  const checked=(()=>{try{const v=JSON.parse(localStorage.getItem(checkKey)||'[]');return Array.isArray(v)?v:[];}catch(_){return [];}})();
+  const updateChecks=()=>{const boxes=[...checklist.querySelectorAll('input')],done=boxes.filter(x=>x.checked).length;$('taChecklistStatus').textContent='اكتملت '+done+' من '+checks.length+' نقاط تحقق. لا تعتبر العلامات ضماناً لسلامة الصفقة.';try{localStorage.setItem(checkKey,JSON.stringify(boxes.map(x=>x.checked)));}catch(_){}};
+  checks.forEach((label,i)=>{const card=document.createElement('label');card.className='ta-check';const input=document.createElement('input');input.type='checkbox';input.checked=!!checked[i];input.addEventListener('change',updateChecks);const span=document.createElement('span');span.textContent=label;card.append(input,span);checklist.append(card);});
+  drawJournal();updateChecks();
+}
+
 function activateSectionPage(sec){
   document.body.classList.add('section-mode');
   const hero=document.getElementById('sectionHero');
@@ -2224,7 +2357,8 @@ function activateSectionPage(sec){
     auto_moto_gallery:{image:'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1800&q=90',kicker:'السيارات والدراجات وقطع الغيار'},
     tech_devices:{image:'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1800&q=90',kicker:'أحدث التقنيات والأجهزة'},
     luxury_villas:{image:'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1800&q=90',kicker:'العمارة والفخامة والتصميم'},
-    sports_radar:{image:'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=2000&q=92',kicker:'OFOQ FOOTBALL GALAXY · ادخل إلى قلب اللعبة'}
+    sports_radar:{image:'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=2000&q=92',kicker:'OFOQ FOOTBALL GALAXY · ادخل إلى قلب اللعبة'},
+    trading_academy:{image:'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1800&q=90',kicker:'OFOQ TRADING INTELLIGENCE · أكاديمية التداول'}
   };
   const visual=visuals[sec.id];
   hero.style.backgroundImage=visual?'linear-gradient(90deg,#07101d99,#07101d33),url("'+visual.image+'")':'linear-gradient(120deg,#1b3555,#101a30 65%,#40301c)';
@@ -2254,6 +2388,7 @@ async function openSection(sec){
 activateSectionPage(sec);
 document.getElementById('detailTitle').textContent=sec.title;document.getElementById('detailDesc').textContent=sec.desc;const tool=document.getElementById('specialTool');tool.innerHTML='';document.getElementById('detailNotice').style.display='block';
 if(sec.id==='sports_radar'){document.getElementById('detailNotice').style.display='none';document.getElementById('detailPanel').classList.add('football-detail-mode');renderFootballModule(tool);}
+else if(sec.id==='trading_academy'){document.getElementById('detailNotice').textContent='مساحة تداول تعليمية متكاملة تعمل محلياً دون اتصال بمنصات التداول أو استهلاك أي حصة API. جميع الحسابات تقديرية ولا تمثل توصيات مالية.';renderTradingAcademy(tool);}
 else if(sec.id==='zodiac_world'){document.getElementById('detailNotice').textContent='عالم ترفيهي تفاعلي للأبراج والتوافق والتاروت ورسائل المرح. قراءة صور الفنجان الذكية جاهزة من ناحية الواجهة وتنتظر ربط نموذج الذكاء الاصطناعي. النتائج رمزية وليست تنبؤات مؤكدة.';renderMysticModule(tool);}
 else if(sec.id==='prices'){document.getElementById('detailNotice').textContent='أدخل سعر الصرف الذي تريد استخدامه بنفسك. لا تعرض البوابة حالياً أسعاراً سوقية مباشرة، لذلك لن تُقدّم أرقاماً قديمة على أنها لحظية.';tool.innerHTML='<div class="calc"><label>المبلغ<input id="amount" type="number" min="0" step="any" value="1"></label><label>سعر الوحدة<input id="rate" type="number" min="0" step="any" placeholder="أدخل السعر"></label><label>العملية<select id="operation"><option value="multiply">ضرب (تحويل إلى العملة المقابلة)</option><option value="divide">قسمة</option></select></label></div><button class="btn" id="calcBtn" style="margin-top:12px">احسب</button><div class="result" id="calcResult"></div>';document.getElementById('calcBtn').onclick=()=>{const a=Number(document.getElementById('amount').value),r=Number(document.getElementById('rate').value),op=document.getElementById('operation').value;document.getElementById('calcResult').textContent=Number.isFinite(a)&&Number.isFinite(r)&&r>0?(op==='multiply'?a*r:a/r).toLocaleString('en-US',{maximumFractionDigits:4}):'أدخل مبلغاً وسعراً صحيحين أكبر من صفر.';};}
 else if(sec.id==='chef'){document.getElementById('detailNotice').textContent='أداة اختيار عشوائي بسيطة تعمل داخل المتصفح، ولا تحتاج إلى اتصال بخدمة خارجية.';tool.innerHTML='<button class="btn" id="mealBtn">اقترح طبخة عشوائية</button><div class="result" id="mealResult"></div>';document.getElementById('mealBtn').onclick=()=>{const meals=['مجدّرة','يبرق','فتّة حمص','مقلوبة','شوربة عدس','بطاطا بالفرن','فاصولياء بالزيت','كبة بالصينية'];document.getElementById('mealResult').textContent=meals[Math.floor(Math.random()*meals.length)];};}
