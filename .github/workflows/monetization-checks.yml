@@ -50,5 +50,7 @@ jobs:
           PY
       - name: Check e-commerce studio JavaScript
         run: node --check ecommerce-studio.js
+      - name: Check career studio JavaScript
+        run: node --check career-studio.js
       - name: Run OFOQ portal contract tests
         run: python3 scripts/validate_ofoq.py
