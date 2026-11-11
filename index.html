@@ -3099,7 +3099,7 @@ if(typeof oldHome==='function'&&!oldHome.__ofoqFadeWrapped){
     auto_moto_gallery:"auto",cars_guide:"auto",transport:"auto",travel_visa:"travel",tourism:"travel",global_travel:"travel",consular:"syria",civil:"syria",directory_services:"syria",
     chef:"food",global_cuisine:"food",domestic_economy:"home",family_life:"home",education:"education",syria_curriculum:"education",no_khosoosie:"education",language_academy:"education",global_languages:"education",books_knowledge:"education",engineer_vip:"programming",jobs:"business",
     health:"health",fitness_coach:"health",fitness_wellness:"health",mirror:"creative",birds_pets:"health",agriculture:"environment",fertilizers:"environment",environment_climate:"environment",sustainable_living:"environment",energy:"environment",water:"environment",
-    business:"business",startup_lab:"business",freelance_vip:"business",events_calendar:"culture",culture:"culture",heritage:"culture",nostalgia_archive:"culture",zodiac_world:"entertainment",gaming_arena:"entertainment",science_space:"science",world_encyclopedia:"education",world_history:"education",legal:"legal",reports:"syria",solidarity:"syria",realestate:"business",luxury_villas:"business",body_language:"health"
+    business:"business",startup_lab:"business",freelance_vip:"business",events_calendar:"culture",culture:"culture",heritage:"culture",nostalgia_archive:"culture",zodiac_world:"entertainment",gaming_arena:"entertainment",science_space:"science",world_encyclopedia:"education",world_history:"education",legal:"legal",news:"culture",terms_of_use:"legal",accessibility_center:"technology",cars:"auto",bikes:"auto",phones:"technology",laptops:"technology",designs:"creative",reports:"syria",solidarity:"syria",realestate:"business",luxury_villas:"business",body_language:"health"
   };
   async function mount(sec){
     const host=document.getElementById("specialTool");
@@ -3193,7 +3193,7 @@ if(typeof oldHome==='function'&&!oldHome.__ofoqFadeWrapped){
  document.addEventListener('keydown',e=>{
   const target=e.target;const typing=target&&(target.isContentEditable||/INPUT|TEXTAREA|SELECT/.test(target.tagName));
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openDialog();return;}
-  if(e.key==='/'&&!typing&&!overlay.hidden===false){e.preventDefault();openDialog();}
+  if(e.key==='/'&&!typing&&overlay.hidden){e.preventDefault();openDialog();}
  });
  top.addEventListener('click',()=>window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'}));
  let scheduled=false;
