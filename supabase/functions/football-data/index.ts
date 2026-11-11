@@ -137,7 +137,7 @@ async function authorizeFootballFeature(request: Request, featureCode: string) {
   let launch: Record<string, any>;
   try { launch = await getLaunchConfig(); }
   catch { return { allowed: false, status: 503, code: "FEATURE_POLICY_UNAVAILABLE" }; }
-  if (launch.launch_mode !== "paid" || launch.billing_enabled !== true || launch.paid_features_enforced !== true) {
+  if (launch.launch_mode !== "paid" || launch.billing_enabled !== true || launch.paid_features_enforced !== true || launch.trial_free_all_features === true) {
     return { allowed: true, status: 200, code: "TRIAL_OR_ENFORCEMENT_OFF" };
   }
   const featureResponse = await dbRest("platform_plan_features?feature_code=eq." + encodeURIComponent(featureCode) + "&access_level=eq.included&select=plan_code");
