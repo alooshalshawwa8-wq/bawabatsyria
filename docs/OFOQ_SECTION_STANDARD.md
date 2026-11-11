@@ -264,3 +264,5 @@ All inventory data remains in browser localStorage on the current device. No API
 - Cloud restore validation now checks optional product and order snapshots (record shapes, statuses and 500/1,000 row limits) before archiving them. The backup panel explicitly lists these merchant records; PWA cache advanced to v34.
 
 - Operations Hub overview now surfaces merchant product count, order count and the total value of non-cancelled locally recorded orders, clearly distinguished from confirmed payments. PWA cache advanced to v36.
+
+- Stock reservation lifecycle is explicit: new, processing and shipped orders reserve quantities; delivered or cancelled orders release reservations. After delivery, the merchant manually reconciles the catalogue quantity with the accounting inventory source. PWA cache advanced to v37.
