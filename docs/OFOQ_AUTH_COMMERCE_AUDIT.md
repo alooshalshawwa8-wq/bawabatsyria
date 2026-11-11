@@ -108,3 +108,15 @@ The accounting/trade workflow in `index.html` was hardened after review:
 - Refreshed the PWA shell to `ofoq-shell-v42` and extended the static validator to require these safeguards.
 
 CI observation: the first workflow run after the change stopped at the static validator because an assertion expected an expression that the implementation did not use. The assertion was corrected to match the actual integer-cent implementation and the validator was updated. That failed run did not deploy Pages and did not reach browser tests; a subsequent workflow run is required to verify the corrected contract and browser regression.
+
+## Backup import reconciliation guard
+
+The local merchant ledger backup importer now performs cross-record checks before merging version-2 backups:
+- Transaction, expense and settlement IDs must be unique within the imported file.
+- Every settlement must reference a transaction present in the same backup.
+- Settlement direction must match the referenced sale/purchase type.
+- The sum of settlement events for each transaction cannot exceed the transaction's recorded paid amount; recorded paid cannot exceed the transaction total.
+- A browser regression supplies a backup containing an orphan settlement and verifies rejection without changing the existing local transaction count.
+- The static contract validator requires these checks; PWA shell cache is `ofoq-shell-v43`.
+
+The validator passed on commit `952d0052e80791b6adb80a7b7f9896d31bb129a1`. The Pages/browser workflow for the latest commit is being checked separately.
