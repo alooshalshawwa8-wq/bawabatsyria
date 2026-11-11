@@ -47,3 +47,13 @@ The frontend maps section IDs to a fixed set of trusted specialist profiles. The
 - Preserved the existing section renderers, football module, section explorer, and Gemini endpoint. No backend function, database schema, provider key, daily quota, or API-Football configuration was changed.
 - Commits: `1ca74fc0504194b9aa2086bf696547cafee75319` (visual layer and command center); `5844a7b5f3cca00911664765069587726ac443e4` (remaining Gemini routing and keyboard shortcut refinement).
 - Verification: fetched the updated `main/index.html` after both commits and confirmed the new style/script markers, existing Gemini script, football renderer, and explorer code remain present. Live browser/mobile interaction testing and a real Gemini request have not yet been performed.
+
+
+## 2026-11-11 — Gemini failure/retry context fix
+
+- Audited the contextual Gemini panel's request lifecycle in the current frontend.
+- Fixed a retry-context issue: when a request fails, its unsatisfied user message is removed from the in-memory conversation history if it is still the latest message. A later attempt therefore does not silently resend the failed prompt as part of the next request.
+- Successful conversation turns remain unchanged; the existing 10-message context cap, one-click/one-request behavior, endpoint, specialist routing, and server-side daily reservation limit remain unchanged.
+- No Gemini or API-Football request was sent during this code change.
+- Commit: 281f826723130844a00aab6ad4a0ea4e7b6fb68c.
+- Verification: source change saved to GitHub main; runtime/browser behavior remains untested pending a safe browser test.
