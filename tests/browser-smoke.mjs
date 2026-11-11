@@ -304,8 +304,15 @@ try {
 
   await hub.getByRole("button", { name: "إنشاء نسخة سحابية الآن" }).click();
   await hub.locator(".oph-cloud-panel .oph-status").getByText(/سجّل الدخول أولاً/).waitFor({ state: "visible" });
-  await hub.locator(".oph-cloud-panel").getByRole("button", { name: "تسجيل الدخول" }).click();
-  await hub.locator(".oph-cloud-panel .oph-status").getByText(/أدخل البريد الإلكتروني وكلمة المرور/).waitFor({ state: "visible" });
+  const cloudPanel = hub.locator(".oph-cloud-panel");
+  await cloudPanel.locator('input[name="cloud-email"]').fill("");
+  await cloudPanel.locator('input[name="cloud-password"]').fill("");
+  await cloudPanel.getByRole("button", { name: "تسجيل الدخول" }).click();
+  const cloudStatus = cloudPanel.locator(".oph-status");
+  await cloudStatus.getByText(/تعذر تسجيل الدخول/).waitFor({ state: "visible" });
+  if (!(await cloudStatus.innerText()).includes("أدخل البريد الإلكتروني وكلمة المرور")) {
+    throw new Error("Cloud login did not reject empty credentials locally");
+  }
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => window.scrollTo(0, 0));
