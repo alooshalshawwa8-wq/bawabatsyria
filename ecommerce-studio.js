@@ -97,8 +97,8 @@
       price:field(priceGrid,"سعر البيع الحالي","price","number","0"),
       qty:field(priceGrid,"عدد الطلبات للتحليل","qty","number","1")
     };
-    const priceActions=actionRow(pricing),calcPrice=button("احسب اقتصاديات الطلب","ofoq-ecom-btn",calculatePrice),savePrice=button("احفظ هذا السيناريو","ofoq-ecom-btn",saveScenario),exportPrices=button("تصدير السيناريوهات JSON","ofoq-ecom-btn",exportScenarios);
-    priceActions.append(calcPrice,savePrice,exportPrices);
+    const priceActions=actionRow(pricing),calcPrice=button("احسب اقتصاديات الطلب","ofoq-ecom-btn",calculatePrice),savePrice=button("احفظ هذا السيناريو","ofoq-ecom-btn",saveScenario),exportPrices=button("تصدير السيناريوهات JSON","ofoq-ecom-btn",exportScenarios),importPrices=button("استيراد نسخة احتياطية","ofoq-ecom-btn",importScenarios);
+    priceActions.append(calcPrice,savePrice,exportPrices,importPrices);
     const priceMetrics=make("div","ofoq-ecom-metrics");pricing.append(priceMetrics);
     const priceOutput=output(pricing);
     const saved=make("div","ofoq-ecom-saved");pricing.append(saved);
@@ -140,6 +140,30 @@
     function exportScenarios(){
       const rows=readScenarios();const blob=new Blob([JSON.stringify({app:"ofoq-ecommerce-scenarios",version:1,createdAt:new Date().toISOString(),scenarios:rows},null,2)],{type:"application/json"});
       const url=URL.createObjectURL(blob),a=make("a");a.href=url;a.download="ofoq-ecommerce-scenarios.json";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }
+    function importScenarios(){
+      const picker=make("input");picker.type="file";picker.accept=".json,application/json";picker.hidden=true;
+      picker.addEventListener("change",async()=>{
+        const file=picker.files&&picker.files[0];if(!file)return;
+        if(file.size>512000){priceOutput.textContent="الملف أكبر من الحد المسموح (500 كيلوبايت).";picker.remove();return;}
+        try{
+          const data=JSON.parse(await file.text());
+          if(!data||data.app!=="ofoq-ecommerce-scenarios"||data.version!==1||!Array.isArray(data.scenarios))throw new Error("صيغة النسخة الاحتياطية غير معروفة.");
+          const keys=["cost","inbound","packaging","fulfilment","ad","platform","payment","returns","target","price","qty"];
+          const valid=data.scenarios.filter(row=>{
+            if(!row||!row.values||typeof row.values!=="object")return false;
+            const v=row.values;
+            return keys.every(k=>Number.isFinite(Number(v[k]))&&Number(v[k])>=0)&&Number.isInteger(Number(v.qty))&&Number(v.qty)>0&&Number(v.platform)+Number(v.payment)+Number(v.returns)<100&&Number(v.target)+Number(v.platform)+Number(v.payment)+Number(v.returns)<100;
+          }).slice(-40);
+          if(!valid.length)throw new Error("لا توجد سيناريوهات سليمة قابلة للاستيراد.");
+          const existing=readScenarios(),seen=new Set(existing.map(x=>x.id));
+          const incoming=valid.map((row,i)=>({id:seen.has(row.id)?"import_"+Date.now().toString(36)+"_"+i:String(row.id).slice(0,80),name:String(row.name||"سيناريو مستورد").slice(0,70),createdAt:new Date().toISOString(),values:Object.fromEntries(keys.map(k=>[k,Number(row.values[k])]))}));
+          if(!writeJSON(PRICE_KEY,[...existing,...incoming].slice(-40)))throw new Error("تعذر الحفظ؛ مساحة التخزين غير كافية.");
+          renderScenarios();priceOutput.textContent="تم استيراد "+incoming.length+" سيناريو وحفظها محلياً. راجع القيم قبل اعتماد أي تسعير.";
+        }catch(err){priceOutput.textContent="لم يتم الاستيراد: "+(err&&err.message?err.message:"ملف غير صالح.");}
+        picker.remove();
+      });
+      document.body.append(picker);picker.click();
     }
     calcPrice.addEventListener("click",calculatePrice);renderScenarios();
 
