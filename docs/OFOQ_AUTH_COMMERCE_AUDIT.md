@@ -92,3 +92,7 @@ Local Operations Hub improvement:
 - Browser smoke coverage now asserts that 125.567 is rejected without creating a ledger row, while 125.56 is accepted.
 
 The updated source and test files were fetched back from GitHub for marker verification. The browser suite has not been executed in this session, so no browser/CI pass is claimed.
+
+## Release consistency
+
+The Operations Hub amount-precision change is included in the offline shell cache refresh: service worker cache version is now `ofoq-shell-v41`. The static contract validator was updated to require the delivered-order reservation rule and the cent-precision guard, avoiding a stale assertion that would otherwise reject the corrected inventory behavior. Browser assertions remain scheduled in the Pages workflow; the workflow result was not available during this pass.
