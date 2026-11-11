@@ -2542,7 +2542,7 @@ if(reportType.value==='pnl'){
 const sales=all.filter(x=>x.type==='sale'),purchases=all.filter(x=>x.type==='purchase'),known=sales.filter(x=>Number.isFinite(x.costAtSale));
 const expenses=readExpenses().filter(x=>String(x.date||'').slice(0,7)===month),expenseTotal=expenses.reduce((n,x)=>n+Number(x.amount||0),0),expensePaid=expenses.reduce((n,x)=>n+Number(x.paid||0),0);
 const revenue=sales.reduce((n,x)=>n+x.total,0),cost=known.reduce((n,x)=>n+x.costAtSale*x.qty,0);
-reportHeaders=['البند','القيمة'];reportRows=[['المبيعات',revenue],['المشتريات',purchases.reduce((n,x)=>n+x.total,0)],['تكلفة البضاعة المباعة الموثقة',cost],['مجمل الربح المعروف',known.reduce((n,x)=>n+(x.total-x.costAtSale*x.qty),0)],['المصروفات التشغيلية المسجلة',expenseTotal],['الربح التشغيلي التقديري قبل الضرائب',known.reduce((n,x)=>n+(x.total-x.costAtSale*x.qty),0)-expenseTotal],['عدد مبيعات ذات تكلفة موثقة',known.length],['عدد المبيعات دون تكلفة موثقة',sales.length-known.length]];
+reportHeaders=['البند','القيمة'];reportRows=[['المبيعات',revenue],['المشتريات',purchases.reduce((n,x)=>n+x.total,0)],['تكلفة البضاعة المباعة الموثقة',cost],['مجمل الربح المعروف',known.reduce((n,x)=>n+(x.total-x.costAtSale*x.qty),0)],['المصروفات التشغيلية المسجلة',expenseTotal],['الربح التشغيلي المعروف بعد المصروفات',known.reduce((n,x)=>n+(x.total-x.costAtSale*x.qty),0)-expenseTotal],['عدد مبيعات ذات تكلفة موثقة',known.length],['عدد المبيعات دون تكلفة موثقة',sales.length-known.length]];
 reportSummary.textContent='ملخص '+month+' · لا يشمل المصاريف العامة أو الضرائب أو السحوبات. لا تُعامل كل المشتريات كمصروف مبيعات.';
 }else if(reportType.value==='cash'){
 reportHeaders=['التاريخ','الحركة','الطرف','البيان','داخل','خارج'];
@@ -2584,7 +2584,7 @@ const data=JSON.parse(await file.text());
 if(!data||data.app!=='ofoq-trade-ledger'||![1,2].includes(data.version)||!Array.isArray(data.transactions)||data.transactions.length>20000)throw new Error('ملف دفتر العمليات غير صالح.');
 const valid=data.transactions.every(x=>x&&typeof x.id==='string'&&['sale','purchase'].includes(x.type)&&/^\d{4}-\d{2}-\d{2}$/.test(x.date)&&typeof x.item==='string'&&x.item.length<=60&&Number.isInteger(x.qty)&&x.qty>0&&Number.isFinite(x.unitPrice)&&x.unitPrice>=0&&Number.isFinite(x.total)&&x.total>=0&&Math.abs(x.total-x.qty*x.unitPrice)<0.000001&&Number.isFinite(x.paid)&&x.paid>=0&&x.paid<=x.total&&typeof x.party==='string');
 if(!valid)throw new Error('تحتوي النسخة على سجل غير صالح؛ لم يتم استيرادها.');
-const current=read(),ids=new Set(current.map(x=>x.id)),incoming=data.transactions.filter(x=>!ids.has(x.id));
+const current=read(),ids=new Set(current.map(x=>x.id)),incoming=data.transactions.filter(x=>!ids.has(x.id)),oldExpenseCount=readExpenses().length,oldSettlementCount=readSettlements().length;
 let oldParties=readParties(),newParties=[],newExpenses=readExpenses(),newSettlements=readSettlements(),numbers=readInvoiceNumbers();
 if(data.version===2){
 if(!Array.isArray(data.parties)||!Array.isArray(data.expenses)||!Array.isArray(data.settlements)||!data.invoiceNumbers||typeof data.invoiceNumbers!=='object'||Array.isArray(data.invoiceNumbers))throw new Error('بيانات الملفات الإضافية غير صالحة.');
@@ -2601,7 +2601,7 @@ try{
 if(!save(current.concat(incoming))||!saveParties(oldParties.concat(newParties))||!saveExpenses(newExpenses)||!saveSettlements(newSettlements))throw new Error('تعذر حفظ بعض الملفات؛ تحقق من مساحة المتصفح.');
 localStorage.setItem(invoiceKey,JSON.stringify(numbers));
 }catch(writeError){keys.forEach((k,i)=>{try{if(snapshot[i]===null)localStorage.removeItem(k);else localStorage.setItem(k,snapshot[i]);}catch(e){}});throw new Error(writeError.message||'تعذر الحفظ؛ تمت محاولة استعادة الحالة السابقة.');}
-status.textContent='اكتمل الاستيراد: '+incoming.length+' عملية، '+newParties.length+' ملف طرف، '+(newExpenses.length-readExpenses().length)+' مصروف، وبيانات التحصيل والفواتير. تم دمج النسخة دون استبدال السجلات الموجودة.';
+status.textContent='اكتمل الاستيراد: '+incoming.length+' عملية، '+newParties.length+' ملف طرف، '+(newExpenses.length-oldExpenseCount)+' مصروف، '+(newSettlements.length-oldSettlementCount)+' دفعة، وبيانات الفواتير. تم دمج النسخة دون استبدال السجلات الموجودة.';
 draw();makeReport();renderDirectory();refreshOperationChoices();
 }catch(error){status.textContent=error.message||'تعذر استيراد الدفتر.';}finally{ledgerFile.value='';}});
 add.addEventListener('click',()=>{
