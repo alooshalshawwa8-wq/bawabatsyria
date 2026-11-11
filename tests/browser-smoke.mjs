@@ -97,6 +97,18 @@ try {
   });
   const merchant = page.locator(".ofoq-ecom-studio");
   await merchant.waitFor({ state: "visible", timeout: 10000 });
+  await merchant.locator("#ofoq-ecom-cost").fill("10");
+  await merchant.locator("#ofoq-ecom-price").fill("25");
+  await merchant.locator("#ofoq-ecom-target").fill("20");
+  await merchant.getByRole("button", { name: "احسب اقتصاديات الطلب" }).click();
+  const pricingOutput = merchant.locator(".ofoq-ecom-output").first();
+  if (await pricingOutput.getAttribute("data-valid") !== "1") throw new Error("Valid pricing calculation was not marked successful");
+  if (await merchant.locator(".ofoq-ecom-metrics .ofoq-ecom-metric").count() !== 6) throw new Error("Expected six pricing metrics after a valid calculation");
+  await merchant.locator("#ofoq-ecom-target").fill("100");
+  await merchant.getByRole("button", { name: "احسب اقتصاديات الطلب" }).click();
+  if (await pricingOutput.getAttribute("data-valid") !== "0") throw new Error("Invalid pricing input did not clear the success state");
+  if (await merchant.locator(".ofoq-ecom-metrics .ofoq-ecom-metric").count() !== 0) throw new Error("Stale pricing metrics remained visible after invalid input");
+  if (!(await pricingOutput.innerText()).includes("لم تُعرض نتائج قديمة")) throw new Error("Invalid pricing feedback did not explain that stale results were cleared");
   await merchant.getByRole("tab", { name: "📦 المنتجات والمخزون" }).click();
   await merchant.locator("#ofoq-ecom-catalog-name").fill("OFOQ Browser Test Product");
   await merchant.locator("#ofoq-ecom-catalog-cost").fill("12");
