@@ -128,3 +128,11 @@ All inventory data remains in browser localStorage on the current device. No API
 - Party profiles use a separate localStorage key and remain on the current browser/device. No cloud sync, API, Supabase, Gemini, API-Football, or quota changes. No live browser/device test or Pages deployment verification.
 
 - Follow-up refinement: added a consolidated outstanding-balance alert for partially/unpaid recorded transactions, clearly noting that the ledger currently has no contractual due-date field.
+
+
+## Invoices, expenses and settlements — 2026-11-11
+
+- Added printable invoice generation from an existing sale/purchase ledger transaction, with stable local invoice numbering and escaped invoice text.
+- Added a local operating-expense register with category, date, total amount, and amount paid. Expenses feed the period P&L and recorded cash-outflow report; the P&L now shows known gross profit less recorded operating expenses as an explicitly estimated operating result, not net profit.
+- Added incremental customer/supplier payment settlement against an existing transaction, validating that payments do not exceed its outstanding balance. Updates the existing ledger record and refreshes summaries/statements.
+- All additions use separate local browser storage for expenses and invoice numbering; no external services, APIs, Supabase, Gemini, API-Football or quotas changed. No browser/device test or Pages deployment verification.
