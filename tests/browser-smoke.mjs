@@ -37,8 +37,19 @@ try {
     if (!workspace.trim()) throw new Error("Empty workspace for " + section.id);
   }
 
-  await page.keyboard.press("Control+k");
   const commandDialog = page.locator("#ofoq-command-overlay");
+  await page.keyboard.press("Control+k");
+  await commandDialog.waitFor({ state: "visible", timeout: 5000 });
+  const commandSearch = commandDialog.locator(".ofoq-command-search");
+  const firstSectionTitle = sections[0].title;
+  await commandSearch.fill(firstSectionTitle);
+  const commandResults = commandDialog.locator(".ofoq-command-result");
+  await commandResults.first().waitFor({ state: "visible", timeout: 5000 });
+  if (await commandResults.count() < 1) throw new Error("Command center search returned no result for a known section");
+  await page.locator("#ofoq-launcher").focus();
+  await page.keyboard.press("Escape");
+  await commandDialog.waitFor({ state: "hidden", timeout: 5000 });
+  await page.keyboard.press("Control+k");
   await commandDialog.waitFor({ state: "visible", timeout: 5000 });
   await page.keyboard.press("Escape");
   await commandDialog.waitFor({ state: "hidden", timeout: 5000 });
