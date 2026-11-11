@@ -32,7 +32,13 @@ jobs:
           import re
           from pathlib import Path
           html = Path("index.html").read_text(encoding="utf-8")
-          scripts = re.findall(r"<script\b[^>]*>([\s\S]*?)</script>", html, re.I)
+          script_tags = re.findall(r"<script\b([^>]*)>([\s\S]*?)</script>", html, re.I)
+          scripts = []
+          for attrs, body in script_tags:
+              if re.search(r'type\s*=\s*["\']application/ld\+json["\']', attrs, re.I):
+                  json.loads(body)
+                  continue
+              scripts.append(body)
           if not scripts:
               raise SystemExit("No inline script found")
           Path("/tmp/portal.js").write_text("\n".join(scripts), encoding="utf-8")
