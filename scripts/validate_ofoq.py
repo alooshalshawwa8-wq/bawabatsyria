@@ -123,7 +123,7 @@ for token in ("enable row level security", "Users read own workspace backups", "
 require("./operations-hub.js" in worker and "ofoq-shell-v37" in worker, "operations hub missing from offline shell or cache not refreshed")
 
 # Merchant catalogue and order desk: local records, no storefront or payment claims.
-for token in ("ofoq_ecommerce_products_v1", "ofoq_ecommerce_orders_v1", "📦 المنتجات والمخزون", "🧾 الطلبات", "إضافة منتج", "إضافة طلب", "لا تُخصم الكميات تلقائياً"):
+for token in ("ofoq_ecommerce_products_v1", "ofoq_ecommerce_orders_v1", "📦 المنتجات والمخزون", "🧾 الطلبات", "إضافة منتج", "إضافة طلب", "لا خصم تلقائي للمخزون"):
     require(token in ecommerce, "merchant catalogue/order workflow missing: " + token)
 require("ofoq_ecommerce_products_v1" in operations and "ofoq_ecommerce_orders_v1" in operations, "merchant records are not connected to Operations Hub")
 require("reserved+qty>productRow.stock" in ecommerce and "button(\"تعديل\"" in ecommerce, "merchant stock reservation and product editing checks missing")
