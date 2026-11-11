@@ -442,7 +442,7 @@ Deno.serve(async (request: Request) => {
     const mode = url.searchParams.get("mode") ?? "date";
     if (mode === "live") {
       params.set("live", "all");
-      ttl = 20_000;
+      ttl = 60_000;
     } else if (mode === "last") {
       const league = url.searchParams.get("league") ?? "";
       const season = url.searchParams.get("season") ?? "";
@@ -611,11 +611,11 @@ Deno.serve(async (request: Request) => {
         usageTracked: true,
         provider: "API-Football",
         fetchedAt: new Date().toISOString(),
-        cacheSeconds: live ? 30 : (["FT","AET","PEN"].includes(status) ? 21600 : 900),
+        cacheSeconds: live ? 60 : (["FT","AET","PEN"].includes(status) ? 21600 : 900),
         cached: false
       };
-      cache.set(studioCacheKey, { until: Date.now() + (live ? 30_000 : (["FT","AET","PEN"].includes(status) ? 6 * 60 * 60_000 : 15 * 60_000)), data: result });
-      await persistentCacheSet(studioCacheKey, "studio", result, live ? 30_000 : (["FT","AET","PEN"].includes(status) ? 6 * 60 * 60_000 : 15 * 60_000));
+      cache.set(studioCacheKey, { until: Date.now() + (live ? 60_000 : (["FT","AET","PEN"].includes(status) ? 6 * 60 * 60_000 : 15 * 60_000)), data: result });
+      await persistentCacheSet(studioCacheKey, "studio", result, live ? 60_000 : (["FT","AET","PEN"].includes(status) ? 6 * 60 * 60_000 : 15 * 60_000));
       return reply(result);
     } catch (error) {
       console.error("Football studio error", String(error).slice(0, 300));
@@ -662,7 +662,7 @@ Deno.serve(async (request: Request) => {
       injuries: { path: "injuries", keys: ["league","season","fixture","team","player","date","ids","timezone"], ttl: 14400000 },
       predictions: { path: "predictions", keys: ["fixture"], ttl: 3600000 },
       odds: { path: "odds", keys: ["fixture","league","season","date","timezone","page","bookmaker","bet"], ttl: 10800000 },
-      odds_live: { path: "odds/live", keys: ["fixture","league","bet"], ttl: 5000 },
+      odds_live: { path: "odds/live", keys: ["fixture","league","bet"], ttl: 15000 },
       odds_bets: { path: "odds/live/bets", keys: ["id","search"], ttl: 60000 },
       odds_mapping: { path: "odds/mapping", keys: ["page"], ttl: 86400000 },
       bookmakers: { path: "odds/bookmakers", keys: ["id","search"], ttl: 86400000 },
