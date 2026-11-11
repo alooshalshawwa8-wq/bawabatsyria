@@ -35,12 +35,12 @@ try {
     if (title !== section.title) throw new Error("Section title mismatch for " + section.id + ": " + title);
     const workspace = page.locator("#specialTool .bw-workspace");
     await workspace.waitFor({ state: "visible", timeout: 5000 });
-    const workspaceTabList = workspace.locator(":scope > .bw-tabs");
-    const workspaceTabs = workspaceTabList.locator(":scope > [role=\"tab\"]");
+    const workspaceTabList = workspace.locator('.bw-tabs[role="tablist"][aria-label^="تبويبات مساحة العمل"]');
+    const workspaceTabs = workspace.locator('.bw-tabs[aria-label^="تبويبات مساحة العمل"] > button[role="tab"]');
     const workspaceTabCount = await workspaceTabs.count();
     if (workspaceTabCount !== 3) throw new Error("Expected 3 top-level workspace tabs for " + section.id + "; found " + workspaceTabCount);
     for (const tabName of ["🗂️ خطة التنفيذ", "📝 ملاحظاتي", "🧰 أدوات القسم"]) {
-      const tab = workspaceTabList.locator(":scope > [role=\"tab\"]").filter({ hasText: tabName });
+      const tab = workspaceTabList.locator("> button[role=\"tab\"]").filter({ hasText: tabName });
       await tab.click();
       if (await tab.getAttribute("aria-selected") !== "true") throw new Error("Workspace tab failed for " + section.id + ": " + tabName);
     }
