@@ -156,3 +156,5 @@ All inventory data remains in browser localStorage on the current device. No API
 - Added obligations with creditor, registration date, optional due date, amount, paid amount, outstanding balance, and separately dated settlement events.
 - Added an isolated JSON backup/merge workflow for treasury data, with 2 MB file cap, schema checks, ID-based merge, and attempted localStorage rollback on write failure.
 - Treasury movements are deliberately not auto-posted from the sales ledger to avoid duplicate cash entries. Users should record a cash movement once when reconciling actual receipts/payments. The treasury is browser-local and is not cloud-synced or tested in a live browser.
+
+- Added internal account transfers as paired outflow/inflow movements sharing a transfer ID, so account-level balances move without changing total treasury cash.
