@@ -41,6 +41,25 @@ try {
   await page.getByRole("dialog").waitFor({ state: "hidden", timeout: 5000 });
 
   await page.evaluate(async () => {
+    const commerce = window.BAWABA_SECTIONS.find(item => item.id === "ecommerce_studio");
+    await window.openSection(commerce);
+  });
+  const merchant = page.locator(".ofoq-ecom-studio");
+  await merchant.waitFor({ state: "visible", timeout: 10000 });
+  await merchant.getByRole("tab", { name: "📦 المنتجات والمخزون" }).click();
+  await merchant.locator("#ofoq-ecom-catalog-name").fill("OFOQ Browser Test Product");
+  await merchant.locator("#ofoq-ecom-catalog-cost").fill("12");
+  await merchant.locator("#ofoq-ecom-catalog-price").fill("25");
+  await merchant.locator("#ofoq-ecom-catalog-stock").fill("7");
+  await merchant.getByRole("button", { name: "إضافة منتج" }).click();
+  await merchant.getByText("OFOQ Browser Test Product").waitFor({ state: "visible" });
+  await merchant.getByRole("tab", { name: "🧾 الطلبات" }).click();
+  await merchant.locator("#ofoq-ecom-order-no").fill("OFOQ-BROWSER-001");
+  await merchant.locator("#ofoq-ecom-order-qty").fill("2");
+  await merchant.getByRole("button", { name: "إضافة طلب" }).click();
+  await merchant.getByText("OFOQ-BROWSER-001").waitFor({ state: "visible" });
+
+  await page.evaluate(async () => {
     const business = window.BAWABA_SECTIONS.find(item => item.id === "business");
     await window.openSection(business);
   });
@@ -76,6 +95,8 @@ try {
 
   await hub.getByRole("tab", { name: "⇄ البيانات المرتبطة" }).click();
   await hub.getByRole("button", { name: "تحديث البيانات الآن" }).click();
+  await hub.getByText("منتجات المتجر").waitFor({ state: "visible" });
+  await hub.getByText("طلبات المتجر").waitFor({ state: "visible" });
 
   await hub.getByRole("tab", { name: "⇧ النسخ الاحتياطي" }).click();
   const downloadPromise = page.waitForEvent("download");
