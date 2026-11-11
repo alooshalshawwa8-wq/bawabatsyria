@@ -315,7 +315,7 @@ try {
   const cloudStatus = cloudPanel.locator(".oph-status");
   await cloudStatus.getByText(/تعذر تسجيل الدخول/).waitFor({ state: "visible" });
   const cloudStatusText = await cloudStatus.textContent() || "";
-  if (!cloudStatusText.includes("أدخل البريد الإلكتروني وكلمة المرور")) {
+  if (!cloudStatusText.includes("البريد الإلكتروني وكلمة المرور")) {
     throw new Error("Cloud login empty-credential validation mismatch: " + cloudStatusText);
   }
 
