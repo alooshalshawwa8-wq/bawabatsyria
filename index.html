@@ -3125,7 +3125,10 @@ if(typeof oldHome==='function'&&!oldHome.__ofoqFadeWrapped){
         const data=await response.json().catch(()=>({}));
         if(!response.ok)throw new Error(data.error||"تعذر الاتصال بالمساعد");
         const answer=String(data.answer||"لم يصل رد قابل للعرض.");history.push({role:"assistant",content:answer});if(history.length>10)history.splice(0,history.length-10);add("assistant",answer);status.textContent="اكتمل الرد. قدّم بياناتك أو مصدرك عند طلب تحليل معلومات مباشرة.";
-      }catch(error){status.textContent=error.message||"تعذر الاتصال. حاول لاحقاً.";}
+      }catch(error){
+        if(history.length&&history[history.length-1].role==="user"&&history[history.length-1].content===q)history.pop();
+        status.textContent=error.message||"تعذر الاتصال. حاول لاحقاً.";
+      }
       finally{send.disabled=false;send.textContent="اسأل Gemini";}
     });
     clear.addEventListener("click",()=>{history.length=0;log.replaceChildren();status.textContent="تم مسح سياق هذه الجلسة من الواجهة."});
