@@ -3744,13 +3744,15 @@ if(typeof oldHome==='function'&&!oldHome.__ofoqFadeWrapped){
  const featuredIds=['sports_radar','ai_lab','trading_academy','ecommerce_studio','science_space','travel_visa'];
  let activeFilter='all',lastFocus=null;
  function makeFilter(label,value){const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.filter=value;b.setAttribute('aria-pressed',String(activeFilter===value));b.addEventListener('click',()=>{activeFilter=value;filters.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));renderResults();});filters.appendChild(b);}
- makeFilter('كل الأقسام','all');makeFilter('أقسام مختارة','featured');
+ makeFilter('كل الأقسام','all');makeFilter('أقسام مختارة','featured');makeFilter('★ المفضلة','favorites');makeFilter('◷ الأخيرة','recent');
  function renderResults(){
   results.replaceChildren();
   const q=input.value.trim().toLocaleLowerCase('ar');
+  const favoriteIds=new Set((window.OFOQ_CORE?.getFavorites?.()||[]).map(s=>s.id));
+  const recentIds=new Set((window.OFOQ_CORE?.getRecent?.()||[]).map(s=>s.id));
   const list=allSections.filter(s=>{
    const featured=featuredIds.includes(s.id);
-   const matchFilter=activeFilter==='all'||featured;
+   const matchFilter=activeFilter==='all'||(activeFilter==='featured'&&featured)||(activeFilter==='favorites'&&favoriteIds.has(s.id))||(activeFilter==='recent'&&recentIds.has(s.id));
    const text=(String(s.title||'')+' '+String(s.desc||'')+' '+String(s.id||'')).toLocaleLowerCase('ar');
    return matchFilter&&(!q||text.includes(q));
   });
