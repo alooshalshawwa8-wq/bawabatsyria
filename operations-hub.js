@@ -137,7 +137,7 @@ const cloudStatus=el("p","oph-status","");
 const cloudUser=el("p","oph-note","غير مسجل الدخول");
 const cloudList=el("div","oph-list");
 const cloudSessionKey="ofoq_cloud_backup_session_v1";
-const cloudBase=String(window.BAWABA_SUPABASE_URL||"").replace(/\\/$/,"");
+const cloudBase=String(window.BAWABA_SUPABASE_URL||"").replace(/\/$/,"");
 const cloudAnon=String(window.BAWABA_SUPABASE_ANON_KEY||"");
 const readCloudSession=()=>{try{return JSON.parse(sessionStorage.getItem(cloudSessionKey)||"null");}catch(_){return null;}};
 const saveCloudSession=s=>{try{sessionStorage.setItem(cloudSessionKey,JSON.stringify({access_token:s.access_token,refresh_token:s.refresh_token,user:{id:s.user&&s.user.id,email:s.user&&s.user.email}}));return true;}catch(_){return false;}};
