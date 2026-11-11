@@ -145,3 +145,5 @@ All inventory data remains in browser localStorage on the current device. No API
 - Extended the existing JSON backup to version 2, including transactions, customer/supplier profiles, expenses, dated settlement events, and invoice-number mappings.
 - Import remains backward-compatible with version 1 ledger-only backups, validates imported collections, and merges by IDs/names rather than overwriting existing records.
 - Backup file size remains capped at 2 MB. Data remains browser-local and should be downloaded regularly; imports are not a cloud synchronization service.
+
+- Backup import hardening: validate all collections before writes, snapshot affected localStorage keys, attempt rollback if a write fails, and report merged expense/settlement counts. Profit wording now explicitly refers only to known cost-backed gross profit after recorded expenses.
