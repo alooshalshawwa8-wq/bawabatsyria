@@ -91,3 +91,12 @@ Extended the existing `accounting_vip` local inventory ledger without replacing 
 - Existing JSON backup export/import remains additive; imported items are validated and merged rather than replacing current records.
 
 All inventory data remains in browser localStorage on the current device. No API, Supabase, Gemini, API-Football, provider keys, or quotas were changed. Source-level checks only; no live browser/device test or GitHub Pages deployment verification was performed.
+
+
+## Merchant sales and purchases ledger — 2026-11-11
+
+- Added a local dated transaction ledger to the accounting workspace: sales/purchases, item, customer or supplier, quantity, unit price, payment status, paid amount, and remaining recorded balance.
+- Sales reduce the selected stock item and are blocked when stock is insufficient. Purchases increase stock and update the item's weighted-average unit cost.
+- Added a summary and transaction history. Inventory and transaction data use separate localStorage keys; the existing version-1 inventory backup format remains unchanged.
+- This is a local operating ledger, not a bank reconciliation or complete accounting statement. Data stays on the current browser/device and should be backed up externally.
+- No API, Supabase, Gemini, API-Football, provider keys, or quotas were changed. Source-level implementation only; no live browser/device or end-to-end test, and no GitHub Pages deployment verification.
