@@ -246,3 +246,6 @@ All inventory data remains in browser localStorage on the current device. No API
 
 - Reliability refinement: failed local writes now roll back the in-memory Operations Hub state to the last persisted version; failed recovery-point creation also prevents the attempted write. The privacy center explains manual cloud backup, RLS ownership and the absence of browser-side end-to-end encryption.
 - Advanced the service-worker cache to v30 so installed clients fetch the updated Operations Hub and privacy disclosure.
+
+- Free-tier guardrail: a database trigger keeps only the latest 20 cloud snapshots per user. The trigger runs as SECURITY INVOKER and deletes only rows visible to the authenticated owner through RLS. A transactional smoke test inserted 21 temporary snapshots and confirmed exactly 20 remained before rollback.
+- Retention migration: `20261111161225_bound_workspace_backup_retention.sql`; the PWA cache is v31.
