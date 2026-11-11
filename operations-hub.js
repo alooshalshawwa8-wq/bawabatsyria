@@ -1,4 +1,4 @@
-/* OFOQ Operations Hub v1: local-only projects, tasks, ledger and backup. */
+/* OFOQ Operations Hub v2: local-first operations with opt-in private cloud snapshots. */
 (function(){
 "use strict";
 if(window.__OFOQ_OPERATIONS_HUB_V1__)return;
@@ -62,7 +62,7 @@ style.textContent=[
 "@media(max-width:560px){.oph-hub{padding:13px}.oph-tabs .oph-tab{flex:1 1 42%}.oph-grid{grid-template-columns:1fr 1fr}.oph-item{display:grid}}",
 "@media(prefers-reduced-motion:reduce){.oph-hub *{scroll-behavior:auto!important;transition:none!important}}"
 ].join("");
-const head=el("header","oph-head");head.append(el("div","oph-kicker","OFOQ · BUSINESS OPERATIONS COMMAND"),el("h2","","مركز القيادة وإدارة الأعمال"),el("p","oph-note","لوحة واحدة للمشاريع والمهام والحركة المالية، مع روابط مباشرة إلى أدوات أُفُق. تُحفظ سجلاتك محلياً على هذا الجهاز ولا تُرسل إلى خادم."));
+const head=el("header","oph-head");head.append(el("div","oph-kicker","OFOQ · BUSINESS OPERATIONS COMMAND"),el("h2","","مركز القيادة وإدارة الأعمال"),el("p","oph-note","لوحة واحدة للمشاريع والمهام والحركة المالية، مع روابط مباشرة إلى أدوات أُفُق. تعمل محلياً افتراضياً؛ ولا تُرسل أي بيانات إلى السحابة إلا عند تسجيل الدخول والضغط الصريح على إنشاء نسخة احتياطية."));
 const metrics=el("div","oph-metrics"),tabs=el("div","oph-tabs"),panes=el("div",""),status=el("p","oph-status","");
 tabs.setAttribute("role","tablist");tabs.setAttribute("aria-label","مساحات مركز القيادة");
 const pane=id=>{const p=el("section","oph-pane");p.id="oph-pane-"+id;p.setAttribute("role","tabpanel");p.hidden=true;panes.append(p);return p;};
@@ -123,6 +123,124 @@ const backup=pane("backup");backup.append(el("h3","","نسخ البيانات و
 const importFile=el("input","");importFile.type="file";importFile.accept=".json,application/json";importFile.hidden=true;
 actions(backup,btn("تنزيل نسخة JSON",()=>{const blob=new Blob([JSON.stringify({app:"ofoq-operations-hub",version:2,exportedAt:new Date().toISOString(),data,linkedSources:sourceSnapshot()},null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=el("a");a.href=url;a.download="ofoq-complete-operations-backup.json";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);status.textContent="تم تجهيز النسخة الاحتياطية.";}),btn("استيراد نسخة JSON",()=>importFile.click()));
 backup.append(importFile);
+
+const cloudPanel=el("section","oph-cloud-panel");
+cloudPanel.style.cssText="margin-top:18px;padding:15px;border:1px solid #347b83;border-radius:15px;background:#081a29";
+cloudPanel.append(el("h3","","الخزنة السحابية الخاصة"),el("p","oph-note","نسخ احتياطي اختياري لحسابك فقط. لا توجد مزامنة تلقائية. استخدم بريدك وكلمة مرور حساب أُفُق، ثم اضغط إنشاء نسخة بنفسك. لا تُخزّن كلمة المرور في الموقع؛ تحفظ جلسة الدخول مؤقتاً في علامة التبويب."));
+const authGrid=el("div","oph-grid");
+const cloudEmail=field(authGrid,"البريد الإلكتروني","cloud-email","email");
+cloudEmail.autocomplete="email";cloudEmail.inputMode="email";
+const cloudPassword=field(authGrid,"كلمة المرور","cloud-password","password");
+cloudPassword.autocomplete="current-password";cloudPassword.minLength=8;
+cloudPanel.append(authGrid);
+const cloudStatus=el("p","oph-status","");
+const cloudUser=el("p","oph-note","غير مسجل الدخول");
+const cloudList=el("div","oph-list");
+const cloudSessionKey="ofoq_cloud_backup_session_v1";
+const cloudBase=String(window.BAWABA_SUPABASE_URL||"").replace(/\\/$/,"");
+const cloudAnon=String(window.BAWABA_SUPABASE_ANON_KEY||"");
+const readCloudSession=()=>{try{return JSON.parse(sessionStorage.getItem(cloudSessionKey)||"null");}catch(_){return null;}};
+const saveCloudSession=s=>{try{sessionStorage.setItem(cloudSessionKey,JSON.stringify({access_token:s.access_token,refresh_token:s.refresh_token,user:{id:s.user&&s.user.id,email:s.user&&s.user.email}}));return true;}catch(_){return false;}};
+const clearCloudSession=()=>{try{sessionStorage.removeItem(cloudSessionKey);}catch(_){}};
+const cloudAuth=async(path,body)=>{
+ if(!cloudBase||!cloudAnon)throw new Error("إعداد الاتصال السحابي غير مكتمل.");
+ const response=await fetch(cloudBase+"/auth/v1"+path,{method:"POST",headers:{"apikey":cloudAnon,"Content-Type":"application/json"},body:JSON.stringify(body),cache:"no-store"});
+ const result=await response.json().catch(()=>({}));
+ if(!response.ok)throw new Error(result.msg||result.message||result.error_description||result.error||"تعذر إكمال طلب الحساب.");
+ return result;
+};
+const refreshCloudSession=async()=>{
+ const s=readCloudSession();if(!s||!s.refresh_token)throw new Error("انتهت جلسة الدخول؛ سجّل الدخول مجدداً.");
+ const fresh=await cloudAuth("/token?grant_type=refresh_token",{refresh_token:s.refresh_token});
+ if(!fresh.access_token||!saveCloudSession(fresh))throw new Error("تعذر تحديث جلسة الدخول.");
+ return readCloudSession();
+};
+const cloudRequest=async(path,options={},retry=true)=>{
+ let s=readCloudSession();if(!s||!s.access_token)throw new Error("سجّل الدخول أولاً.");
+ const headers=Object.assign({"apikey":cloudAnon,"Authorization":"Bearer "+s.access_token,"Content-Type":"application/json"},options.headers||{});
+ let response=await fetch(cloudBase+path,Object.assign({},options,{headers,cache:"no-store"}));
+ if(response.status===401&&retry){s=await refreshCloudSession();return cloudRequest(path,options,false);}
+ const raw=await response.text();let result={};try{result=raw?JSON.parse(raw):{};}catch(_){result={message:raw};}
+ if(!response.ok)throw new Error(result.message||result.msg||result.error_description||"تعذر الوصول إلى الخزنة السحابية ("+response.status+").");
+ return result;
+};
+const setCloudStatus=message=>{cloudStatus.textContent=message;};
+const backupPayload=()=>({app:"ofoq-operations-hub",version:2,exportedAt:new Date().toISOString(),data:clean(data),linkedSources:sourceSnapshot()});
+const validCloudBackup=p=>{
+ const d=p&&p.data;
+ if(!p||p.app!=="ofoq-operations-hub"||![1,2].includes(p.version)||!d||!Array.isArray(d.projects)||!Array.isArray(d.tasks)||!Array.isArray(d.transactions))return false;
+ if(d.projects.length>100||d.tasks.length>300||d.transactions.length>500)return false;
+ if(!d.projects.every(x=>x&&typeof x.name==="string"&&x.name.length<=100&&["active","paused","done"].includes(x.status)))return false;
+ if(!d.tasks.every(x=>x&&typeof x.title==="string"&&x.title.length<=160&&["open","done"].includes(x.status)))return false;
+ if(!d.transactions.every(x=>x&&["income","expense"].includes(x.kind)&&Number.isFinite(x.amount)&&x.amount>0&&x.amount<=1e12&&typeof x.category==="string"))return false;
+ const ls=p.linkedSources;
+ return !ls||(Array.isArray(ls.stock)&&Array.isArray(ls.trade)&&Array.isArray(ls.expenses)&&Array.isArray(ls.settlements)&&ls.stock.length<=10000&&ls.trade.length<=20000&&ls.expenses.length<=20000&&ls.settlements.length<=20000);
+};
+const loadCloudBackups=async()=>{
+ cloudList.replaceChildren();
+ const rows=await cloudRequest("/rest/v1/user_workspace_backups?select=id,label,backup_type,schema_version,created_at&order=created_at.desc&limit=20");
+ if(!Array.isArray(rows)||!rows.length){showEmpty(cloudList,"لا توجد نسخ سحابية بعد.");return;}
+ rows.forEach(item=>{
+  const actionsBox=el("div","oph-actions");
+  actionsBox.append(btn("استعادة",async()=>{
+   if(!confirm("ستُستبدل بيانات مركز القيادة المحلي بالنسخة المختارة، مع حفظ نقطة استعادة محلية أولاً. لن تُستبدل دفاتر الأدوات الأصلية. هل تريد المتابعة؟"))return;
+   try{
+    const found=await cloudRequest("/rest/v1/user_workspace_backups?id=eq."+encodeURIComponent(item.id)+"&select=payload&limit=1");
+    const payload=Array.isArray(found)&&found[0]&&found[0].payload;
+    if(!validCloudBackup(payload))throw new Error("النسخة غير صالحة أو لا تتوافق مع إصدار مركز القيادة.");
+    if(payload.version===2&&payload.linkedSources){try{localStorage.setItem(ARCHIVE_KEY,JSON.stringify({archivedAt:new Date().toISOString(),linkedSources:payload.linkedSources}));}catch(_){throw new Error("تعذر حفظ أرشيف المصادر؛ لم تُستبدل بيانات مركز القيادة.");}}
+    data=clean(payload.data);if(!persist())throw new Error("تعذر حفظ الاستعادة محلياً؛ تحقق من المساحة المتاحة.");
+    setCloudStatus("تمت الاستعادة بنجاح. بقيت بيانات الأدوات الأصلية دون تعديل.");
+   }catch(e){setCloudStatus("تعذرت الاستعادة: "+(e.message||"خطأ غير معروف."));}
+  }),btn("حذف",async()=>{
+   if(!confirm("حذف هذه النسخة السحابية نهائياً؟"))return;
+   try{await cloudRequest("/rest/v1/user_workspace_backups?id=eq."+encodeURIComponent(item.id),{method:"DELETE"});setCloudStatus("تم حذف النسخة.");await loadCloudBackups();}
+   catch(e){setCloudStatus("تعذر الحذف: "+e.message);}
+  },"oph-btn oph-danger"));
+  const date=new Date(item.created_at).toLocaleString();
+  cloudList.append(record(item.label||"نسخة مركز القيادة",date+" · نسخة خاصة بحسابك",actionsBox));
+ });
+};
+const updateCloudState=()=>{
+ const s=readCloudSession();
+ cloudUser.textContent=s&&s.user&&s.user.email?"متصل بالحساب: "+s.user.email:"غير مسجل الدخول";
+};
+const signInCloud=async()=>{
+ try{setCloudStatus("جارٍ تسجيل الدخول…");const email=cloudEmail.value.trim(),password=cloudPassword.value;
+  if(!email||!password)throw new Error("أدخل البريد الإلكتروني وكلمة المرور.");
+  const s=await cloudAuth("/token?grant_type=password",{email,password});
+  if(!s.access_token||!s.user||!s.user.id)throw new Error("لم تُنشأ جلسة دخول صالحة.");
+  if(!saveCloudSession(s))throw new Error("تعذر حفظ الجلسة المؤقتة في علامة التبويب.");
+  cloudPassword.value="";updateCloudState();await loadCloudBackups();setCloudStatus("تم تسجيل الدخول وتحميل قائمة النسخ الخاصة بحسابك.");
+ }catch(e){setCloudStatus("تعذر تسجيل الدخول: "+(e.message||"تحقق من بيانات الحساب."));}
+};
+const signUpCloud=async()=>{
+ try{setCloudStatus("جارٍ إنشاء الحساب…");const email=cloudEmail.value.trim(),password=cloudPassword.value;
+  if(!email||!password||password.length<8)throw new Error("أدخل بريداً صحيحاً وكلمة مرور من 8 أحرف على الأقل.");
+  const s=await cloudAuth("/signup",{email,password});
+  if(s.access_token&&s.user){saveCloudSession(s);updateCloudState();await loadCloudBackups();setCloudStatus("تم إنشاء الحساب وتسجيل الدخول.");}
+  else setCloudStatus("تم إرسال طلب إنشاء الحساب. تحقق من بريدك لتأكيده، ثم سجّل الدخول.");
+  cloudPassword.value="";
+ }catch(e){setCloudStatus("تعذر إنشاء الحساب: "+(e.message||"تحقق من البيانات."));}
+};
+const createCloudBackup=async()=>{
+ try{
+  const s=readCloudSession();if(!s||!s.user||!s.user.id)throw new Error("سجّل الدخول أولاً.");
+  const payload=backupPayload(),serialized=JSON.stringify(payload);
+  if(new TextEncoder().encode(serialized).length>1800000)throw new Error("حجم النسخة كبير جداً؛ نزّل نسخة JSON محلية أو قلّل السجلات.");
+  const label="مركز القيادة · "+new Date().toLocaleString();
+  await cloudRequest("/rest/v1/user_workspace_backups",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({user_id:s.user.id,backup_type:"operations_hub",schema_version:2,label,payload})});
+  setCloudStatus("تم إنشاء نسخة سحابية خاصة بحسابك. لم يتم تفعيل مزامنة تلقائية.");
+  await loadCloudBackups();
+ }catch(e){setCloudStatus("تعذر إنشاء النسخة: "+(e.message||"تحقق من الاتصال والحساب."));}
+};
+const signOutCloud=async()=>{
+ try{const s=readCloudSession();if(s&&s.access_token)await cloudAuth("/logout",{}).catch(()=>{});}
+ finally{clearCloudSession();cloudList.replaceChildren();updateCloudState();setCloudStatus("تم إنهاء الجلسة المحلية.");}
+};
+actions(cloudPanel,btn("تسجيل الدخول",signInCloud),btn("إنشاء حساب",signUpCloud),btn("إنشاء نسخة سحابية الآن",createCloudBackup),btn("تحديث قائمة النسخ",async()=>{try{await loadCloudBackups();setCloudStatus("تم تحديث قائمة النسخ.");}catch(e){setCloudStatus(e.message);}}),btn("تسجيل الخروج",signOutCloud,"oph-btn oph-danger"));
+cloudPanel.append(cloudUser,cloudList,cloudStatus,el("p","oph-note","الحماية: RLS تقصر القراءة والإنشاء والحذف على صاحب الحساب. لا توجد صلاحية تعديل النسخة بعد إنشائها. النسخ محفوظة في قاعدة البيانات السحابية ولا تُشفّر تشفيراً طرفياً من المتصفح؛ لا ترفع كلمات مرور أو أسراراً أو بيانات لا تريد تخزينها سحابياً."));
+backup.append(cloudPanel);updateCloudState();
 importFile.addEventListener("change",async()=>{const file=importFile.files&&importFile.files[0];if(!file)return;try{if(file.size>1024*1024)throw new Error("الملف يتجاوز 1 ميغابايت.");const raw=JSON.parse(await file.text()),d=raw&&raw.data;if(!raw||raw.app!=="ofoq-operations-hub"||![1,2].includes(raw.version)||!d||!Array.isArray(d.projects)||!Array.isArray(d.tasks)||!Array.isArray(d.transactions))throw new Error("صيغة النسخة غير متوافقة.");if(d.projects.length>100||d.tasks.length>300||d.transactions.length>500)throw new Error("تجاوزت النسخة حدود السجلات.");if(!d.projects.every(x=>x&&typeof x.name==="string"&&x.name.length<=100&&["active","paused","done"].includes(x.status)))throw new Error("بيانات المشاريع غير صالحة.");if(!d.tasks.every(x=>x&&typeof x.title==="string"&&x.title.length<=160&&["open","done"].includes(x.status)))throw new Error("بيانات المهام غير صالحة.");if(!d.transactions.every(x=>x&&["income","expense"].includes(x.kind)&&Number.isFinite(x.amount)&&x.amount>0&&x.amount<=1e12&&typeof x.category==="string"))throw new Error("بيانات الدفتر المالي غير صالحة.");if(!confirm("سيستبدل الاستيراد بيانات مركز القيادة الحالية. هل تريد المتابعة؟"))return;if(raw.version===2&&raw.linkedSources){const ls=raw.linkedSources;if(!ls||typeof ls!=="object"||!Array.isArray(ls.stock)||!Array.isArray(ls.trade)||!Array.isArray(ls.expenses)||!Array.isArray(ls.settlements)||ls.stock.length>10000||ls.trade.length>20000||ls.expenses.length>20000||ls.settlements.length>20000)throw new Error("لقطة المصادر المرتبطة غير صالحة أو تجاوزت الحدود.");try{localStorage.setItem(ARCHIVE_KEY,JSON.stringify({archivedAt:new Date().toISOString(),linkedSources:ls}));}catch(_){throw new Error("تعذر حفظ أرشيف المصادر؛ لم يتم استبدال بيانات مركز القيادة.");}}data=clean(d);if(!persist())throw new Error("لم تتم الاستعادة لأن الحفظ الآمن لم يكتمل.");status.textContent=raw.version===2?"تمت استعادة مركز القيادة وحفظ لقطة المصادر في أرشيف منفصل دون المساس بالأدوات الأصلية.":"تمت استعادة بيانات مركز القيادة.";}catch(e){status.textContent="تعذر الاستيراد: "+(e.message||"ملف غير صالح.");}finally{importFile.value="";}});
 root.append(style,head,metrics,tabs,panes,status);host.append(root);render();renderLinked();activate("overview");
 }
