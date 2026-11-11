@@ -11,6 +11,8 @@ const cors = {
 const headers = { ...cors, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" };
 const cache = new Map<string, { until: number; data: unknown }>();
 const requests = new Map<string, number[]>();
+const providerFetchInFlight = new Map<string, Promise<Record<string, any>>>();
+let providerStatusCheckAt = 0;
 
 function reply(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers });
@@ -190,7 +192,7 @@ async function reserveFootballBudget(bucket: string, endpoint: string) {
   if (!response.ok) throw new Error("FOOTBALL_BUDGET_GUARD_UNAVAILABLE");
   return await response.json();
 }
-async function providerFetch(path: string, query: Record<string,string>, ttl: number, tracker: FetchTracker, budgetBucket = "core") {
+async function providerFetchFresh(path: string, query: Record<string,string>, ttl: number, tracker: FetchTracker, budgetBucket = "core") {
   const params = new URLSearchParams(query);
   const cacheKey = path + "?" + params.toString();
   const local = cache.get("provider:" + cacheKey);
@@ -281,6 +283,21 @@ async function providerFetch(path: string, query: Record<string,string>, ttl: nu
   return result;
 }
 
+
+async function providerFetch(path: string, query: Record<string,string>, ttl: number, tracker: FetchTracker, budgetBucket = "core") {
+  const params = new URLSearchParams(query);
+  const key = path + "?" + params.toString();
+  const existing = providerFetchInFlight.get(key);
+  if (existing) {
+    tracker.cacheHits++;
+    return await existing;
+  }
+  const pending = providerFetchFresh(path, query, ttl, tracker, budgetBucket);
+  providerFetchInFlight.set(key, pending);
+  try { return await pending; }
+  finally { if (providerFetchInFlight.get(key) === pending) providerFetchInFlight.delete(key); }
+}
+
 function validDate(value: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value + "T00:00:00Z"));
 }
@@ -314,12 +331,46 @@ Deno.serve(async (request: Request) => {
       const keys = await footballEntitlements(user.id);
       const metadataOwner = user.appMetadata?.role === "OWNER" && user.appMetadata?.owner === true;
       if (!metadataOwner && !keys.has("owner_access")) return reply({ error: "هذه اللوحة مخصصة لمالك المنصة." }, 403);
-      const [usageResponse, budgetResponse] = await Promise.all([
+      let [usageResponse, budgetResponse] = await Promise.all([
         dbRest("rpc/football_api_usage_summary", { method: "POST", body: "{}" }),
         dbRest("rpc/football_api_budget_status", { method: "POST", body: "{}" })
       ]);
       if (!usageResponse.ok || !budgetResponse.ok) throw new Error("Usage or budget summary unavailable");
-      return reply({ provider: "API-Football", configured: Boolean(apiKey), ...await usageResponse.json(), budget: await budgetResponse.json() });
+      let budgetSnapshot = await budgetResponse.json();
+      const providerHeaderAt = budgetSnapshot?.providerHeaderAt ? Date.parse(budgetSnapshot.providerHeaderAt) : 0;
+      if (apiKey && Date.now() - providerHeaderAt > 30 * 60_000 && Date.now() - providerStatusCheckAt > 30 * 60_000) {
+        providerStatusCheckAt = Date.now();
+        const statusStarted = Date.now();
+        try {
+          const statusResponse = await fetch("https://v3.football.api-sports.io/status", {
+            headers: { "x-apisports-key": apiKey, "Accept": "application/json" }
+          });
+          const statusData = await statusResponse.json().catch(() => ({}));
+          const dailyRemaining = statusResponse.headers.get("x-ratelimit-requests-remaining");
+          const dailyLimit = statusResponse.headers.get("x-ratelimit-requests-limit");
+          const minuteRemaining = statusResponse.headers.get("x-ratelimit-remaining");
+          const minuteLimit = statusResponse.headers.get("x-ratelimit-limit");
+          await recordProviderUsage({
+            endpoint: "status", cacheKey: "provider-status", status: statusResponse.status,
+            errors: hasProviderErrors(statusData?.errors) ? statusData.errors : null,
+            responseCount: Array.isArray(statusData?.response) ? statusData.response.length : 0,
+            remaining: dailyRemaining === null ? null : Number(dailyRemaining),
+            limit: dailyLimit === null ? null : Number(dailyLimit),
+            minuteRemaining: minuteRemaining === null ? null : Number(minuteRemaining),
+            minuteLimit: minuteLimit === null ? null : Number(minuteLimit),
+            durationMs: Date.now() - statusStarted
+          });
+        } catch (statusError) {
+          console.warn("API-Football status refresh failed", String(statusError).slice(0,160));
+        }
+        [usageResponse, budgetResponse] = await Promise.all([
+          dbRest("rpc/football_api_usage_summary", { method: "POST", body: "{}" }),
+          dbRest("rpc/football_api_budget_status", { method: "POST", body: "{}" })
+        ]);
+        if (!usageResponse.ok || !budgetResponse.ok) throw new Error("Usage or budget summary unavailable after status refresh");
+        budgetSnapshot = await budgetResponse.json();
+      }
+      return reply({ provider: "API-Football", configured: Boolean(apiKey), ...await usageResponse.json(), budget: budgetSnapshot });
     } catch {
       return reply({ error: "تعذر قراءة لوحة استهلاك المزود حالياً." }, 503);
     }
@@ -494,10 +545,15 @@ Deno.serve(async (request: Request) => {
       return body.response;
     };
     try {
-      const fixtureRowsData = await providerFetch("fixtures", { id: fixtureId, timezone: "Asia/Damascus" }, 15 * 60_000, tracker);
+      const fixtureRowsData = await providerFetch("fixtures", { id: fixtureId, timezone: "Asia/Damascus" }, 30_000, tracker);
       const fixtureRows = fixtureRowsData.response;
       const match = fixtureRows[0];
       if (!match) return reply({ error: "لم يعثر API-Football على المباراة بهذا الرقم." }, 404);
+      const fixtureStatusForTtl = String(match.fixture?.status?.short ?? "");
+      const fixtureTtl = ["1H","HT","2H","ET","BT","P","LIVE"].includes(fixtureStatusForTtl) ? 30_000 : (["FT","AET","PEN"].includes(fixtureStatusForTtl) ? 6 * 60 * 60_000 : 15 * 60_000);
+      const fixtureCacheKey = "fixtures?id=" + fixtureId + "&timezone=Asia%2FDamascus";
+      cache.set("provider:" + fixtureCacheKey, { until: Date.now() + Math.min(fixtureTtl, 60_000), data: fixtureRowsData });
+      await persistentCacheSet(fixtureCacheKey, "fixtures", fixtureRowsData, fixtureTtl);
       const homeId = String(match.teams?.home?.id ?? "");
       const awayId = String(match.teams?.away?.id ?? "");
       const leagueId = String(match.league?.id ?? "");
