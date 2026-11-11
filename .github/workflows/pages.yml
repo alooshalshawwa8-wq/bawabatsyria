@@ -45,6 +45,27 @@ jobs:
           for block in structured_data:
               json.loads(block)
           print(f"Validated {len(structured_data)} JSON-LD block(s).")
+          required_seo = (
+              '<meta name="description"',
+              '<meta name="robots"',
+              '<meta property="og:title"',
+              '<meta property="og:description"',
+              '<meta property="og:url"',
+              '<meta name="twitter:card"',
+              '<meta name="twitter:title"',
+              '<link rel="canonical"',
+              '<link rel="preload" as="image"',
+          )
+          missing_seo = [item for item in required_seo if item not in html]
+          if missing_seo:
+              raise SystemExit("Missing SEO metadata: " + repr(missing_seo))
+          if not (root / "robots.txt").is_file() or not (root / "sitemap.xml").is_file():
+              raise SystemExit("robots.txt or sitemap.xml is missing")
+          robots = (root / "robots.txt").read_text(encoding="utf-8")
+          sitemap = (root / "sitemap.xml").read_text(encoding="utf-8")
+          if "Sitemap:" not in robots or "https://" not in sitemap or "<loc>" not in sitemap:
+              raise SystemExit("Robots/sitemap configuration is incomplete")
+          print("SEO metadata, robots.txt and sitemap.xml checks passed.")
 
           script_tags = re.findall(r"<script\b([^>]*)>([\s\S]*?)</script>", html, re.I)
           scripts = []
