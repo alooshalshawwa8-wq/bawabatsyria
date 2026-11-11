@@ -2390,13 +2390,67 @@ const reportTable=document.createElement('div');reportTable.style.cssText='overf
 reports.append(reportsTitle,reportsNote,reportControls,reportSummary,reportTable);
 let reportRows=[],reportHeaders=[];
 
+const directory=document.createElement('section');directory.style.cssText='margin-top:18px;padding:15px;border:1px solid var(--line);border-radius:13px;background:rgba(4,18,31,.7)';
+const directoryTitle=document.createElement('h4');directoryTitle.textContent='إدارة العملاء والموردين';directoryTitle.style.color='var(--gold2)';
+const directoryNote=document.createElement('p');directoryNote.textContent='ملفات الأطراف محفوظة محلياً على هذا الجهاز. تُجمع المعاملات من دفتر العمليات تلقائياً، ولا تُكرر أرصدة الديون في سجل مستقل.';directoryNote.style.cssText='font-size:12px;color:var(--muted);line-height:1.7';
+const directoryForm=document.createElement('div');directoryForm.className='calc';
+const partyRole=document.createElement('select');[['customer','عميل'],['supplier','مورد'],['both','عميل ومورد']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;partyRole.appendChild(o);});
+const partyName=document.createElement('input');partyName.placeholder='الاسم الكامل *';partyName.maxLength=80;
+const partyPhone=document.createElement('input');partyPhone.placeholder='رقم الهاتف (اختياري)';partyPhone.maxLength=35;
+const partyAddress=document.createElement('input');partyAddress.placeholder='العنوان (اختياري)';partyAddress.maxLength=140;
+const partyNotes=document.createElement('input');partyNotes.placeholder='ملاحظات (اختياري)';partyNotes.maxLength=240;
+const partySave=document.createElement('button');partySave.type='button';partySave.className='btn';partySave.textContent='حفظ ملف الطرف';
+const partyStatus=document.createElement('p');partyStatus.className='notice';partyStatus.setAttribute('aria-live','polite');
+const partyCards=document.createElement('div');partyCards.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px';
+const partySelect=document.createElement('select');const partySearch=document.createElement('input');partySearch.placeholder='ابحث بالاسم أو الهاتف';partySearch.maxLength=80;
+const partyLedger=document.createElement('div');partyLedger.style.cssText='overflow-x:auto;margin-top:10px';
+directoryForm.append(partyRole,partyName,partyPhone,partyAddress,partyNotes,partySave);
+directory.append(directoryTitle,directoryNote,directoryForm,partyStatus,partySearch,partyCards,partySelect,partyLedger);
+let activeParty='';
+const partyKey='bawabatsyria_trade_parties_v1';
+function readParties(){try{const v=JSON.parse(localStorage.getItem(partyKey)||'[]');return Array.isArray(v)?v.filter(x=>x&&typeof x.name==='string'):[];}catch(e){return [];}}
+function saveParties(v){try{localStorage.setItem(partyKey,JSON.stringify(v));return true;}catch(e){return false;}}
+function renderDirectory(){
+const profiles=readParties(),tx=read(),names=[...new Set(tx.map(x=>(x.party||'').trim()).filter(Boolean))];
+const allNames=[...new Set([...profiles.map(x=>x.name),...names])].sort((a,b)=>a.localeCompare(b,'ar'));
+const q=partySearch.value.trim().toLocaleLowerCase('ar');partyCards.replaceChildren();partySelect.replaceChildren();
+const choose=document.createElement('option');choose.value='';choose.textContent='اختر ملفاً لعرض كشف الحساب';partySelect.appendChild(choose);
+allNames.forEach(name=>{const prof=profiles.find(x=>x.name.toLocaleLowerCase('ar')===name.toLocaleLowerCase('ar'))||{name,role:'unknown'};const related=tx.filter(x=>(x.party||'').trim().toLocaleLowerCase('ar')===name.toLocaleLowerCase('ar'));const sales=related.filter(x=>x.type==='sale'),buys=related.filter(x=>x.type==='purchase');const dueSales=sales.reduce((n,x)=>n+Math.max(0,x.total-x.paid),0),dueBuys=buys.reduce((n,x)=>n+Math.max(0,x.total-x.paid),0);
+if(!name.toLocaleLowerCase('ar').includes(q)&&!String(prof.phone||'').includes(q))return;
+const card=document.createElement('article');card.style.cssText='padding:12px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.035)';
+const title=document.createElement('strong');title.textContent=name;title.style.color='var(--gold2)';
+const meta=document.createElement('p');meta.style.cssText='font-size:11px;color:var(--muted);line-height:1.7';meta.textContent=(prof.role==='customer'?'عميل':prof.role==='supplier'?'مورد':prof.role==='both'?'عميل ومورد':'دور غير محدد')+' · '+(prof.phone||'لا يوجد هاتف')+' · '+related.length+' عملية';
+const balances=document.createElement('p');balances.style.cssText='font-size:12px;line-height:1.8';balances.textContent='مستحق لك: '+fmt(dueSales)+' · مستحق عليك: '+fmt(dueBuys);
+const open=document.createElement('button');open.type='button';open.className='btn secondary';open.textContent='فتح كشف الحساب';open.addEventListener('click',()=>{activeParty=name;partySelect.value=name;renderPartyStatement(name);});
+card.append(title,meta,balances,open);partyCards.appendChild(card);
+const opt=document.createElement('option');opt.value=name;opt.textContent=name;partySelect.appendChild(opt);
+});
+if(!partyCards.childElementCount){const empty=document.createElement('p');empty.className='notice';empty.textContent='لا توجد أطراف مطابقة. أضف عميلاً أو مورداً أو سجّل عملية باسم الطرف.';partyCards.appendChild(empty);}
+if(activeParty&&allNames.includes(activeParty))partySelect.value=activeParty;
+}
+function renderPartyStatement(name){
+partyLedger.replaceChildren();if(!name){partyLedger.textContent='اختر طرفاً لعرض معاملاته.';return;}
+const tx=read().filter(x=>(x.party||'').trim().toLocaleLowerCase('ar')===name.toLocaleLowerCase('ar')).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+const table=document.createElement('table');table.style.cssText='width:100%;min-width:650px;border-collapse:collapse;font-size:12px';const head=document.createElement('tr');
+['التاريخ','العملية','الصنف','الإجمالي','المدفوع','المتبقي'].forEach(t=>{const th=document.createElement('th');th.textContent=t;th.style.cssText='padding:8px;text-align:right;color:var(--gold2);border-bottom:1px solid var(--line)';head.appendChild(th);});table.appendChild(head);
+tx.forEach(x=>{const tr=document.createElement('tr');[x.date,x.type==='sale'?'بيع':'شراء',x.item,fmt(x.total),fmt(x.paid),fmt(Math.max(0,x.total-x.paid))].forEach(v=>{const td=document.createElement('td');td.textContent=String(v??'');td.style.cssText='padding:8px;border-bottom:1px solid var(--line)';tr.appendChild(td);});table.appendChild(tr);});
+const total=tx.reduce((n,x)=>n+(x.type==='sale'?1:-1)*Math.max(0,x.total-x.paid),0);
+const foot=document.createElement('p');foot.className='notice';foot.textContent='صافي الذمم المسجلة للطرف (مستحق لك موجب / مستحق عليك سالب): '+fmt(total)+' · '+tx.length+' معاملة. الفواتير هنا مستخرجة من سجل العمليات وليست ملفات مرفقة.';
+partyLedger.append(foot,table);
+}
+partySave.addEventListener('click',()=>{const name=partyName.value.trim();if(!name){partyStatus.textContent='أدخل اسم الطرف.';return;}const list=readParties(),existing=list.findIndex(x=>x.name.toLocaleLowerCase('ar')===name.toLocaleLowerCase('ar'));const profile={name,role:partyRole.value,phone:partyPhone.value.trim(),address:partyAddress.value.trim(),notes:partyNotes.value.trim(),updatedAt:new Date().toISOString()};if(existing>=0)list[existing]=profile;else list.push(profile);if(!saveParties(list)){partyStatus.textContent='تعذر الحفظ؛ قد تكون مساحة التخزين ممتلئة.';return;}activeParty=name;partyStatus.textContent='تم حفظ ملف '+name+'.';renderDirectory();partySelect.value=name;renderPartyStatement(name);});
+partySelect.addEventListener('change',()=>{activeParty=partySelect.value;renderPartyStatement(activeParty);});
+partySearch.addEventListener('input',renderDirectory);
+renderDirectory();
+
+
 
 const backupRow=document.createElement('div');backupRow.className='calc';backupRow.style.marginTop='10px';
 const exportLedger=document.createElement('button');exportLedger.type='button';exportLedger.className='btn secondary';exportLedger.textContent='تنزيل نسخة دفتر العمليات';
 const importLedger=document.createElement('button');importLedger.type='button';importLedger.className='btn secondary';importLedger.textContent='استيراد دفتر عمليات';
 const ledgerFile=document.createElement('input');ledgerFile.type='file';ledgerFile.accept='application/json,.json';ledgerFile.hidden=true;
 backupRow.append(exportLedger,importLedger,ledgerFile);
-box.append(h,note,form,add,status,summary,finance,reports,history);box.appendChild(backupRow);tool.appendChild(box);
+box.append(h,note,form,add,status,summary,finance,reports,directory,history);box.appendChild(backupRow);tool.appendChild(box);
 const fmt=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits:2});
 function refreshItems(){const old=item.value;item.replaceChildren();readStock().forEach((x,i)=>{const o=document.createElement('option');o.value=String(i);o.textContent=x.name+' · '+x.qty;item.appendChild(o);});if(old!==''&&Number(old)<item.options.length)item.value=old;const x=readStock()[Number(item.value)];if(x)unit.value=type.value==='sale'?x.sale:x.cost;}
 function draw(){
@@ -2415,6 +2469,7 @@ history.replaceChildren();if(!rows.length){history.textContent='لا توجد ع
 const table=document.createElement('table');table.style.cssText='width:100%;min-width:700px;border-collapse:collapse;font-size:12px';const trh=document.createElement('tr');
 ['التاريخ','النوع','الصنف','الطرف','الكمية','الإجمالي','المدفوع','المتبقي'].forEach(t=>{const th=document.createElement('th');th.textContent=t;th.style.cssText='padding:8px;text-align:right;color:var(--gold2);border-bottom:1px solid var(--line)';trh.appendChild(th);});table.appendChild(trh);
 rows.slice().reverse().forEach(x=>{const tr=document.createElement('tr');[x.date,x.type==='sale'?'مبيعات':'مشتريات',x.item,x.party||'—',String(x.qty),fmt(x.total),fmt(x.paid),fmt(Math.max(0,x.total-x.paid))].forEach(v=>{const td=document.createElement('td');td.textContent=v;td.style.cssText='padding:8px;border-bottom:1px solid var(--line)';tr.appendChild(td);});table.appendChild(tr);});history.appendChild(table);
+if(typeof renderDirectory==='function')renderDirectory();
 }
 
 function makeReport(){
@@ -2451,6 +2506,7 @@ reportParty.disabled=true;
 reportCsv.addEventListener('click',()=>{if(!reportHeaders.length)makeReport();if(!reportHeaders.length)return;const safe=v=>{let x=String(v??'');if(/^[=+\-@\t\r]/.test(x))x="'"+x;return '"'+x.replace(/"/g,'""')+'"';};const csv='\uFEFF'+[reportHeaders,...reportRows].map(row=>row.map(safe).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),link=document.createElement('a');link.href=url;link.download='ofoq-report-'+reportType.value+'-'+(period.value||'period')+'.csv';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);});
 reportPrint.addEventListener('click',()=>{if(!reportHeaders.length)makeReport();window.print();});
 makeReport();
+renderDirectory();
 
 type.addEventListener('change',refreshItems);item.addEventListener('change',()=>{const x=readStock()[Number(item.value)];if(x)unit.value=type.value==='sale'?x.sale:x.cost;});
 exportLedger.addEventListener('click',()=>{const payload={app:'ofoq-trade-ledger',version:1,createdAt:new Date().toISOString(),transactions:read()};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='ofoq-trade-ledger-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);status.textContent='تم تجهيز نسخة دفتر العمليات. احفظها في مكان آمن.';});
