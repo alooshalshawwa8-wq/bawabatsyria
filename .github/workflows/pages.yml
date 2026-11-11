@@ -25,6 +25,27 @@ jobs:
         uses: actions/checkout@v4
       - name: Configure Pages
         uses: actions/configure-pages@v5
+      - name: Generate responsive WebP welcome images
+        run: |
+          python3 -m pip install --disable-pip-version-check Pillow
+          python3 - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          assets = Path("assets")
+          sources = [
+              "file_00000000dce882129102a05013969410.png",
+              "file_000000008668821282987c991b233d13.png",
+          ]
+          for name in sources:
+              source = assets / name
+              image = Image.open(source).convert("RGB")
+              for width in (828, 1400):
+                  resized = image.copy()
+                  resized.thumbnail((width, width), Image.Resampling.LANCZOS)
+                  target = assets / f"{source.stem}-{width}.webp"
+                  resized.save(target, "WEBP", quality=82, method=6)
+                  print(f"{target}: {target.stat().st_size} bytes")
+          PY
       - name: Validate site files and JavaScript
         run: |
           test -f index.html
