@@ -683,7 +683,7 @@ Deno.serve(async (request: Request) => {
     if (["standings","scorers","assists","yellow_cards","red_cards","rounds"].includes(dataset) && (!params.has("league") || !params.has("season"))) {
       return reply({ error: "يتطلب هذا القسم league و season، مثال league=39&season=2025." }, 400);
     }
-    if (dataset === "trophies" && !((params.has("player") && /^\\d+$/.test(params.get("player")!)) || (params.has("coach") && /^\\d+$/.test(params.get("coach")!)))) return reply({ error: "سجل البطولات يتطلب player=رقم اللاعب أو coach=رقم المدرب." }, 400);
+    if (dataset === "trophies" && !((params.has("player") && /^\d+$/.test(params.get("player")!)) || (params.has("coach") && /^\d+$/.test(params.get("coach")!)))) return reply({ error: "سجل البطولات يتطلب player=رقم اللاعب أو coach=رقم المدرب." }, 400);
     if (dataset === "team_stats" && (!params.has("team") || !params.has("league") || !params.has("season"))) {
       return reply({ error: "إحصاءات الفريق تتطلب team و league و season." }, 400);
     }
