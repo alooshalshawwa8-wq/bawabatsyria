@@ -215,7 +215,7 @@ Deno.serve(async (request: Request) => {
           .filter((mapping: Record<string, any>) => mapping.plan_code === plan.plan_code)
           .map((mapping: Record<string, any>) => {
             const feature = (Array.isArray(features) ? features : []).find((item: Record<string, any>) => item.feature_code === mapping.feature_code);
-            return feature ? { ...feature, access_level: mapping.access_level, usage_limit: mapping.usage_limit } : null;
+            return feature ? { ...feature, access_level: launch?.trial_free_all_features ? "included" : mapping.access_level, usage_limit: mapping.usage_limit } : null;
           }).filter(Boolean)
       }));
       return reply({
