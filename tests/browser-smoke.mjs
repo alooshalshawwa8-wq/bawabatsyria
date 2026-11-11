@@ -191,8 +191,8 @@ try {
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(commerceBackup))
   });
-  await merchant.getByText("OFOQ TEMP Product").waitFor({ state: "detached" });
-  await merchant.getByText("OFOQ Browser Test Product").waitFor({ state: "visible" });
+  await merchant.locator(".ofoq-ecom-saved-row").filter({ hasText: "OFOQ TEMP Product" }).waitFor({ state: "detached" });
+  await merchant.locator(".ofoq-ecom-saved-row").filter({ hasText: "OFOQ Browser Test Product" }).waitFor({ state: "visible" });
 
   await page.evaluate(() => {
     localStorage.setItem("bawabatsyria_stock_v1", JSON.stringify([
