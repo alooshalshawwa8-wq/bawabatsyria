@@ -157,7 +157,7 @@ try {
   await merchant.locator("#ofoq-ecom-catalog-price").fill("25");
   await merchant.locator("#ofoq-ecom-catalog-stock").fill("7");
   await merchant.getByRole("button", { name: "إضافة منتج" }).click();
-  await merchant.getByText("OFOQ Browser Test Product").waitFor({ state: "visible" });
+  await merchant.locator(".ofoq-ecom-saved-row").filter({ hasText: "OFOQ Browser Test Product" }).waitFor({ state: "visible" });
   await merchant.getByRole("tab", { name: "🧾 الطلبات" }).click();
   await merchant.locator("#ofoq-ecom-order-no").fill("OFOQ-BROWSER-001");
   await merchant.locator("#ofoq-ecom-order-qty").fill("2");
@@ -184,7 +184,7 @@ try {
   await merchant.locator("#ofoq-ecom-catalog-price").fill("3");
   await merchant.locator("#ofoq-ecom-catalog-stock").fill("1");
   await merchant.getByRole("button", { name: "إضافة منتج" }).click();
-  await merchant.getByText("OFOQ TEMP Product").waitFor({ state: "visible" });
+  await merchant.locator(".ofoq-ecom-saved-row").filter({ hasText: "OFOQ TEMP Product" }).waitFor({ state: "visible" });
   page.once("dialog", dialog => dialog.accept());
   await merchant.locator("#ofoq-ecom-import-file").setInputFiles({
     name: "ofoq-commerce-backup.json",
