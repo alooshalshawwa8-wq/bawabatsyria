@@ -104,6 +104,8 @@ require("./career-studio.js" in worker, "career studio missing from offline app 
 require("operations-hub.js" in html, "operations hub script not loaded by the portal")
 for token in ("ofoq_operations_hub_v1", "ofoq-operations-hub", "transactions", "projects", "tasks", "1024*1024", "persist"):
     require(token in operations, "operations hub feature missing: " + token)
+require("تعذر إنشاء نقطة الاستعادة" in operations and "أُعيدت البيانات إلى الحالة السابقة" in operations, "operations hub must roll back failed local writes")
+require("النسخ السحابية الاختيارية في أُفُق" in html, "privacy center cloud backup disclosure missing")
 for token in ("user_workspace_backups", "cloudRequest", "/token?grant_type=password", "/signup", "sessionStorage", "createCloudBackup", "validCloudBackup", "refresh_token"):
     require(token in operations, "opt-in cloud backup contract missing: " + token)
 require("fetch(" in operations and "XMLHttpRequest" not in operations, "cloud backup must use bounded fetch requests only")
@@ -114,7 +116,7 @@ require(backup_migration.is_file(), "cloud backup RLS migration missing")
 backup_sql = backup_migration.read_text(encoding="utf-8")
 for token in ("enable row level security", "Users read own workspace backups", "Users create own workspace backups", "Users delete own workspace backups", "revoke all on public.user_workspace_backups from anon"):
     require(token in backup_sql, "cloud backup database security contract missing: " + token)
-require("./operations-hub.js" in worker and "ofoq-shell-v29" in worker, "operations hub missing from offline shell or cache not refreshed")
+require("./operations-hub.js" in worker and "ofoq-shell-v30" in worker, "operations hub missing from offline shell or cache not refreshed")
 
 # Cross-tool local data adapters and non-destructive recovery archive.
 for token in (
