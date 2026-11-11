@@ -138,3 +138,10 @@ All inventory data remains in browser localStorage on the current device. No API
 - All additions use separate local browser storage for expenses and invoice numbering; no external services, APIs, Supabase, Gemini, API-Football or quotas changed. No browser/device test or Pages deployment verification.
 
 - Reliability refinement: deferred invoice/expense selector initialization until shared currency formatting is ready; recorded each later settlement with its own date and excluded it from the original transaction's cash receipt/payment to prevent period double counting.
+
+
+## Unified merchant backup — 2026-11-11
+
+- Extended the existing JSON backup to version 2, including transactions, customer/supplier profiles, expenses, dated settlement events, and invoice-number mappings.
+- Import remains backward-compatible with version 1 ledger-only backups, validates imported collections, and merges by IDs/names rather than overwriting existing records.
+- Backup file size remains capped at 2 MB. Data remains browser-local and should be downloaded regularly; imports are not a cloud synchronization service.
