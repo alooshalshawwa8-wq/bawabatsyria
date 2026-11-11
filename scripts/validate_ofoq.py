@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 html = (ROOT / "index.html").read_text(encoding="utf-8")
 assistant = (ROOT / "supabase/functions/site-assistant/index.ts").read_text(encoding="utf-8")
 worker = (ROOT / "service-worker.js").read_text(encoding="utf-8")
+core = (ROOT / "ofoq-core.js").read_text(encoding="utf-8")
 ecommerce = (ROOT / "ecommerce-studio.js").read_text(encoding="utf-8")
 career = (ROOT / "career-studio.js").read_text(encoding="utf-8")
 operations = (ROOT / "operations-hub.js").read_text(encoding="utf-8")
@@ -163,6 +164,16 @@ require("fetch(" not in source_adapter and "XMLHttpRequest" not in source_adapte
 # Browser-level regression coverage runs after Pages deployment and blocks provider traffic.
 require((ROOT / "tests/browser-smoke.mjs").is_file(), "Playwright browser smoke test missing")
 require("playwright@1.65.0" in (ROOT / ".github/workflows/pages.yml").read_text(encoding="utf-8"), "pinned Playwright CI dependency missing")
+
+# OFOQ personal space: local-only favorites, recent history, and filter integrity.
+require((ROOT / "ofoq-core.js").is_file(), "OFOQ core script missing")
+require('<script src="./ofoq-core.js" defer></script>' in html, "OFOQ core script is not loaded")
+for token in ("ofoq_personal_space_v1", "getFavorites", "getRecent", "toggleFavorite", "recordVisit", "data-ofoq-view", "aria-pressed", "لا تحفظ أي بيانات شخصية"):
+    if token == "لا تحفظ أي بيانات شخصية":
+        continue
+    require(token in core, "OFOQ personal space feature missing: " + token)
+require("fetch(" not in core and "XMLHttpRequest" not in core, "OFOQ personal space must remain local-only")
+require("./ofoq-core.js" in worker and "ofoq-shell-v39" in worker, "OFOQ core missing from offline shell or cache not refreshed")
 
 # PWA and shell integrity.
 require((ROOT / "manifest.json").is_file(), "manifest missing")
