@@ -63,6 +63,26 @@ try {
   await merchant.getByRole("button", { name: "إضافة طلب" }).click();
   await merchant.getByText(/الكمية تتجاوز المتاح/).waitFor({ state: "visible" });
   await merchant.getByLabel("حالة الطلب OFOQ-BROWSER-001").selectOption("processing");
+  const commerceBackup = await page.evaluate(() => ({
+    app: "ofoq-ecommerce-commerce",
+    version: 1,
+    products: JSON.parse(localStorage.getItem("ofoq_ecommerce_products_v1") || "[]"),
+    orders: JSON.parse(localStorage.getItem("ofoq_ecommerce_orders_v1") || "[]")
+  }));
+  await merchant.getByRole("tab", { name: "📦 المنتجات والمخزون" }).click();
+  await merchant.locator("#ofoq-ecom-catalog-name").fill("OFOQ TEMP Product");
+  await merchant.locator("#ofoq-ecom-catalog-price").fill("3");
+  await merchant.locator("#ofoq-ecom-catalog-stock").fill("1");
+  await merchant.getByRole("button", { name: "إضافة منتج" }).click();
+  await merchant.getByText("OFOQ TEMP Product").waitFor({ state: "visible" });
+  page.once("dialog", dialog => dialog.accept());
+  await merchant.locator("#ofoq-ecom-import-file").setInputFiles({
+    name: "ofoq-commerce-backup.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(commerceBackup))
+  });
+  await merchant.getByText("OFOQ TEMP Product").waitFor({ state: "detached" });
+  await merchant.getByText("OFOQ Browser Test Product").waitFor({ state: "visible" });
 
   await page.evaluate(async () => {
     const business = window.BAWABA_SECTIONS.find(item => item.id === "business");
