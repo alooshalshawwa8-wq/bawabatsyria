@@ -545,8 +545,6 @@ Deno.serve(async (request: Request) => {
     const persistentStudio = await persistentCacheGet(studioCacheKey);
     if (persistentStudio && typeof persistentStudio === "object") return reply({ ...persistentStudio as Record<string, unknown>, cached: true });
     const ttlFor = (path: string) => path === "fixtures/events" || path === "fixtures/statistics" || path === "fixtures/players" ? 60_000 : path === "fixtures/lineups" ? 15 * 60_000 : path === "odds" ? 3 * 60 * 60_000 : path === "predictions" ? 60 * 60_000 : 6 * 60 * 60_000;
-    const matchStatus = String(match.fixture?.status?.short ?? "");
-    const matchIsLive = ["1H","HT","2H","ET","BT","P","LIVE"].includes(matchStatus);
     const apiFetch = async (path: string, query: Record<string,string> = {}) => {
       const body = await providerFetch(path, query, ttlFor(path), tracker, matchIsLive ? "live" : "core");
       return body.response;
