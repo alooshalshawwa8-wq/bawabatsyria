@@ -14,7 +14,9 @@ settlements:"bawabatsyria_trade_settlements_v1",
 invoiceNumbers:"bawabatsyria_trade_invoice_numbers_v1",
 parties:"bawabatsyria_trade_parties_v1",
 career:"ofoq_career_applications_v1",
-ecommerceScenarios:"ofoq_ecommerce_scenarios_v1"
+ecommerceScenarios:"ofoq_ecommerce_scenarios_v1",
+commerceProducts:"ofoq_ecommerce_products_v1",
+commerceOrders:"ofoq_ecommerce_orders_v1"
 };
 const ARCHIVE_KEY="ofoq_operations_recovery_archive_v1";
 const RECOVERY_KEY="ofoq_operations_hub_recovery_v1";
@@ -30,6 +32,8 @@ settlements:readSource(SOURCE_KEYS.settlements,x=>x&&typeof x.transactionId==="s
 parties:readSource(SOURCE_KEYS.parties,x=>x&&typeof x.name==="string",10000),
 career:readSource(SOURCE_KEYS.career,x=>x&&typeof x.id==="string",100),
 ecommerceScenarios:readSource(SOURCE_KEYS.ecommerceScenarios,x=>x&&typeof x==="object",100),
+commerceProducts:readSource(SOURCE_KEYS.commerceProducts,x=>x&&typeof x.id==="string"&&typeof x.name==="string"&&Number.isFinite(Number(x.price))&&Number.isFinite(Number(x.stock)),500),
+commerceOrders:readSource(SOURCE_KEYS.commerceOrders,x=>x&&typeof x.id==="string"&&typeof x.orderNo==="string"&&Number.isFinite(Number(x.total))&&Number.isInteger(Number(x.qty)),1000),
 invoiceNumbers:(()=>{try{const x=JSON.parse(localStorage.getItem(SOURCE_KEYS.invoiceNumbers)||"{}");return x&&typeof x==="object"&&!Array.isArray(x)?x:{};}catch(_){return {};}})()
 });
 const sourceTotals=s=>{
@@ -111,7 +115,7 @@ const linked=pane("linked");linked.append(el("h3","","مزامنة مصادر أ
 const linkedSummary=el("div","oph-metrics"),linkedList=el("div","oph-list");
 const renderLinked=()=>{
 const snap=sourceSnapshot(),totals=sourceTotals(snap);linkedSummary.replaceChildren();linkedList.replaceChildren();
-[[ "أصناف المخزون",snap.stock.length],["وحدات المخزون",money(totals.units)],["عمليات البيع",snap.trade.filter(x=>x.type==="sale").length],["عمليات الشراء",snap.trade.filter(x=>x.type==="purchase").length],["المصروفات",snap.expenses.length],["التحصيلات والتسديدات",snap.settlements.length],["ملفات العملاء والموردين",snap.parties.length],["طلبات التوظيف",snap.career.length],["سيناريوهات المتجر",snap.ecommerceScenarios.length],["أرقام الفواتير",Object.keys(snap.invoiceNumbers).length]].forEach(([label,value])=>{const m=el("div","oph-metric");m.append(el("small","",label),el("strong","",String(value)));linkedSummary.append(m);});
+[[ "أصناف المخزون",snap.stock.length],["وحدات المخزون",money(totals.units)],["عمليات البيع",snap.trade.filter(x=>x.type==="sale").length],["عمليات الشراء",snap.trade.filter(x=>x.type==="purchase").length],["المصروفات",snap.expenses.length],["التحصيلات والتسديدات",snap.settlements.length],["ملفات العملاء والموردين",snap.parties.length],["طلبات التوظيف",snap.career.length],["سيناريوهات التسعير",snap.ecommerceScenarios.length],["منتجات المتجر",snap.commerceProducts.length],["طلبات المتجر",snap.commerceOrders.length],["أرقام الفواتير",Object.keys(snap.invoiceNumbers).length]].forEach(([label,value])=>{const m=el("div","oph-metric");m.append(el("small","",label),el("strong","",String(value)));linkedSummary.append(m);});
 const add=(title,detail)=>linkedList.append(el("article","oph-item",""),el("small","",detail));
 const rows=[
 ["المخزون",snap.stock.length+" صنف · "+money(totals.units)+" وحدة · المصدر: دفتر المخزون"],
@@ -121,7 +125,9 @@ const rows=[
 ["التحصيلات والتسديدات",snap.settlements.length+" حركة مرتبطة بمعرّفات المعاملات"],
 ["العملاء والموردون",snap.parties.length+" ملف طرف محفوظ"],
 ["طلبات المسار المهني",snap.career.length+" طلب توظيف محفوظ"],
-["استوديو المتجر",snap.ecommerceScenarios.length+" سيناريو محفوظ؛ لا توجد سجلات طلبات بيع إلكترونية مستقلة في هذا المصدر"]
+["كتالوج المتجر",snap.commerceProducts.length+" منتج محلي · "+money(snap.commerceProducts.reduce((n,x)=>n+Number(x.stock||0),0))+" وحدة مسجلة"],
+["طلبات المتجر",snap.commerceOrders.length+" طلب محلي · "+money(snap.commerceOrders.reduce((n,x)=>n+Number(x.total||0),0))+" قيمة إجمالية مسجلة؛ لا تمثل مدفوعات مؤكدة"],
+["استوديو المتجر",snap.ecommerceScenarios.length+" سيناريو تسعير محفوظ"]
 ];
 rows.forEach(([title,detail])=>{const r=el("article","oph-item");r.append(el("div","",""),el("small","",detail));r.firstChild.append(el("strong","",title));linkedList.append(r);});
 };
