@@ -96,6 +96,11 @@ async function persistentRateAllowed(bucket: string, maxRequests = 60): Promise<
     return count <= maxRequests;
   } catch { return true; }
 }
+function hasProviderErrors(value: unknown) {
+  if (Array.isArray(value)) return value.length > 0;
+  if (value && typeof value === "object") return Object.keys(value).length > 0;
+  return Boolean(value);
+}
 async function providerFetch(path: string, query: Record<string,string>, ttl: number, tracker: FetchTracker) {
   const params = new URLSearchParams(query);
   const cacheKey = path + "?" + params.toString();
@@ -131,13 +136,13 @@ async function providerFetch(path: string, query: Record<string,string>, ttl: nu
   const limit = limitHeader === null ? null : Number(limitHeader);
   await recordProviderUsage({
     endpoint: path, cacheKey, status: upstream.status,
-    errors: Array.isArray(data.errors) && data.errors.length ? data.errors : null,
+    errors: hasProviderErrors(data.errors) ? data.errors : null,
     responseCount: Array.isArray(data.response) ? data.response.length : 0,
     remaining: Number.isFinite(remaining) ? remaining : null,
     limit: Number.isFinite(limit) ? limit : null,
     durationMs: Date.now()-started
   });
-  if (!upstream.ok || (Array.isArray(data.errors) && data.errors.length)) {
+  if (!upstream.ok || hasProviderErrors(data.errors)) {
     const stale = await persistentCacheGet(cacheKey, true);
     if (stale && typeof stale === "object") {
       tracker.cacheHits++; tracker.staleHits++;
