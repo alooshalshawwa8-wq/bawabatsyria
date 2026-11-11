@@ -165,10 +165,10 @@ source_adapter = operations[operations.find("const readSource"):operations.find(
 require("fetch(" not in source_adapter and "XMLHttpRequest" not in source_adapter, "cross-tool data readers must stay local-only")
 
 # Accounting and trade ledger monetary inputs are constrained to minor-unit precision.
-for token in ("unit.step='0.01'", "paid.step='0.01'", "expenseAmount.step='0.01'", "expensePaid.step='0.01'", "settlementAmount.step='0.01'", "Math.round(n*Math.round(p*100))/100", "Math.round(amount*100)/100"):
+for token in ("unit.step='0.01'", "paid.step='0.01'", "expenseAmount.step='0.01'", "expensePaid.step='0.01'", "settlementAmount.step='0.01'", "Math.round(n*Math.round(p*100))/100", "Math.round(rawAmount*100)/100", "const nextPaid=Math.round("):
     require(token in html, "trade/accounting cent precision contract missing: " + token)
 require('العملة تقبل منزلتين عشريتين فقط' in html, "trade ledger must reject sub-cent values")
-require('العملة تقبل منزلتين عشريتين كحد أقصى' in html, "settlements must reject sub-cent values")
+require('منزلتين عشريتين كحد أقصى' in html, "settlements must reject sub-cent values")
 require('سعر الوحدة").fill("1.239")' in (ROOT / "tests/browser-smoke.mjs").read_text(encoding="utf-8"), "browser suite must cover sub-cent trade rejection")
 
 # Browser-level regression coverage runs after Pages deployment and blocks provider traffic.
