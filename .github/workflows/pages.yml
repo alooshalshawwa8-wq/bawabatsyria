@@ -130,5 +130,5 @@ jobs:
           OFOQ_BASE_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
           npm install --no-save --no-package-lock playwright@1.65.0
-          npx --no-install playwright install chromium
+          PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=30000 npx --no-install playwright install --only-shell chromium
           node tests/browser-smoke.mjs
