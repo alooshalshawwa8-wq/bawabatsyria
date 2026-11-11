@@ -26,7 +26,7 @@ function rateAllowed(ip: string) {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_SECRET_KEY") ?? "";
-type FetchTracker = { upstreamCalls: number; cacheHits: number };
+type FetchTracker = { upstreamCalls: number; cacheHits: number; staleHits: number };
 async function dbRest(path: string, init: RequestInit = {}) {
   if (!SUPABASE_URL || !SERVICE_KEY) throw new Error("Persistent storage credentials unavailable");
   return await fetch(SUPABASE_URL + "/rest/v1/" + path, {
@@ -39,13 +39,15 @@ async function dbRest(path: string, init: RequestInit = {}) {
     },
   });
 }
-async function persistentCacheGet(key: string): Promise<unknown | null> {
+async function persistentCacheGet(key: string, allowStale = false): Promise<unknown | null> {
   try {
     const response = await dbRest("football_api_cache?cache_key=eq." + encodeURIComponent(key) + "&select=payload,expires_at&limit=1");
     if (!response.ok) return null;
     const rows = await response.json();
     if (!Array.isArray(rows) || !rows[0]) return null;
-    if (Date.parse(rows[0].expires_at) <= Date.now()) return null;
+    const expired = Date.parse(rows[0].expires_at) <= Date.now();
+    if (expired && !allowStale) return null;
+    if (expired && rows[0].payload && typeof rows[0].payload === "object") return { ...rows[0].payload, stale: true, staleAt: rows[0].expires_at };
     return rows[0].payload;
   } catch { return null; }
 }
@@ -116,6 +118,11 @@ async function providerFetch(path: string, query: Record<string,string>, ttl: nu
     data = await upstream.json().catch(() => ({}));
   } catch (error) {
     await recordProviderUsage({ endpoint: path, cacheKey, status: 0, errors: String(error).slice(0,300), durationMs: Date.now()-started });
+    const stale = await persistentCacheGet(cacheKey, true);
+    if (stale && typeof stale === "object") {
+      tracker.cacheHits++; tracker.staleHits++;
+      return { ...stale as Record<string, any>, cached: true, stale: true };
+    }
     throw error;
   }
   const remainingHeader = upstream.headers.get("x-ratelimit-requests-remaining");
@@ -131,6 +138,11 @@ async function providerFetch(path: string, query: Record<string,string>, ttl: nu
     durationMs: Date.now()-started
   });
   if (!upstream.ok || (Array.isArray(data.errors) && data.errors.length)) {
+    const stale = await persistentCacheGet(cacheKey, true);
+    if (stale && typeof stale === "object") {
+      tracker.cacheHits++; tracker.staleHits++;
+      return { ...stale as Record<string, any>, cached: true, stale: true };
+    }
     const err = new Error(path + " returned " + upstream.status);
     (err as any).status = upstream.status;
     throw err;
@@ -160,7 +172,7 @@ Deno.serve(async (request: Request) => {
 
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   if (!rateAllowed(ip) || !(await persistentRateAllowed(await hashClientKey(ip), 60))) return reply({ error: "تم تجاوز عدد الطلبات المؤقت. حاول بعد دقيقة." }, 429);
-  const tracker: FetchTracker = { upstreamCalls: 0, cacheHits: 0 };
+  const tracker: FetchTracker = { upstreamCalls: 0, cacheHits: 0, staleHits: 0 };
 
   const apiKey = Deno.env.get("API_FOOTBALL_KEY") ?? "";
   const url = new URL(request.url);
@@ -276,7 +288,7 @@ Deno.serve(async (request: Request) => {
       }));
       const unpack = (index: number) => results[index].status === "fulfilled" ? results[index].value : [];
       const unavailable = paths.filter((_path, index) => results[index].status === "rejected");
-      const result = { events: unpack(0), lineups: unpack(1), players: unpack(2), statistics: unpack(3), unavailable, provider: "API-Football", fetchedAt: new Date().toISOString(), cached: false, requestsMade: tracker.upstreamCalls, cacheHits: tracker.cacheHits, usageTracked: true };
+      const result = { events: unpack(0), lineups: unpack(1), players: unpack(2), statistics: unpack(3), unavailable, provider: "API-Football", fetchedAt: new Date().toISOString(), cached: false, requestsMade: tracker.upstreamCalls, cacheHits: tracker.cacheHits, staleHits: tracker.staleHits, staleData: tracker.staleHits > 0, usageTracked: true };
       cache.set(cacheKey, { until: Date.now() + 60_000, data: result });
       return reply(result);
     } catch (_error) {
@@ -343,6 +355,8 @@ Deno.serve(async (request: Request) => {
         unavailable,
         requestsMade: tracker.upstreamCalls,
         cacheHits: tracker.cacheHits,
+        staleHits: tracker.staleHits,
+        staleData: tracker.staleHits > 0,
         usageTracked: true,
         provider: "API-Football",
         fetchedAt: new Date().toISOString(),
@@ -446,7 +460,7 @@ Deno.serve(async (request: Request) => {
 
   try {
     const data = await providerFetch(endpoint, Object.fromEntries(params.entries()), ttl, tracker);
-    return reply({ ...data, cacheHits: tracker.cacheHits, upstreamCalls: tracker.upstreamCalls, usageTracked: true });
+    return reply({ ...data, cacheHits: tracker.cacheHits, staleHits: tracker.staleHits, staleData: tracker.staleHits > 0, upstreamCalls: tracker.upstreamCalls, usageTracked: true });
   } catch (error) {
     const status = Number((error as any)?.status ?? 502);
     return reply({ error: "تعذر جلب البيانات من مزود كرة القدم أو أن الخطة لا تغطي هذا الطلب.", providerStatus: status }, status === 429 ? 429 : 502);
