@@ -126,3 +126,5 @@ All inventory data remains in browser localStorage on the current device. No API
 - Added search, party cards, linked transaction totals, receivables/payables indicators, and per-party chronological statement generated from the existing ledger.
 - New and existing transaction parties are discovered automatically; the directory does not duplicate or independently mutate financial balances. Statements explicitly distinguish ledger-derived transaction history from attached invoice files (none are stored).
 - Party profiles use a separate localStorage key and remain on the current browser/device. No cloud sync, API, Supabase, Gemini, API-Football, or quota changes. No live browser/device test or Pages deployment verification.
+
+- Follow-up refinement: added a consolidated outstanding-balance alert for partially/unpaid recorded transactions, clearly noting that the ledger currently has no contractual due-date field.
