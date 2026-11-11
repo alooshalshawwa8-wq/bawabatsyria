@@ -36,11 +36,9 @@ try {
     const workspace = page.locator("#specialTool .bw-workspace");
     await workspace.waitFor({ state: "visible", timeout: 5000 });
     const workspaceTabList = workspace.locator('.bw-tabs[role="tablist"][aria-label^="تبويبات مساحة العمل"]');
-    const workspaceTabs = workspaceTabList.locator('button[role="tab"][data-pane="tools"], button[role="tab"][data-pane="tasks"], button[role="tab"][data-pane="notes"]');
-    const workspaceTabCount = await workspaceTabs.count();
-    if (workspaceTabCount !== 3) throw new Error("Expected tools/tasks/notes workspace tabs for " + section.id + "; found " + workspaceTabCount);
     for (const [tabName, paneId] of [["🗂️ خطة التنفيذ", "tasks"], ["📝 ملاحظاتي", "notes"], ["🧰 أدوات القسم", "tools"]]) {
-      const tab = workspaceTabList.locator('button[role="tab"][data-pane="' + paneId + '"]');
+      const tab = workspaceTabList.locator('button[role="tab"][aria-controls="ofoq-pane-' + section.id + '-' + paneId + '"]');
+      if (await tab.count() !== 1) throw new Error("Missing unique core workspace tab for " + section.id + ": " + paneId);
       await tab.click();
       if (await tab.getAttribute("aria-selected") !== "true") throw new Error("Workspace tab failed for " + section.id + ": " + tabName);
     }
