@@ -554,6 +554,7 @@ Deno.serve(async (request: Request) => {
       const fixtureRows = fixtureRowsData.response;
       const match = fixtureRows[0];
       if (!match) return reply({ error: "لم يعثر API-Football على المباراة بهذا الرقم." }, 404);
+      const matchIsLive = ["1H","HT","2H","ET","BT","P","LIVE"].includes(String(match.fixture?.status?.short ?? ""));
       const fixtureStatusForTtl = String(match.fixture?.status?.short ?? "");
       const fixtureTtl = ["1H","HT","2H","ET","BT","P","LIVE"].includes(fixtureStatusForTtl) ? 30_000 : (["FT","AET","PEN"].includes(fixtureStatusForTtl) ? 6 * 60 * 60_000 : 15 * 60_000);
       const fixtureCacheKey = "fixtures?id=" + fixtureId + "&timezone=Asia%2FDamascus";
