@@ -94,7 +94,7 @@ require("./ecommerce-studio.js" in worker, "e-commerce studio missing from offli
 
 # Career and freelance studios are isolated, local-first workspaces with tested contracts.
 require("career-studio.js" in html, "career studio script not loaded by the portal")
-for token in ("jobs", "freelance_vip", "ofoq-studio", "ofoq_career_applications_v1", "STAR", "portfolio", "proposal"):
+for token in ("jobs", "freelance_vip", "ofc-studio", "ofoq_career_applications_v1", "STAR", "portfolio", "proposal"):
     require(token in career, "career studio feature missing: " + token)
 require("fetch(" not in career and "XMLHttpRequest" not in career and "site-assistant" not in career, "career studio must remain local-first and API-free")
 require("./career-studio.js" in worker, "career studio missing from offline app shell")
