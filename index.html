@@ -2690,7 +2690,7 @@ function currentReconciliation(){
 const account=treasuryRead('accounts').find(a=>a.id===reconcileAccount.value),date=reconcileDate.value;
 if(!account||!date)return null;
 const moves=treasuryRead('moves').filter(m=>m.accountId===account.id&&String(m.date)<=date);
-const bookBalance=Number(account.opening||0)+moves.reduce((n,m)=>n+(m.direction==='in'?1:-1)*Number(m.amount||0),0);
+const bookBalance=treasuryCents(Number(account.opening||0)+moves.reduce((n,m)=>n+(m.direction==='in'?1:-1)*Math.round(Number(m.amount||0)*100)/100,0));
 return {account,date,bookBalance};
 }
 function updateReconcilePreview(){
