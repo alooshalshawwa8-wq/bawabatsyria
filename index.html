@@ -693,7 +693,7 @@ function renderFootballModule(tool){
         <button type="button" class="fb-galaxy-card fb-galaxy-academy" data-fb-jump="academy"><span class="fb-galaxy-tag">08 · OFOQ ACADEMY</span><strong>أكاديمية أُفُق</strong><small>تعلم وتحديات واختبارات كروية</small><b>ابدأ رحلتك ←</b></button>
       </div>
       <div class="fb-vip-strip"><span>✦ OFOQ FOOTBALL VIP</span><strong>مزايا احترافية قيد التجهيز</strong><small>التحليلات المتقدمة · ملفات المشجعين · تقارير موسعة — متاحة مجاناً في هذه المرحلة</small></div>`;
-    wrap.prepend(cinema);
+    // Unified seven-world entrance is mounted below; prevent a duplicate cinema panel.
     const jump=(target)=>{
       const normal=wrap.querySelector('.fb-tab[data-tab="'+target+'"]');
       const extra=wrap.querySelector('.fb-tab[data-extra-tab="'+target+'"]');
@@ -882,6 +882,7 @@ function renderFootballModule(tool){
       <button class="fb-tab" type="button" data-extra-tab="dna">🧬 البصمة الكروية</button>
       <button class="fb-tab" type="button" data-extra-tab="moments">🎬 ذاكرة المباراة</button>
       <button class="fb-tab" type="button" data-extra-tab="passport">🏅 جواز المشجع</button>
+      <button class="fb-tab" type="button" data-extra-tab="fans">📣 نبض الجماهير</button>
       <button class="fb-tab" type="button" data-extra-tab="academy">🎓 الأكاديمية</button>
     </div>
     <section class="fb-extra-pane" data-extra-pane="scout">
@@ -951,6 +952,12 @@ function renderFootballModule(tool){
         <label class="fb-field">بطولتك المفضلة<input id="fbFanLeague" maxlength="60" placeholder="البطولة"></label>
       </div>
       <button class="btn" id="fbFanSave" type="button" style="margin-top:12px">احفظ بطاقة المشجع</button><div id="fbFanResult" class="fb-result" hidden></div>
+    </section>
+    <section class="fb-extra-pane" data-extra-pane="fans">
+      <h4 class="fb-subhead">أُفُق FAN PULSE · نبض الجماهير</h4>
+      <p class="fb-note">تصويت تفاعلي تجريبي. الأصوات محفوظة على هذا الجهاز فقط وليست تصويتاً عاماً بين جميع الزوار.</p>
+      <div id="fbFanPollOptions" class="fb-list"></div>
+      <div id="fbFanPollResult" class="fb-result" role="status" hidden></div>
     </section>
     <section class="fb-extra-pane" data-extra-pane="academy">
       <h4 class="fb-subhead">أكاديمية أُفُق الكروية · اختبر معلوماتك</h4>
@@ -1023,6 +1030,20 @@ function renderFootballModule(tool){
     let score=0,answered=0;quiz.forEach((q,i)=>{const choice=wrap.querySelector('input[name="fbQuiz'+i+'"]:checked');if(choice){answered++;if(Number(choice.value)===q[2])score++;}});
     show('fbQuizResult','نتيجتك: '+score+' من '+quiz.length+' · أجبت عن '+answered+' أسئلة. '+(score===quiz.length?'ممتاز!':'واصل التعلم وحاول مرة أخرى.'));
   });
+  const fanPollKey='ofoq_football_fan_poll_v1',fanVoteKey='ofoq_football_fan_vote_v1';
+  const fanPollOptions=['الهجوم','خط الوسط','الدفاع','حراسة المرمى'];
+  function drawFanPoll(){
+    const box=wrap.querySelector('#fbFanPollOptions');if(!box)return;box.replaceChildren();
+    let counts={},voted='';try{counts=JSON.parse(localStorage.getItem(fanPollKey)||'{}')||{};voted=localStorage.getItem(fanVoteKey)||'';}catch(_){counts={};}
+    fanPollOptions.forEach(label=>{
+      const row=node('div',undefined,'fb-row');const count=Number.isFinite(Number(counts[label]))?Number(counts[label]):0;
+      row.append(node('span',label+' · '+count+' صوت محلي'));
+      const button=node('button',voted===label?'صوتك مسجل':'صوّت','btn secondary');button.type='button';button.disabled=Boolean(voted);
+      button.addEventListener('click',()=>{if(voted)return;try{counts[label]=count+1;localStorage.setItem(fanPollKey,JSON.stringify(counts));localStorage.setItem(fanVoteKey,label);voted=label;drawFanPoll();show('fbFanPollResult','شكراً لمشاركتك! اختيارك: '+label+'. التصويت محلي على جهازك فقط.');}catch(_){show('fbFanPollResult','تعذر حفظ التصويت في هذا المتصفح.');}});
+      row.appendChild(button);box.appendChild(row);
+    });
+  }
+  drawFanPoll();
 
 
   // Dedicated cinematic landing page for the Football section.
@@ -1030,54 +1051,50 @@ function renderFootballModule(tool){
   studio.className='ofq-football-studio';
   studio.innerHTML='<div class="ofq-studio-top"><div><span class="ofq-studio-kicker">OFOQ SPORTS NETWORK</span><h2>عالم كرة القدم</h2><p>اختر وجهتك… كل أدواتك الكروية في مساحة واحدة</p></div><span class="ofq-live-mark"><i></i> FOOTBALL HUB</span></div><div class="ofq-studio-feature"><span>⚽</span><div><strong>من قلب الملعب إلى أدق التفاصيل</strong><small>المباريات · البطولات · التحليل · التكتيك · المواهب · مجتمع المشجعين</small></div></div><div class="ofq-studio-label">استكشف مراكز كرة القدم</div><div class="ofq-studio-grid"></div>';
   const studioGrid=studio.querySelector('.ofq-studio-grid');
-  const destinations=[
-    ['matches','activity','المباريات المباشرة','النتائج والمواعيد والأحداث','tab','photo-1522778119026-d647f0596c20'],
-    ['competitions','trophy','البطولات والدوريات','البطولات العالمية والعربية','tab','photo-1461896836934-905e1c4c147a'],
-    ['biggames','flame','القمم والديربيات','أشهر المواجهات الكروية','tab','photo-1508098682722-e99c43a406b2'],
-    ['clubs','shield','الأندية والمنتخبات','موسوعة الفرق والمنتخبات','tab','photo-1521412644187-c49fa049e84d'],
-    ['popular','users','نبض الجماهير','الأندية الأكثر متابعة','tab','photo-1517466787929-bc90951d0974'],
-    ['favorites','heart','فريقي المفضل','قائمة المتابعة الشخصية','tab','photo-1574629810360-7efbbe195018'],
-    ['scout','radar','كشاف المواهب','بطاقات اكتشاف اللاعبين','extra','photo-1517466787929-bc90951d0974'],
-    ['predict','chart','مختبر التوقعات','سيناريوهات وتحليل احتمالي مبسط','extra','photo-1508098682722-e99c43a406b2'],
-    ['tactics','layout','مختبر التكتيك','اصنع تشكيلتك وخطتك','extra','photo-1431324155629-1a6deb1dec8d'],
-    ['dna','fingerprint','البصمة الكروية DNA','مؤشرات أسلوب الفريق','extra','photo-1579952363873-27f3bade9f55'],
-    ['moments','film','ذاكرة المباراة','اصنع قصة اللقاء وخطّه الزمني','extra','photo-1522778119026-d647f0596c20'],
-    ['passport','badge','جواز المشجع','بطاقتك الكروية الشخصية','extra','photo-1521412644187-c49fa049e84d'],
-    ['academy','graduation','الأكاديمية الكروية','اختبارات وتعلّم قوانين اللعبة','extra','photo-1518604666860-9ed391f76460']
+  const worlds=[
+    {title:'ملاعب العالم',desc:'المباريات والبطولات والقمم في مركز واحد',icon:'⚽',photo:'photo-1522778119026-d647f0596c20',branches:[['matches','المباريات والنتائج','tab'],['competitions','البطولات والدوريات','tab'],['biggames','ليالي القمم والديربيات','tab']]},
+    {title:'موسوعة الأندية والمنتخبات',desc:'الفرق والإنجازات وقوائم المتابعة',icon:'🏆',photo:'photo-1521412644187-c49fa049e84d',branches:[['clubs','الأندية والمنتخبات','tab'],['popular','نبض الشعبية والمتابعة','tab'],['favorites','فريقي المفضل','tab']]},
+    {title:'مختبر التحليل والتكتيك',desc:'التشكيلات والبصمة الكروية وسيناريو المباراة',icon:'📐',photo:'photo-1431324155629-1a6deb1dec8d',branches:[['tactics','لوحة المدرب والتشكيلات','extra'],['dna','البصمة الكروية DNA','extra'],['predict','مختبر سيناريو المباراة','extra']]},
+    {title:'كشاف المواهب',desc:'أنشئ بطاقة تقييم واكتشاف لاعب',icon:'🔎',photo:'photo-1517466787929-bc90951d0974',branches:[['scout','بطاقة كشاف المواهب','extra']]},
+    {title:'نبض الجماهير',desc:'شارك في تصويت تفاعلي تجريبي',icon:'📣',photo:'photo-1518604666860-9ed391f76460',branches:[['fans','تصويت الجمهور','extra']]},
+    {title:'ذاكرة الملاعب وهوية المشجع',desc:'وثّق لحظاتك وأنشئ جوازك الكروي',icon:'🎬',photo:'photo-1508098682722-e99c43a406b2',branches:[['moments','ذاكرة المباراة والخط الزمني','extra'],['passport','جواز المشجع','extra']]},
+    {title:'أكاديمية أُفُق',desc:'تعلم قوانين اللعبة واختبر معلوماتك',icon:'🎓',photo:'photo-1461896836934-905e1c4c147a',branches:[['academy','اختبارات وأكاديمية كرة القدم','extra']]}
   ];
-  destinations.forEach(([id,icon,label,desc,type,photo])=>{
-    const card=document.createElement('button');card.type='button';card.className='ofq-studio-card';
-    const image=document.createElement('img');image.className='ofq-studio-image';image.alt=label;image.loading='lazy';image.decoding='async';image.src='https://images.unsplash.com/'+photo+'?auto=format&fit=crop&w=720&q=82';image.onerror=()=>{image.style.display='none';};
-    const shade=document.createElement('span');shade.className='ofq-studio-shade';
-    const content=document.createElement('span');content.className='ofq-studio-content';
-    const glyph=document.createElement('span');glyph.className='ofq-studio-icon';glyph.textContent=({activity:'⚽',trophy:'🏆',flame:'🔥',shield:'🛡️',users:'👥',heart:'❤️',radar:'🔎',chart:'🎯',layout:'📐',fingerprint:'🧬',film:'🎬',badge:'🏅',graduation:'🎓'})[icon]||'⚽';
-    const name=document.createElement('strong');name.textContent=label;
-    const detail=document.createElement('small');detail.textContent=desc;
-    const arrow=document.createElement('span');arrow.className='ofq-studio-arrow';arrow.textContent='←';
-    content.append(glyph,name,detail);card.append(image,shade,content,arrow);
-    card.addEventListener('click',()=>{
-      const target=type==='tab'?wrap.querySelector('.fb-tab[data-tab="'+id+'"]'):wrap.querySelector('.fb-tab[data-extra-tab="'+id+'"]');
-      const pane=type==='tab'?wrap.querySelector('.fb-pane[data-pane="'+id+'"]'):wrap.querySelector('.fb-extra-pane[data-extra-pane="'+id+'"]');
-      if(!target||!pane){
-        let note=studio.querySelector('.fb-navigation-status');
-        if(!note){note=document.createElement('div');note.className='fb-navigation-status fb-result';note.setAttribute('role','status');studio.appendChild(note);}
-        note.textContent='هذا التفرع غير جاهز للفتح حالياً. أعد تحميل الصفحة وحاول مرة أخرى.';
-        return;
-      }
-      wrap.querySelectorAll('.fb-tab').forEach(x=>x.classList.toggle('active',x===target));
-      wrap.querySelectorAll('.fb-pane').forEach(x=>x.classList.toggle('active',x===pane));
-      wrap.querySelectorAll('.fb-extra-pane').forEach(x=>x.classList.toggle('active',x===pane));
-      studio.hidden=true;
-      backToStudio.hidden=false;
-      pane.scrollIntoView({behavior:'smooth',block:'start'});
-    });
-    studioGrid.appendChild(card);
+  function openFootballBranch(id,type){
+    const target=type==='tab'?wrap.querySelector('.fb-tab[data-tab="'+id+'"]'):wrap.querySelector('.fb-tab[data-extra-tab="'+id+'"]');
+    const pane=type==='tab'?wrap.querySelector('.fb-pane[data-pane="'+id+'"]'):wrap.querySelector('.fb-extra-pane[data-extra-pane="'+id+'"]');
+    if(!target||!pane){let note=studio.querySelector('.fb-navigation-status');if(!note){note=document.createElement('div');note.className='fb-navigation-status fb-result';note.setAttribute('role','status');studio.appendChild(note);}note.textContent='هذا التفرع غير متاح حالياً. أعد تحميل القسم وحاول مرة أخرى.';return false;}
+    wrap.querySelectorAll('.fb-tab').forEach(x=>x.classList.toggle('active',x===target));
+    wrap.querySelectorAll('.fb-pane').forEach(x=>x.classList.toggle('active',x===pane));
+    wrap.querySelectorAll('.fb-extra-pane').forEach(x=>x.classList.toggle('active',x===pane));
+    studio.hidden=true;backToStudio.hidden=false;
+    if(id==='matches'&&!matchesLoaded)loadFixtures('date');
+    pane.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});return true;
+  }
+  worlds.forEach((world,index)=>{
+    const card=document.createElement('article');card.className='ofq-world-card';
+    const image=document.createElement('img');image.className='ofq-world-cover';image.alt=world.title;image.loading='lazy';image.decoding='async';image.src='https://images.unsplash.com/'+world.photo+'?auto=format&fit=crop&w=900&q=82';image.onerror=()=>{image.style.display='none';};
+    const trigger=document.createElement('button');trigger.type='button';trigger.className='ofq-world-trigger';trigger.setAttribute('aria-expanded','false');
+    const heading=document.createElement('span');heading.className='ofq-world-heading';
+    const glyph=document.createElement('span');glyph.className='ofq-world-icon';glyph.textContent=world.icon;
+    const title=document.createElement('strong');title.textContent=(index+1).toString().padStart(2,'0')+' · '+world.title;
+    const detail=document.createElement('small');detail.textContent=world.desc;
+    const indicator=document.createElement('span');indicator.className='ofq-world-indicator';indicator.textContent='＋';
+    heading.append(glyph,title,detail);trigger.append(heading,indicator);
+    const branches=document.createElement('div');branches.className='ofq-world-branches';branches.hidden=true;
+    world.branches.forEach(([id,label,type])=>{const branch=document.createElement('button');branch.type='button';branch.className='ofq-world-branch';branch.textContent=label+' ←';branch.addEventListener('click',()=>openFootballBranch(id,type));branches.appendChild(branch);});
+    trigger.addEventListener('click',()=>{const open=branches.hidden;studioGrid.querySelectorAll('.ofq-world-branches').forEach(x=>x.hidden=true);studioGrid.querySelectorAll('.ofq-world-trigger').forEach(x=>x.setAttribute('aria-expanded','false'));studioGrid.querySelectorAll('.ofq-world-card').forEach(x=>x.classList.remove('is-open'));branches.hidden=!open;trigger.setAttribute('aria-expanded',String(open));card.classList.toggle('is-open',open);indicator.textContent=open?'−':'＋';studioGrid.querySelectorAll('.ofq-world-indicator').forEach(x=>{if(x!==indicator)x.textContent='＋';});});
+    card.append(image,trigger,branches);studioGrid.appendChild(card);
   });
   const backToStudio=document.createElement('button');backToStudio.type='button';backToStudio.className='btn secondary ofq-studio-back';backToStudio.textContent='← العودة إلى واجهة كرة القدم';backToStudio.hidden=true;
   backToStudio.addEventListener('click',()=>{
     wrap.querySelectorAll('.fb-extra-pane').forEach(p=>p.classList.remove('active'));
     wrap.querySelectorAll('.fb-pane').forEach(p=>p.classList.toggle('active',p.dataset.pane==='home'));
     wrap.querySelectorAll('.fb-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab==='home'));
+    studioGrid.querySelectorAll('.ofq-world-branches').forEach(x=>x.hidden=true);
+    studioGrid.querySelectorAll('.ofq-world-trigger').forEach(x=>x.setAttribute('aria-expanded','false'));
+    studioGrid.querySelectorAll('.ofq-world-card').forEach(x=>x.classList.remove('is-open'));
+    studioGrid.querySelectorAll('.ofq-world-indicator').forEach(x=>x.textContent='＋');
     studio.hidden=false;backToStudio.hidden=true;studio.scrollIntoView({behavior:'smooth',block:'start'});
   });
   const studioStyle=document.createElement('style');
@@ -1092,6 +1109,7 @@ function renderFootballModule(tool){
     @media(max-width:390px){.ofq-studio-grid{grid-template-columns:1fr}.ofq-studio-card{min-height:175px}}
     @media(prefers-reduced-motion:reduce){.ofq-football-studio{animation:none}.ofq-studio-card{transition:none}}
   `;
+  studioStyle.textContent+='\n    .ofq-world-card{overflow:hidden;border:1px solid #31566c;border-radius:18px;background:linear-gradient(155deg,#102b40,#0a1a2c);box-shadow:0 12px 32px #0005;transition:transform .25s,border-color .25s,box-shadow .25s}.ofq-world-card.is-open{border-color:#6bd7e6;box-shadow:0 16px 38px #0879d633;transform:translateY(-2px)}.ofq-world-cover{display:block;width:100%;height:132px;object-fit:cover;filter:saturate(.9);mask-image:linear-gradient(#000 60%,transparent 100%)}.ofq-world-trigger{display:flex;width:100%;align-items:center;justify-content:space-between;gap:10px;padding:0 14px 14px;border:0;background:transparent;color:#f3fbff;text-align:right;cursor:pointer}.ofq-world-heading{display:grid;grid-template-columns:34px 1fr;gap:5px 9px;align-items:center}.ofq-world-icon{grid-row:span 2;font-size:27px}.ofq-world-heading strong{font-size:14px;line-height:1.6}.ofq-world-heading small{grid-column:2;color:#a9c3d5;font-size:11px;line-height:1.7}.ofq-world-indicator{display:grid;place-items:center;flex:0 0 30px;height:30px;border:1px solid #3e7189;border-radius:50%;color:#8be8f3;font-size:19px}.ofq-world-branches{display:grid;gap:7px;padding:0 12px 13px;animation:ofqStudioReveal .25s ease both}.ofq-world-branch{width:100%;padding:10px 12px;border:1px solid #294b61;border-radius:10px;background:#0b2033;color:#dff8ff;text-align:right;font-size:12px;cursor:pointer;transition:background .2s,border-color .2s}.ofq-world-branch:hover{background:#123c52;border-color:#69cbd9}.fb-pane.active,.fb-extra-pane.active{animation:ofqStudioReveal .35s ease both}@media(max-width:650px){.ofq-studio-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.ofq-world-cover{height:105px}.ofq-world-trigger{padding:0 9px 11px}.ofq-world-heading strong{font-size:12px}.ofq-world-heading small{font-size:10px}}@media(max-width:390px){.ofq-studio-grid{grid-template-columns:1fr}}';
   wrap.prepend(studioStyle,studio,backToStudio);
 
 }
