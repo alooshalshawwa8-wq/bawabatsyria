@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 html = (ROOT / "index.html").read_text(encoding="utf-8")
 assistant = (ROOT / "supabase/functions/site-assistant/index.ts").read_text(encoding="utf-8")
 worker = (ROOT / "service-worker.js").read_text(encoding="utf-8")
+ecommerce = (ROOT / "ecommerce-studio.js").read_text(encoding="utf-8")
 manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
 
 def require(condition, message):
@@ -82,6 +83,13 @@ back_profiles = object_body(assistant, "const sectionProfiles: Record<string, st
 front_values = set(re.findall(r':\s*"([a-z_]+)"', front_profiles))
 back_values = set(re.findall(r'^\s*([a-z_]+):\s*"', back_profiles, re.M))
 require(front_values <= back_values, "frontend routes to unknown backend profiles: " + repr(sorted(front_values - back_values)))
+
+# E-commerce studio is local-first, mounted only in its own section, and covered by syntax CI.
+require("ecommerce-studio.js" in html, "e-commerce studio script not loaded by the portal")
+for token in ("ofoq-ecom-studio", "calculatePrice", "ROAS", "ofoq_ecommerce_scenarios_v1", "ofoq_ecommerce_launch_checklist_v1", "role", "tablist"):
+    require(token in ecommerce, "e-commerce studio feature missing: " + token)
+require("fetch(" not in ecommerce and "XMLHttpRequest" not in ecommerce and "site-assistant" not in ecommerce, "e-commerce studio must remain local-first and API-free")
+require("./ecommerce-studio.js" in worker, "e-commerce studio missing from offline app shell")
 
 # PWA and shell integrity.
 require((ROOT / "manifest.json").is_file(), "manifest missing")
