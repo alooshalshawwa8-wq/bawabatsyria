@@ -2390,6 +2390,65 @@ const reportTable=document.createElement('div');reportTable.style.cssText='overf
 reports.append(reportsTitle,reportsNote,reportControls,reportSummary,reportTable);
 let reportRows=[],reportHeaders=[];
 
+const operations=document.createElement('section');operations.style.cssText='margin-top:18px;padding:15px;border:1px solid var(--line);border-radius:13px;background:rgba(4,18,31,.7)';
+const operationsTitle=document.createElement('h4');operationsTitle.textContent='الفواتير والمصروفات والتحصيل';operationsTitle.style.color='var(--gold2)';
+const operationsNote=document.createElement('p');operationsNote.textContent='أنشئ فاتورة من عملية مسجلة، وسجّل المصروفات التشغيلية والتحصيلات اللاحقة. البيانات تبقى محلية على هذا الجهاز.';operationsNote.style.cssText='font-size:12px;color:var(--muted);line-height:1.7';
+const invoiceRow=document.createElement('div');invoiceRow.className='calc';
+const invoiceSelect=document.createElement('select');const invoicePreview=document.createElement('div');invoicePreview.style.cssText='padding:10px;border:1px dashed var(--line);border-radius:9px;margin-top:10px;font-size:12px;line-height:1.9';
+const invoiceMake=document.createElement('button');invoiceMake.type='button';invoiceMake.className='btn';invoiceMake.textContent='إنشاء / عرض الفاتورة';
+const invoicePrint=document.createElement('button');invoicePrint.type='button';invoicePrint.className='btn secondary';invoicePrint.textContent='طباعة الفاتورة';
+invoiceRow.append(invoiceSelect,invoiceMake,invoicePrint);
+const expenseForm=document.createElement('div');expenseForm.className='calc';expenseForm.style.marginTop='12px';
+const expenseDate=document.createElement('input');expenseDate.type='date';expenseDate.value=new Date().toISOString().slice(0,10);
+const expenseName=document.createElement('input');expenseName.placeholder='بيان المصروف';expenseName.maxLength=100;
+const expenseCategory=document.createElement('select');['إيجار','رواتب','نقل وشحن','اتصالات','تسويق','صيانة','رسوم','أخرى'].forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;expenseCategory.appendChild(o);});
+const expenseAmount=document.createElement('input');expenseAmount.type='number';expenseAmount.min='0.01';expenseAmount.step='any';expenseAmount.placeholder='قيمة المصروف';
+const expensePaid=document.createElement('input');expensePaid.type='number';expensePaid.min='0';expensePaid.step='any';expensePaid.placeholder='المدفوع الآن';
+const expenseAdd=document.createElement('button');expenseAdd.type='button';expenseAdd.className='btn';expenseAdd.textContent='تسجيل المصروف';
+expenseForm.append(expenseDate,expenseName,expenseCategory,expenseAmount,expensePaid,expenseAdd);
+const settlementForm=document.createElement('div');settlementForm.className='calc';settlementForm.style.marginTop='12px';
+const settlementSelect=document.createElement('select');const settlementAmount=document.createElement('input');settlementAmount.type='number';settlementAmount.min='0.01';settlementAmount.step='any';settlementAmount.placeholder='قيمة الدفعة الجديدة';
+const settlementAdd=document.createElement('button');settlementAdd.type='button';settlementAdd.className='btn';settlementAdd.textContent='تسجيل تحصيل / تسديد';
+settlementForm.append(settlementSelect,settlementAmount,settlementAdd);
+const operationsStatus=document.createElement('p');operationsStatus.className='notice';operationsStatus.setAttribute('aria-live','polite');
+const expenseList=document.createElement('div');expenseList.style.cssText='overflow-x:auto;margin-top:10px';
+operations.append(operationsTitle,operationsNote,invoiceRow,invoicePreview,expenseForm,settlementForm,operationsStatus,expenseList);
+const expenseKey='bawabatsyria_trade_expenses_v1',invoiceKey='bawabatsyria_trade_invoice_numbers_v1';
+function readExpenses(){try{const v=JSON.parse(localStorage.getItem(expenseKey)||'[]');return Array.isArray(v)?v.filter(x=>x&&typeof x.id==='string'&&Number.isFinite(x.amount)&&x.amount>0):[];}catch(e){return [];}}
+function saveExpenses(v){try{localStorage.setItem(expenseKey,JSON.stringify(v));return true;}catch(e){return false;}}
+function readInvoiceNumbers(){try{const v=JSON.parse(localStorage.getItem(invoiceKey)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}catch(e){return {};}}
+function escapeInvoice(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function refreshOperationChoices(){
+const tx=read();invoiceSelect.replaceChildren();settlementSelect.replaceChildren();
+tx.slice().reverse().forEach(x=>{const label=(x.date||'')+' · '+(x.type==='sale'?'بيع':'شراء')+' · '+x.item+' · '+(x.party||'بدون طرف');[invoiceSelect,settlementSelect].forEach(sel=>{const o=document.createElement('option');o.value=x.id;o.textContent=label;sel.appendChild(o);});});
+renderExpenses();
+}
+function renderInvoice(){
+const x=read().find(v=>v.id===invoiceSelect.value);invoicePreview.replaceChildren();if(!x){invoicePreview.textContent='لا توجد عملية لإنشاء فاتورة لها.';return;}
+const nums=readInvoiceNumbers();let number=nums[x.id];if(!number){number='OFQ-'+String(Object.keys(nums).length+1).padStart(6,'0');nums[x.id]=number;try{localStorage.setItem(invoiceKey,JSON.stringify(nums));}catch(e){operationsStatus.textContent='تعذر حفظ رقم الفاتورة.';return;}}
+const title=document.createElement('strong');title.textContent='فاتورة '+number;title.style.color='var(--gold2)';
+const detail=document.createElement('p');detail.textContent='التاريخ: '+x.date+' · الطرف: '+(x.party||'—')+' · الصنف: '+x.item+' · الكمية: '+x.qty+' · سعر الوحدة: '+fmt(x.unitPrice)+' · الإجمالي: '+fmt(x.total)+' · المدفوع: '+fmt(x.paid)+' · المتبقي: '+fmt(Math.max(0,x.total-x.paid));
+invoicePreview.append(title,detail);invoicePreview.dataset.invoiceId=x.id;
+}
+function printInvoice(){
+const x=read().find(v=>v.id===invoiceSelect.value);if(!x){operationsStatus.textContent='اختر عملية أولاً.';return;}
+renderInvoice();const number=readInvoiceNumbers()[x.id]||'';
+const w=window.open('','_blank');if(!w){operationsStatus.textContent='اسمح بالنوافذ المنبثقة لطباعة الفاتورة.';return;}
+w.document.write('<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>فاتورة '+escapeInvoice(number)+'</title><style>body{font:16px Arial,sans-serif;padding:35px;color:#17212b}h1{color:#11616a}table{width:100%;border-collapse:collapse;margin-top:25px}td,th{border:1px solid #bbb;padding:12px;text-align:right}.total{font-size:20px;font-weight:bold;margin-top:25px}</style><h1>أُفُق · فاتورة</h1><h2>'+escapeInvoice(number)+'</h2><p>التاريخ: '+escapeInvoice(x.date)+'</p><p>العميل / المورد: '+escapeInvoice(x.party||'—')+'</p><table><tr><th>البيان</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th></tr><tr><td>'+escapeInvoice(x.item)+'</td><td>'+x.qty+'</td><td>'+fmt(x.unitPrice)+'</td><td>'+fmt(x.total)+'</td></tr></table><p class="total">الإجمالي: '+fmt(x.total)+'</p><p>المدفوع: '+fmt(x.paid)+' · المتبقي: '+fmt(Math.max(0,x.total-x.paid))+'</p><script>window.onload=()=>window.print()<\/script></html>');w.document.close();
+}
+function renderExpenses(){
+const rows=readExpenses().slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)));expenseList.replaceChildren();
+const table=document.createElement('table');table.style.cssText='width:100%;min-width:620px;border-collapse:collapse;font-size:12px';const head=document.createElement('tr');
+['التاريخ','البيان','التصنيف','القيمة','المدفوع','المتبقي'].forEach(v=>{const th=document.createElement('th');th.textContent=v;th.style.cssText='padding:8px;text-align:right;color:var(--gold2);border-bottom:1px solid var(--line)';head.appendChild(th);});table.appendChild(head);
+rows.forEach(x=>{const tr=document.createElement('tr');[x.date,x.name,x.category,fmt(x.amount),fmt(x.paid),fmt(Math.max(0,x.amount-x.paid))].forEach(v=>{const td=document.createElement('td');td.textContent=String(v);td.style.cssText='padding:8px;border-bottom:1px solid var(--line)';tr.appendChild(td);});table.appendChild(tr);});
+if(!rows.length){expenseList.textContent='لا توجد مصروفات مسجلة بعد.';return;}expenseList.appendChild(table);
+}
+invoiceMake.addEventListener('click',renderInvoice);invoicePrint.addEventListener('click',printInvoice);
+expenseAdd.addEventListener('click',()=>{const amount=Number(expenseAmount.value),paidNow=Number(expensePaid.value||0);if(!expenseDate.value||!expenseName.value.trim()||!Number.isFinite(amount)||amount<=0||!Number.isFinite(paidNow)||paidNow<0||paidNow>amount){operationsStatus.textContent='تحقق من التاريخ والبيان والقيمة والمدفوع.';return;}const rows=readExpenses();rows.push({id:'ex_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),date:expenseDate.value,name:expenseName.value.trim(),category:expenseCategory.value,amount,paid:paidNow,createdAt:new Date().toISOString()});if(!saveExpenses(rows)){operationsStatus.textContent='تعذر حفظ المصروف.';return;}expenseName.value='';expenseAmount.value='';expensePaid.value='';operationsStatus.textContent='تم تسجيل المصروف.';renderExpenses();draw();makeReport();});
+settlementAdd.addEventListener('click',()=>{const rows=read(),i=rows.findIndex(x=>x.id===settlementSelect.value),amount=Number(settlementAmount.value);if(i<0||!Number.isFinite(amount)||amount<=0){operationsStatus.textContent='اختر عملية وأدخل دفعة صحيحة.';return;}const outstanding=Math.max(0,Number(rows[i].total)-Number(rows[i].paid));if(amount>outstanding){operationsStatus.textContent='الدفعة تتجاوز المبلغ المتبقي ('+fmt(outstanding)+').';return;}rows[i]={...rows[i],paid:Number(rows[i].paid)+amount,payment:rows[i].paid+amount>=rows[i].total?'paid':'partial',updatedAt:new Date().toISOString()};if(!save(rows)){operationsStatus.textContent='تعذر حفظ الدفعة.';return;}settlementAmount.value='';operationsStatus.textContent='تم تسجيل الدفعة وتحديث رصيد العملية.';draw();makeReport();renderDirectory();refreshOperationChoices();});
+refreshOperationChoices();
+
+
 const directory=document.createElement('section');directory.style.cssText='margin-top:18px;padding:15px;border:1px solid var(--line);border-radius:13px;background:rgba(4,18,31,.7)';
 const directoryTitle=document.createElement('h4');directoryTitle.textContent='إدارة العملاء والموردين';directoryTitle.style.color='var(--gold2)';
 const directoryNote=document.createElement('p');directoryNote.textContent='ملفات الأطراف محفوظة محلياً على هذا الجهاز. تُجمع المعاملات من دفتر العمليات تلقائياً، ولا تُكرر أرصدة الديون في سجل مستقل.';directoryNote.style.cssText='font-size:12px;color:var(--muted);line-height:1.7';
@@ -2452,7 +2511,7 @@ const exportLedger=document.createElement('button');exportLedger.type='button';e
 const importLedger=document.createElement('button');importLedger.type='button';importLedger.className='btn secondary';importLedger.textContent='استيراد دفتر عمليات';
 const ledgerFile=document.createElement('input');ledgerFile.type='file';ledgerFile.accept='application/json,.json';ledgerFile.hidden=true;
 backupRow.append(exportLedger,importLedger,ledgerFile);
-box.append(h,note,form,add,status,summary,finance,reports,directory,history);box.appendChild(backupRow);tool.appendChild(box);
+box.append(h,note,form,add,status,summary,finance,reports,directory,operations,history);box.appendChild(backupRow);tool.appendChild(box);
 const fmt=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits:2});
 function refreshItems(){const old=item.value;item.replaceChildren();readStock().forEach((x,i)=>{const o=document.createElement('option');o.value=String(i);o.textContent=x.name+' · '+x.qty;item.appendChild(o);});if(old!==''&&Number(old)<item.options.length)item.value=old;const x=readStock()[Number(item.value)];if(x)unit.value=type.value==='sale'?x.sale:x.cost;}
 function draw(){
@@ -2472,6 +2531,7 @@ const table=document.createElement('table');table.style.cssText='width:100%;min-
 ['التاريخ','النوع','الصنف','الطرف','الكمية','الإجمالي','المدفوع','المتبقي'].forEach(t=>{const th=document.createElement('th');th.textContent=t;th.style.cssText='padding:8px;text-align:right;color:var(--gold2);border-bottom:1px solid var(--line)';trh.appendChild(th);});table.appendChild(trh);
 rows.slice().reverse().forEach(x=>{const tr=document.createElement('tr');[x.date,x.type==='sale'?'مبيعات':'مشتريات',x.item,x.party||'—',String(x.qty),fmt(x.total),fmt(x.paid),fmt(Math.max(0,x.total-x.paid))].forEach(v=>{const td=document.createElement('td');td.textContent=v;td.style.cssText='padding:8px;border-bottom:1px solid var(--line)';tr.appendChild(td);});table.appendChild(tr);});history.appendChild(table);
 if(typeof renderDirectory==='function')renderDirectory();
+if(typeof refreshOperationChoices==='function')refreshOperationChoices();
 }
 
 function makeReport(){
@@ -2479,12 +2539,14 @@ const month=period.value||new Date().toISOString().slice(0,7),all=read().filter(
 const fmtNum=n=>Number(n||0).toLocaleString('en-US',{maximumFractionDigits:2});
 if(reportType.value==='pnl'){
 const sales=all.filter(x=>x.type==='sale'),purchases=all.filter(x=>x.type==='purchase'),known=sales.filter(x=>Number.isFinite(x.costAtSale));
+const expenses=readExpenses().filter(x=>String(x.date||'').slice(0,7)===month),expenseTotal=expenses.reduce((n,x)=>n+Number(x.amount||0),0),expensePaid=expenses.reduce((n,x)=>n+Number(x.paid||0),0);
 const revenue=sales.reduce((n,x)=>n+x.total,0),cost=known.reduce((n,x)=>n+x.costAtSale*x.qty,0);
-reportHeaders=['البند','القيمة'];reportRows=[['المبيعات',revenue],['المشتريات',purchases.reduce((n,x)=>n+x.total,0)],['تكلفة البضاعة المباعة الموثقة',cost],['مجمل الربح المعروف',known.reduce((n,x)=>n+(x.total-x.costAtSale*x.qty),0)],['عدد مبيعات ذات تكلفة موثقة',known.length],['عدد المبيعات دون تكلفة موثقة',sales.length-known.length]];
+reportHeaders=['البند','القيمة'];reportRows=[['المبيعات',revenue],['المشتريات',purchases.reduce((n,x)=>n+x.total,0)],['تكلفة البضاعة المباعة الموثقة',cost],['مجمل الربح المعروف',known.reduce((n,x)=>n+(x.total-x.costAtSale*x.qty),0)],['المصروفات التشغيلية المسجلة',expenseTotal],['الربح التشغيلي التقديري قبل الضرائب',known.reduce((n,x)=>n+(x.total-x.costAtSale*x.qty),0)-expenseTotal],['عدد مبيعات ذات تكلفة موثقة',known.length],['عدد المبيعات دون تكلفة موثقة',sales.length-known.length]];
 reportSummary.textContent='ملخص '+month+' · لا يشمل المصاريف العامة أو الضرائب أو السحوبات. لا تُعامل كل المشتريات كمصروف مبيعات.';
 }else if(reportType.value==='cash'){
 reportHeaders=['التاريخ','الحركة','الطرف','البيان','داخل','خارج'];
 reportRows=all.map(x=>[x.date||'',x.type==='sale'?'قبض من بيع':'دفع لمشتريات',x.party||'—',x.item+' × '+x.qty,x.type==='sale'?x.paid:0,x.type==='purchase'?x.paid:0]);
+readExpenses().filter(x=>String(x.date||'').slice(0,7)===month).forEach(x=>reportRows.push([x.date,'دفع مصروف',x.category,x.name,0,x.paid]));
 const incoming=reportRows.reduce((n,x)=>n+Number(x[4]),0),outgoing=reportRows.reduce((n,x)=>n+Number(x[5]),0);
 reportSummary.textContent='حركة '+month+' · المقبوض '+fmtNum(incoming)+' · المدفوع '+fmtNum(outgoing)+' · صافي الحركة '+fmtNum(incoming-outgoing)+'. لا يتضمن رصيداً افتتاحياً.';
 }else{
