@@ -3370,7 +3370,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
   document.addEventListener('keydown',event=>{
     if(event.key!=='Escape'||!document.body.classList.contains('section-mode'))return;
     const commandOverlay=document.getElementById('ofoq-command-overlay');
-    if(commandOverlay&&!commandOverlay.hidden)return;
+    if(commandOverlay&&(!commandOverlay.hidden||(event.target instanceof Element&&commandOverlay.contains(event.target))))return;
     home();
   });
   document.querySelectorAll('[data-open-section]').forEach(link=>link.addEventListener('click',()=>{setTimeout(()=>window.scrollTo({top:0,behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'}),0);}));
