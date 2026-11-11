@@ -110,6 +110,8 @@ jobs:
           print(f"Section audit passed: {len(ids)} unique sections, {len(priority)} priority entries, all sections mapped to a renderer and shared workspace.")
           PY
           node --check service-worker.js
+      - name: Run OFOQ portal contract tests
+        run: python3 scripts/validate_ofoq.py
       - name: Upload site
         uses: actions/upload-pages-artifact@v4
         with:
