@@ -136,3 +136,5 @@ All inventory data remains in browser localStorage on the current device. No API
 - Added a local operating-expense register with category, date, total amount, and amount paid. Expenses feed the period P&L and recorded cash-outflow report; the P&L now shows known gross profit less recorded operating expenses as an explicitly estimated operating result, not net profit.
 - Added incremental customer/supplier payment settlement against an existing transaction, validating that payments do not exceed its outstanding balance. Updates the existing ledger record and refreshes summaries/statements.
 - All additions use separate local browser storage for expenses and invoice numbering; no external services, APIs, Supabase, Gemini, API-Football or quotas changed. No browser/device test or Pages deployment verification.
+
+- Reliability refinement: deferred invoice/expense selector initialization until shared currency formatting is ready; recorded each later settlement with its own date and excluded it from the original transaction's cash receipt/payment to prevent period double counting.
