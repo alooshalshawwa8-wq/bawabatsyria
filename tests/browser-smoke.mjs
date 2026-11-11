@@ -294,7 +294,7 @@ try {
   await hub.getByRole("tab", { name: "⇄ البيانات المرتبطة" }).click();
   await hub.getByRole("button", { name: "تحديث البيانات الآن" }).click();
   await hub.locator("#oph-pane-linked").getByText("منتجات المتجر", { exact: true }).waitFor({ state: "visible" });
-  await hub.locator("#oph-pane-linked").getByText("طلبات المتجر", { exact: true }).waitFor({ state: "visible" });
+  await hub.locator("#oph-pane-linked small").filter({ hasText: /^طلبات المتجر$/ }).waitFor({ state: "visible" });
 
   await hub.getByRole("tab", { name: "⇧ النسخ الاحتياطي" }).click();
   const downloadPromise = page.waitForEvent("download");
