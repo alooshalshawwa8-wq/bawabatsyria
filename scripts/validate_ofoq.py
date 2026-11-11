@@ -141,6 +141,10 @@ require('localStorage.setItem(RECOVERY_KEY' in operations, "safe pre-write recov
 source_adapter = operations[operations.find("const readSource"):operations.find("const sourceTotals")]
 require("fetch(" not in source_adapter and "XMLHttpRequest" not in source_adapter, "cross-tool data readers must stay local-only")
 
+# Browser-level regression coverage runs after Pages deployment and blocks provider traffic.
+require((ROOT / "tests/browser-smoke.mjs").is_file(), "Playwright browser smoke test missing")
+require("playwright@1.65.0" in (ROOT / ".github/workflows/pages.yml").read_text(encoding="utf-8"), "pinned Playwright CI dependency missing")
+
 # PWA and shell integrity.
 require((ROOT / "manifest.json").is_file(), "manifest missing")
 require((ROOT / "service-worker.js").is_file(), "service worker missing")
