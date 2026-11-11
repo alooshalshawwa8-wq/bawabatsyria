@@ -124,7 +124,7 @@ require("security invoker" in retention_sql and "limit 19" in retention_sql and 
 backup_sql = backup_migration.read_text(encoding="utf-8")
 for token in ("enable row level security", "Users read own workspace backups", "Users create own workspace backups", "Users delete own workspace backups", "revoke all on public.user_workspace_backups from anon"):
     require(token in backup_sql, "cloud backup database security contract missing: " + token)
-require("./operations-hub.js" in worker and "ofoq-shell-v43" in worker, "operations hub missing from offline shell or cache not refreshed")
+require("./operations-hub.js" in worker and "ofoq-shell-v44" in worker, "operations hub missing from offline shell or cache not refreshed")
 
 # Merchant catalogue and order desk: local records, no storefront or payment claims.
 for token in ("ofoq_ecommerce_products_v1", "ofoq_ecommerce_orders_v1", "📦 المنتجات والمخزون", "🧾 الطلبات", "إضافة منتج", "إضافة طلب", "لا خصم تلقائي للمخزون"):
@@ -165,6 +165,15 @@ source_adapter = operations[operations.find("const readSource"):operations.find(
 require("fetch(" not in source_adapter and "XMLHttpRequest" not in source_adapter, "cross-tool data readers must stay local-only")
 
 # Accounting and trade ledger monetary inputs are constrained to minor-unit precision.
+# Backup imports must reject duplicate identifiers, orphan settlements and over-reconciliation.
+for token in ("const uniqueIds=rows=>new Set(rows.map(x=>x.id)).size===rows.length", "const transactionMap=new Map(data.transactions.map(x=>[x.id,x]))", "توجد دفعة مرتبطة بعملية غير موجودة", "اتجاه إحدى الدفعات لا يطابق نوع العملية", "مجموع الدفعات لا يتطابق"):
+    require(token in html, "trade backup reconciliation guard missing: " + token)
+require('orphanSettlementBackup' in (ROOT / "tests/browser-smoke.mjs").read_text(encoding="utf-8"), "browser suite must reject orphan settlement backups")
+
+# Treasury cash, asset, obligation and reconciliation amounts use the same minor-unit rule.
+for token in ("const treasuryIsCent=v=>Number.isFinite(v)", "treasuryCents((Math.round(rows[i].paid*100)+Math.round(amount*100))/100)", "const difference=treasuryCents(actual-x.bookBalance)", "movementAmount.step='0.01'", "transferAmount.step='0.01'", "obligationPayAmount.step='0.01'", "الرصيد الفعلي الصحيح بمنزلتين عشريتين"):
+    require(token in html, "treasury minor-unit precision contract missing: " + token)
+
 for token in ("unit.step='0.01'", "paid.step='0.01'", "expenseAmount.step='0.01'", "expensePaid.step='0.01'", "settlementAmount.step='0.01'", "Math.round(n*Math.round(p*100))/100", "Math.round(rawAmount*100)/100", "const nextPaid=Math.round("):
     require(token in html, "trade/accounting cent precision contract missing: " + token)
 require('العملة تقبل منزلتين عشريتين فقط' in html, "trade ledger must reject sub-cent values")
@@ -183,7 +192,7 @@ for token in ("ofoq_personal_space_v1", "getFavorites", "getRecent", "toggleFavo
         continue
     require(token in core, "OFOQ personal space feature missing: " + token)
 require("fetch(" not in core and "XMLHttpRequest" not in core, "OFOQ personal space must remain local-only")
-require("./ofoq-core.js" in worker and "ofoq-shell-v43" in worker, "OFOQ core missing from offline shell or cache not refreshed")
+require("./ofoq-core.js" in worker and "ofoq-shell-v44" in worker, "OFOQ core missing from offline shell or cache not refreshed")
 
 # PWA and shell integrity.
 require((ROOT / "manifest.json").is_file(), "manifest missing")
