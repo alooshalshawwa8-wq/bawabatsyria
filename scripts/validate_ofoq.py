@@ -120,7 +120,7 @@ require("security invoker" in retention_sql and "limit 19" in retention_sql and 
 backup_sql = backup_migration.read_text(encoding="utf-8")
 for token in ("enable row level security", "Users read own workspace backups", "Users create own workspace backups", "Users delete own workspace backups", "revoke all on public.user_workspace_backups from anon"):
     require(token in backup_sql, "cloud backup database security contract missing: " + token)
-require("./operations-hub.js" in worker and "ofoq-shell-v33" in worker, "operations hub missing from offline shell or cache not refreshed")
+require("./operations-hub.js" in worker and "ofoq-shell-v34" in worker, "operations hub missing from offline shell or cache not refreshed")
 
 # Merchant catalogue and order desk: local records, no storefront or payment claims.
 for token in ("ofoq_ecommerce_products_v1", "ofoq_ecommerce_orders_v1", "📦 المنتجات والمخزون", "🧾 الطلبات", "إضافة منتج", "إضافة طلب", "لا تُخصم الكميات تلقائياً"):
@@ -128,6 +128,7 @@ for token in ("ofoq_ecommerce_products_v1", "ofoq_ecommerce_orders_v1", "📦 ا
 require("ofoq_ecommerce_products_v1" in operations and "ofoq_ecommerce_orders_v1" in operations, "merchant records are not connected to Operations Hub")
 require("reserved+qty>productRow.stock" in ecommerce and "button(\"تعديل\"" in ecommerce, "merchant stock reservation and product editing checks missing")
 require("commerceProducts" in operations and "commerceOrders" in operations, "merchant records missing from unified backup snapshot")
+require("ls.commerceProducts.length<=500" in operations and "ls.commerceOrders.length<=1000" in operations, "cloud backup must validate merchant snapshot bounds and records")
 require("منتجات المتجر" in operations and "طلبات المتجر" in operations, "merchant data indicators missing from linked dashboard")
 
 # Cross-tool local data adapters and non-destructive recovery archive.
