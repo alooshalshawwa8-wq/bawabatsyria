@@ -63,9 +63,9 @@ insert into public.football_api_budget_policy(singleton) values (true) on confli
 insert into public.platform_plan_catalog(plan_code,name_ar,description_ar,display_order,billing_interval,visible,future_only)
 values
  ('free','أُفُق المجانية','الأساسيات لمتابعة كرة القدم والبطولات.',1,'none',true,false),
- ('plus','أُفُق بلس','إحصاءات موسعة وملفات اللاعبين والأندية.',2,'monthly',true,false),
- ('pro','أُفُق برو','استوديو التحليل التكتيكي والتفاصيل المتقدمة للمباريات.',3,'monthly',true,false),
- ('vip','أُفُق VIP','تجربة النخبة والتحليلات الموسعة والتنبيهات المتقدمة.',4,'monthly',true,false)
+ ('pro_monthly','أُفُق برو','إحصاءات موسعة وملفات اللاعبين واستوديو تحليل المباريات.',2,'monthly',true,false),
+ ('vip_monthly','أُفُق VIP','تجربة النخبة مع التحليلات والمواجهات التاريخية والبيانات المتقدمة.',3,'monthly',true,false),
+ ('business_monthly','أُفُق أعمال','باقة المؤسسات والفرق والاحتياجات المتقدمة عند إطلاق خدمات الأعمال.',4,'monthly',true,true)
 on conflict (plan_code) do update set name_ar=excluded.name_ar,description_ar=excluded.description_ar,display_order=excluded.display_order,billing_interval=excluded.billing_interval,visible=excluded.visible,future_only=excluded.future_only;
 
 insert into public.platform_feature_catalog(feature_code,name_ar,description_ar,category,availability)
@@ -105,3 +105,13 @@ alter table public.platform_plan_features enable row level security;
 alter table public.football_api_budget_policy enable row level security;
 revoke all on public.platform_launch_config,public.platform_plan_catalog,public.platform_feature_catalog,public.platform_plan_features,public.football_api_budget_policy from anon,authenticated;
 grant all on public.platform_launch_config,public.platform_plan_catalog,public.platform_feature_catalog,public.platform_plan_features,public.football_api_budget_policy to service_role;
+
+insert into public.membership_plans(id,name_ar,description_ar,billing_interval,active,display_order,stripe_price_id,price_minor,currency)
+values
+ ('free','أُفُق المجانية','المتابعة الأساسية للمباريات والنتائج والدوريات وصفحات الأندية.','none',true,1,null,null,null),
+ ('pro_monthly','أُفُق برو','إحصاءات موسعة وملفات اللاعبين واستوديو تحليل المباريات.','month',true,2,null,null,null),
+ ('vip_monthly','أُفُق VIP','تجربة النخبة مع التحليلات والمواجهات التاريخية والبيانات المتقدمة.','month',true,3,null,null,null),
+ ('business_monthly','أُفُق أعمال','باقة المؤسسات والفرق والاحتياجات المتقدمة عند إطلاق خدمات الأعمال.','month',true,4,null,null,null)
+on conflict (id) do update set
+ name_ar=excluded.name_ar,description_ar=excluded.description_ar,billing_interval=excluded.billing_interval,
+ active=excluded.active,display_order=excluded.display_order,stripe_price_id=null,price_minor=null,currency=null;
