@@ -2968,7 +2968,7 @@ delete tool.dataset.professionalWorkspace;
 renderSectionWorkspace(sec,tool);
 syrianizeSectionInterface(tool);
 appendFreeAIHelper(sec,tool);
-panel.classList.add('open');panel.scrollIntoView({behavior:'smooth',block:'start'});}
+panel.classList.add('open');const reduceMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true;panel.scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'start'});}
 function showHome(){document.body.classList.remove('section-mode');const detail=document.getElementById('detailPanel');if(detail)detail.classList.remove('open');const member=document.getElementById('membershipPanel');if(member)member.classList.remove('open');window.scrollTo({top:0,behavior:'smooth'});const search=document.getElementById('searchInput');if(search)search.blur();}
 function doSearch(){const q=document.getElementById('searchInput').value.trim().toLocaleLowerCase('ar');if(!q){render(sections);return;}const titleMatches=sections.filter(s=>s.title.toLocaleLowerCase('ar').includes(q));render(titleMatches.length?titleMatches:sections.filter(s=>s.desc.toLocaleLowerCase('ar').includes(q)));}
 document.getElementById('searchBtn').addEventListener('click',doSearch);document.getElementById('searchInput').addEventListener('input',doSearch);const homeButton=document.getElementById('homeBtn');const backButton=document.getElementById('backBtn');if(homeButton)homeButton.onclick=showHome;if(backButton)backButton.onclick=showHome;
