@@ -96,3 +96,15 @@ The updated source and test files were fetched back from GitHub for marker verif
 ## Release consistency
 
 The Operations Hub amount-precision change is included in the offline shell cache refresh: service worker cache version is now `ofoq-shell-v41`. The static contract validator was updated to require the delivered-order reservation rule and the cent-precision guard, avoiding a stale assertion that would otherwise reject the corrected inventory behavior. Browser assertions remain scheduled in the Pages workflow; the workflow result was not available during this pass.
+
+## Trade, expense and settlement minor-unit precision
+
+The accounting/trade workflow in `index.html` was hardened after review:
+- Unit prices, paid amounts, expenses and settlement inputs now use a 0.01 step.
+- New sale/purchase entries reject sub-cent prices or paid values; line totals are calculated from integer cents and quantity.
+- New expense entries reject sub-cent amount/paid values.
+- New settlement entries reject sub-cent amounts, compare outstanding balances in integer cents, and update paid totals using integer-cent arithmetic.
+- Added a browser regression that seeds an isolated stock item, verifies a 1.239 unit price is rejected without creating a trade row, then verifies 1.23 is accepted and persisted as the exact total.
+- Refreshed the PWA shell to `ofoq-shell-v42` and extended the static validator to require these safeguards.
+
+CI observation: the first workflow run after the change stopped at the static validator because an assertion expected an expression that the implementation did not use. The assertion was corrected to match the actual integer-cent implementation and the validator was updated. That failed run did not deploy Pages and did not reach browser tests; a subsequent workflow run is required to verify the corrected contract and browser regression.
