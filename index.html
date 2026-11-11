@@ -696,9 +696,24 @@ function renderFootballModule(tool){
     wrap.prepend(cinema);
     const jump=(target)=>{
       const normal=wrap.querySelector('.fb-tab[data-tab="'+target+'"]');
-      if(normal){normal.click();wrap.querySelector('.fb-hero')?.scrollIntoView({behavior:'smooth',block:'start'});return;}
-      const extra=wrap.querySelector('.fb-extra-tabs [data-extra-tab="'+target+'"]');
-      if(extra){extra.click();extra.scrollIntoView({behavior:'smooth',block:'center'});return;}
+      const extra=wrap.querySelector('.fb-tab[data-extra-tab="'+target+'"]');
+      const tab=normal||extra;
+      const pane=wrap.querySelector(normal?'.fb-pane[data-pane="'+target+'"]':'.fb-extra-pane[data-extra-pane="'+target+'"]');
+      if(!tab||!pane){
+        let note=wrap.querySelector('.fb-navigation-status');
+        if(!note){note=document.createElement('div');note.className='fb-navigation-status fb-result';note.setAttribute('role','status');cinema.appendChild(note);}
+        note.textContent='تعذر فتح هذه الوجهة حالياً؛ أعد تحميل القسم أو جرّب وجهة أخرى.';
+        return false;
+      }
+      wrap.querySelectorAll('.fb-tab').forEach(x=>x.classList.toggle('active',x===tab));
+      wrap.querySelectorAll('.fb-pane').forEach(x=>x.classList.toggle('active',x===pane));
+      wrap.querySelectorAll('.fb-extra-pane').forEach(x=>x.classList.toggle('active',x===pane));
+      const studio=wrap.querySelector('.ofq-football-studio');
+      const back=wrap.querySelector('.ofq-studio-back');
+      if(studio)studio.hidden=true;
+      if(back)back.hidden=false;
+      pane.scrollIntoView({behavior:'smooth',block:'start'});
+      return true;
     };
     cinema.querySelectorAll('[data-fb-jump]').forEach(button=>button.addEventListener('click',()=>jump(button.dataset.fbJump)));
   }
@@ -1041,18 +1056,28 @@ function renderFootballModule(tool){
     const arrow=document.createElement('span');arrow.className='ofq-studio-arrow';arrow.textContent='←';
     content.append(glyph,name,detail);card.append(image,shade,content,arrow);
     card.addEventListener('click',()=>{
+      const target=type==='tab'?wrap.querySelector('.fb-tab[data-tab="'+id+'"]'):wrap.querySelector('.fb-tab[data-extra-tab="'+id+'"]');
+      const pane=type==='tab'?wrap.querySelector('.fb-pane[data-pane="'+id+'"]'):wrap.querySelector('.fb-extra-pane[data-extra-pane="'+id+'"]');
+      if(!target||!pane){
+        let note=studio.querySelector('.fb-navigation-status');
+        if(!note){note=document.createElement('div');note.className='fb-navigation-status fb-result';note.setAttribute('role','status');studio.appendChild(note);}
+        note.textContent='هذا التفرع غير جاهز للفتح حالياً. أعد تحميل الصفحة وحاول مرة أخرى.';
+        return;
+      }
+      wrap.querySelectorAll('.fb-tab').forEach(x=>x.classList.toggle('active',x===target));
+      wrap.querySelectorAll('.fb-pane').forEach(x=>x.classList.toggle('active',x===pane));
+      wrap.querySelectorAll('.fb-extra-pane').forEach(x=>x.classList.toggle('active',x===pane));
       studio.hidden=true;
-      if(type==='tab'){const target=wrap.querySelector('.fb-tab[data-tab="'+id+'"]');if(target)target.click();}
-      else{const target=wrap.querySelector('.fb-tab[data-extra-tab="'+id+'"]');if(target)target.click();}
-      const back=wrap.querySelector('.ofq-studio-back');if(back)back.hidden=false;
-      wrap.scrollIntoView({behavior:'smooth',block:'start'});
+      backToStudio.hidden=false;
+      pane.scrollIntoView({behavior:'smooth',block:'start'});
     });
     studioGrid.appendChild(card);
   });
   const backToStudio=document.createElement('button');backToStudio.type='button';backToStudio.className='btn secondary ofq-studio-back';backToStudio.textContent='← العودة إلى واجهة كرة القدم';backToStudio.hidden=true;
   backToStudio.addEventListener('click',()=>{
-    wrap.querySelectorAll('.fb-pane,.fb-extra-pane').forEach(p=>p.classList.remove('active'));
-    wrap.querySelectorAll('.fb-tab').forEach(t=>t.classList.remove('active'));
+    wrap.querySelectorAll('.fb-extra-pane').forEach(p=>p.classList.remove('active'));
+    wrap.querySelectorAll('.fb-pane').forEach(p=>p.classList.toggle('active',p.dataset.pane==='home'));
+    wrap.querySelectorAll('.fb-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab==='home'));
     studio.hidden=false;backToStudio.hidden=true;studio.scrollIntoView({behavior:'smooth',block:'start'});
   });
   const studioStyle=document.createElement('style');
