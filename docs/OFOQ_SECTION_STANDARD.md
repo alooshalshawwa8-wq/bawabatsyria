@@ -170,3 +170,15 @@ All inventory data remains in browser localStorage on the current device. No API
 - Added per-account printable statement output and CSV export, including the dated movements used in the calculation.
 - Upgraded the separate treasury backup format to version 2 to include reconciliation history. Import remains compatible with version 1, validates account references and numeric/date fields, merges by ID, and attempts rollback if local storage writes fail.
 - This is a manual reconciliation tool: it does not connect to banks, fetch statements, automatically create adjustment entries, or change the underlying ledger. Users must compare against a reliable physical cash count or official bank statement. No live-browser or deployment test is claimed.
+
+## OFOQ Trading Academy — 2026-11-11
+
+- Promoted `trading_academy` from its generic risk-size calculator into a dedicated Arabic trading-learning workspace with a cinematic trading hero and accessible tabs.
+- Added a position-sizing/risk calculator with direction-aware stop validation, configurable risk percentage, and a contract multiplier field.
+- Added a reward-to-risk scenario calculator with direction-aware entry, stop, and target validation; clearly explains that the ratio is not a win probability.
+- Added a local paper-trade journal (maximum 200 records), input validation, individual deletion, and JSON export.
+- Added a locally persisted pre-trade discipline checklist.
+- Added educational sections for market structure, risk management, paper testing, and trading psychology. No buy/sell signals, live prices, exchange connections, API calls, or provider keys were introduced.
+- Journal and checklist data remain in the visitor's browser on the current device; export is required for backup or transfer.
+- Verification: source committed to GitHub main. GitHub Pages workflow and browser-level interaction checks are pending.
+
