@@ -52,5 +52,7 @@ jobs:
         run: node --check ecommerce-studio.js
       - name: Check career studio JavaScript
         run: node --check career-studio.js
+      - name: Check operations hub JavaScript
+        run: node --check operations-hub.js
       - name: Run OFOQ portal contract tests
         run: python3 scripts/validate_ofoq.py
