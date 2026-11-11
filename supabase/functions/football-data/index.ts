@@ -26,7 +26,7 @@ function rateAllowed(ip: string) {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_SECRET_KEY") ?? "";
-type FetchTracker = { upstreamCalls: number; cacheHits: number; staleHits: number };
+type FetchTracker = { upstreamCalls: number; cacheHits: number; staleHits: number; budgetBlocked: number };
 async function dbRest(path: string, init: RequestInit = {}) {
   if (!SUPABASE_URL || !SERVICE_KEY) throw new Error("Persistent storage credentials unavailable");
   return await fetch(SUPABASE_URL + "/rest/v1/" + path, {
@@ -86,22 +86,110 @@ async function hashClientKey(value: string) {
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return Array.from(new Uint8Array(digest)).map(x => x.toString(16).padStart(2,"0")).join("");
 }
-async function persistentRateAllowed(bucket: string, maxRequests = 60): Promise<boolean> {
+async function persistentRateAllowed(bucket: string, maxRequests = 60): Promise<boolean | null> {
   try {
     const response = await dbRest("rpc/football_rate_limit_hit", {
       method: "POST", body: JSON.stringify({ p_bucket_key: bucket, p_window_seconds: 60, p_max_requests: maxRequests })
     });
-    if (!response.ok) return true;
+    if (!response.ok) return null;
     const count = Number(await response.json());
-    return count <= maxRequests;
-  } catch { return true; }
+    return Number.isFinite(count) && count <= maxRequests;
+  } catch { return null; }
 }
 function hasProviderErrors(value: unknown) {
   if (Array.isArray(value)) return value.length > 0;
   if (value && typeof value === "object") return Object.keys(value).length > 0;
   return Boolean(value);
 }
-async function providerFetch(path: string, query: Record<string,string>, ttl: number, tracker: FetchTracker) {
+
+const AUTH_API_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? SERVICE_KEY;
+let launchConfigMemo: { until: number; data: Record<string, any> } | null = null;
+async function getLaunchConfig() {
+  if (launchConfigMemo && launchConfigMemo.until > Date.now()) return launchConfigMemo.data;
+  const response = await dbRest("platform_launch_config?select=launch_mode,billing_enabled,paid_features_enforced,trial_free_all_features&limit=1");
+  if (!response.ok) throw new Error("Feature policy unavailable");
+  const rows = await response.json();
+  if (!Array.isArray(rows) || !rows[0]) throw new Error("Feature policy missing");
+  launchConfigMemo = { until: Date.now() + 15_000, data: rows[0] };
+  return rows[0];
+}
+async function authenticatedFootballUser(request: Request) {
+  const authorization = request.headers.get("authorization") ?? "";
+  if (!authorization.startsWith("Bearer ") || !SUPABASE_URL || !AUTH_API_KEY) return null;
+  try {
+    const response = await fetch(SUPABASE_URL + "/auth/v1/user", {
+      headers: { "apikey": AUTH_API_KEY, "Authorization": authorization, "Accept": "application/json" }
+    });
+    if (!response.ok) return null;
+    const user = await response.json();
+    if (!user?.id) return null;
+    return { id: String(user.id), appMetadata: user.app_metadata ?? {} };
+  } catch { return null; }
+}
+async function footballEntitlements(userId: string): Promise<Set<string>> {
+  const response = await dbRest("entitlements?user_id=eq." + encodeURIComponent(userId) + "&active=eq.true&select=entitlement_key");
+  if (!response.ok) throw new Error("Entitlements unavailable");
+  const rows = await response.json();
+  return new Set((Array.isArray(rows) ? rows : []).map((row: Record<string, any>) => String(row.entitlement_key)));
+}
+async function authorizeFootballFeature(request: Request, featureCode: string) {
+  let launch: Record<string, any>;
+  try { launch = await getLaunchConfig(); }
+  catch { return { allowed: false, status: 503, code: "FEATURE_POLICY_UNAVAILABLE" }; }
+  if (launch.launch_mode !== "paid" || launch.billing_enabled !== true || launch.paid_features_enforced !== true) {
+    return { allowed: true, status: 200, code: "TRIAL_OR_ENFORCEMENT_OFF" };
+  }
+  const featureResponse = await dbRest("platform_plan_features?feature_code=eq." + encodeURIComponent(featureCode) + "&access_level=eq.included&select=plan_code");
+  if (!featureResponse.ok) return { allowed: false, status: 503, code: "FEATURE_CATALOG_UNAVAILABLE" };
+  const featureRows = await featureResponse.json();
+  const planCodes = new Set((Array.isArray(featureRows) ? featureRows : []).map((row: Record<string, any>) => String(row.plan_code)));
+  if (planCodes.has("free")) return { allowed: true, status: 200, code: "FREE_FEATURE" };
+  const user = await authenticatedFootballUser(request);
+  if (!user) return { allowed: false, status: 401, code: "AUTH_REQUIRED" };
+  let entitlements: Set<string>;
+  try { entitlements = await footballEntitlements(user.id); }
+  catch { return { allowed: false, status: 503, code: "ENTITLEMENT_LOOKUP_FAILED" }; }
+  const metadataOwner = user.appMetadata?.role === "OWNER" && user.appMetadata?.owner === true;
+  if (metadataOwner || entitlements.has("owner_access") || entitlements.has("all_features")) {
+    return { allowed: true, status: 200, code: "OWNER_OR_ALL_FEATURES" };
+  }
+  const planEntitlements: Record<string, string[]> = {
+    pro_monthly: ["pro_access", "vip_access", "business_access"],
+    vip_monthly: ["vip_access", "business_access"],
+    business_monthly: ["business_access"]
+  };
+  const allowed = [...planCodes].some(planCode => (planEntitlements[planCode] ?? []).some(key => entitlements.has(key)));
+  return { allowed, status: allowed ? 200 : 403, code: allowed ? "ENTITLED" : "PLAN_REQUIRED" };
+}
+function requiredFootballFeature(action: string, url: URL): string | null {
+  if (action === "fixtures") return "fixtures_scores";
+  if (action === "teams" || action === "team") return "basic_team_pages";
+  if (action === "leagues" || action === "standings") return "league_tables";
+  if (action === "leaders") return "scorers_assists_cards";
+  if (action === "match") return "match_lineups_events";
+  if (action === "studio") return "match_studio";
+  if (action === "trophies") return "player_profiles_ratings";
+  if (action !== "catalog") return null;
+  const dataset = url.searchParams.get("dataset") ?? "";
+  if (["standings","rounds"].includes(dataset)) return "league_tables";
+  if (["scorers","assists","yellow_cards","red_cards"].includes(dataset)) return "scorers_assists_cards";
+  if (["fixture_events","fixture_lineups"].includes(dataset)) return "match_lineups_events";
+  if (["fixture_stats","team_stats","odds","odds_live","odds_bets","bookmakers","odds_mapping"].includes(dataset)) return "advanced_match_stats";
+  if (["fixture_players","players","player_seasons","squads","coaches","transfers","sidelined"].includes(dataset)) return "player_profiles_ratings";
+  if (["injuries","predictions"].includes(dataset)) return "injuries_predictions";
+  if (dataset === "headtohead") return "head_to_head_history";
+  if (["team_list","team_countries","team_seasons","venues"].includes(dataset)) return "basic_team_pages";
+  if (dataset === "fixture_list") return "fixtures_scores";
+  return null;
+}
+async function reserveFootballBudget(bucket: string, endpoint: string) {
+  const response = await dbRest("rpc/football_api_budget_reserve", {
+    method: "POST", body: JSON.stringify({ p_bucket: bucket, p_endpoint: endpoint })
+  });
+  if (!response.ok) throw new Error("FOOTBALL_BUDGET_GUARD_UNAVAILABLE");
+  return await response.json();
+}
+async function providerFetch(path: string, query: Record<string,string>, ttl: number, tracker: FetchTracker, budgetBucket = "core") {
   const params = new URLSearchParams(query);
   const cacheKey = path + "?" + params.toString();
   const local = cache.get("provider:" + cacheKey);
@@ -111,6 +199,30 @@ async function providerFetch(path: string, query: Record<string,string>, ttl: nu
     tracker.cacheHits++;
     cache.set("provider:" + cacheKey, { until: Date.now() + Math.min(ttl, 60_000), data: persisted });
     return persisted as Record<string, any>;
+  }
+  let budget: Record<string, any>;
+  try { budget = await reserveFootballBudget(budgetBucket, path); }
+  catch {
+    const stale = await persistentCacheGet(cacheKey, true);
+    if (stale && typeof stale === "object") {
+      tracker.cacheHits++; tracker.staleHits++; tracker.budgetBlocked++;
+      return { ...stale as Record<string, any>, cached: true, stale: true, budgetLimited: true };
+    }
+    const error = new Error("FOOTBALL_BUDGET_GUARD_UNAVAILABLE");
+    (error as any).status = 503;
+    throw error;
+  }
+  if (!budget?.allowed) {
+    tracker.budgetBlocked++;
+    const stale = await persistentCacheGet(cacheKey, true);
+    if (stale && typeof stale === "object") {
+      tracker.cacheHits++; tracker.staleHits++;
+      return { ...stale as Record<string, any>, cached: true, stale: true, budgetLimited: true, budgetReason: budget.reason };
+    }
+    const error = new Error("FOOTBALL_DAILY_BUDGET_LIMIT");
+    (error as any).status = 429;
+    (error as any).budget = budget;
+    throw error;
   }
   const started = Date.now();
   tracker.upstreamCalls++;
@@ -176,8 +288,11 @@ Deno.serve(async (request: Request) => {
   if (request.method !== "GET") return reply({ error: "Method not allowed" }, 405);
 
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (!rateAllowed(ip) || !(await persistentRateAllowed(await hashClientKey(ip), 60))) return reply({ error: "تم تجاوز عدد الطلبات المؤقت. حاول بعد دقيقة." }, 429);
-  const tracker: FetchTracker = { upstreamCalls: 0, cacheHits: 0, staleHits: 0 };
+  if (!rateAllowed(ip)) return reply({ error: "تم تجاوز عدد الطلبات المؤقت. حاول بعد دقيقة." }, 429);
+  const persistentRate = await persistentRateAllowed(await hashClientKey(ip), 60);
+  if (persistentRate === null) return reply({ error: "تعذر التحقق من حد الطلبات حالياً؛ أوقفنا الاتصال بالمزود لحماية الحصة." }, 503);
+  if (!persistentRate) return reply({ error: "تم تجاوز عدد الطلبات المؤقت. حاول بعد دقيقة." }, 429);
+  const tracker: FetchTracker = { upstreamCalls: 0, cacheHits: 0, staleHits: 0, budgetBlocked: 0 };
 
   const apiKey = Deno.env.get("API_FOOTBALL_KEY") ?? "";
   const url = new URL(request.url);
@@ -187,9 +302,17 @@ Deno.serve(async (request: Request) => {
   }
   if (action === "usage") {
     try {
-      const response = await dbRest("rpc/football_api_usage_summary", { method: "POST", body: "{}" });
-      if (!response.ok) throw new Error("Usage summary unavailable");
-      return reply({ provider: "API-Football", configured: Boolean(apiKey), ...await response.json() });
+      const user = await authenticatedFootballUser(request);
+      if (!user) return reply({ error: "يلزم تسجيل الدخول بصلاحية مالك المنصة." }, 401);
+      const keys = await footballEntitlements(user.id);
+      const metadataOwner = user.appMetadata?.role === "OWNER" && user.appMetadata?.owner === true;
+      if (!metadataOwner && !keys.has("owner_access")) return reply({ error: "هذه اللوحة مخصصة لمالك المنصة." }, 403);
+      const [usageResponse, budgetResponse] = await Promise.all([
+        dbRest("rpc/football_api_usage_summary", { method: "POST", body: "{}" }),
+        dbRest("rpc/football_api_budget_status", { method: "POST", body: "{}" })
+      ]);
+      if (!usageResponse.ok || !budgetResponse.ok) throw new Error("Usage or budget summary unavailable");
+      return reply({ provider: "API-Football", configured: Boolean(apiKey), ...await usageResponse.json(), budget: await budgetResponse.json() });
     } catch {
       return reply({ error: "تعذر قراءة لوحة استهلاك المزود حالياً." }, 503);
     }
@@ -227,6 +350,20 @@ Deno.serve(async (request: Request) => {
       });
     } catch {
       return reply({ error: "تعذر تحميل باقات أُفُق حالياً." }, 503);
+    }
+  }
+  const requiredFeature = requiredFootballFeature(action, url);
+  if (requiredFeature) {
+    const authorization = await authorizeFootballFeature(request, requiredFeature);
+    if (!authorization.allowed) {
+      const messages: Record<string,string> = {
+        AUTH_REQUIRED: "سجّل الدخول واشترك في الباقة المناسبة للوصول إلى هذه الميزة.",
+        PLAN_REQUIRED: "هذه الميزة متاحة ضمن باقة أعلى. يمكنك الاطلاع على باقات أُفُق.",
+        FEATURE_POLICY_UNAVAILABLE: "تعذر التحقق من صلاحيات الباقات حالياً.",
+        FEATURE_CATALOG_UNAVAILABLE: "تعذر قراءة دليل الميزات حالياً.",
+        ENTITLEMENT_LOOKUP_FAILED: "تعذر التحقق من اشتراك الحساب حالياً."
+      };
+      return reply({ error: messages[authorization.code] ?? "لا تملك صلاحية الوصول إلى هذه الميزة.", code: authorization.code, feature: requiredFeature }, authorization.status);
     }
   }
   if (!apiKey) return reply({ error: "لم تتم إضافة مفتاح مزود البيانات إلى إعدادات الخادم بعد.", code: "PROVIDER_NOT_CONFIGURED" }, 503);
@@ -343,8 +480,10 @@ Deno.serve(async (request: Request) => {
     const persistentStudio = await persistentCacheGet(studioCacheKey);
     if (persistentStudio && typeof persistentStudio === "object") return reply({ ...persistentStudio as Record<string, unknown>, cached: true });
     const ttlFor = (path: string) => path === "fixtures/events" || path === "fixtures/statistics" || path === "fixtures/players" ? 60_000 : path === "fixtures/lineups" ? 15 * 60_000 : path === "odds" ? 3 * 60 * 60_000 : path === "predictions" ? 60 * 60_000 : 6 * 60 * 60_000;
+    const matchStatus = String(match.fixture?.status?.short ?? "");
+    const matchIsLive = ["1H","HT","2H","ET","BT","P","LIVE"].includes(matchStatus);
     const apiFetch = async (path: string, query: Record<string,string> = {}) => {
-      const body = await providerFetch(path, query, ttlFor(path), tracker);
+      const body = await providerFetch(path, query, ttlFor(path), tracker, matchIsLive ? "live" : "core");
       return body.response;
     };
     try {
@@ -394,6 +533,8 @@ Deno.serve(async (request: Request) => {
         ...sections,
         unavailable,
         requestsMade: tracker.upstreamCalls,
+        budgetLimitedRequests: tracker.budgetBlocked,
+        quotaWarning: tracker.budgetBlocked > 0,
         cacheHits: tracker.cacheHits,
         staleHits: tracker.staleHits,
         staleData: tracker.staleHits > 0,
@@ -499,7 +640,7 @@ Deno.serve(async (request: Request) => {
   if (cached && cached.until > Date.now()) return reply({ ...cached.data as Record<string, unknown>, cached: true });
 
   try {
-    const data = await providerFetch(endpoint, Object.fromEntries(params.entries()), ttl, tracker);
+    const data = await providerFetch(endpoint, Object.fromEntries(params.entries()), ttl, tracker, (action === "fixtures" && url.searchParams.get("mode") === "live") || (action === "catalog" && ["odds_live","fixture_events","fixture_stats","fixture_players"].includes(url.searchParams.get("dataset") ?? "")) ? "live" : "core");
     return reply({ ...data, cacheHits: tracker.cacheHits, staleHits: tracker.staleHits, staleData: tracker.staleHits > 0, upstreamCalls: tracker.upstreamCalls, usageTracked: true });
   } catch (error) {
     const status = Number((error as any)?.status ?? 502);
