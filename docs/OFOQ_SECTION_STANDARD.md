@@ -232,3 +232,14 @@ All inventory data remains in browser localStorage on the current device. No API
 - Added quick navigation to the e-commerce, accounting, jobs, freelance, trading academy and personal-finance workspaces. This is navigation, not an automatic data sync; its dashboard metrics reflect only records entered in the hub.
 - No network requests, Gemini calls, API provider usage, analytics, or server storage are used. Data remains in browser localStorage; users should export backups before clearing browser data or changing devices.
 - Added CI syntax checking and contract assertions; included the module in the offline shell and advanced its cache to `ofoq-shell-v28`.
+
+
+## 2026-11-11 — Opt-in private cloud backup vault
+
+- Added a dedicated `public.user_workspace_backups` table for user-owned, append-only JSON snapshots. The table has RLS policies for owner-only SELECT, INSERT and DELETE; anonymous access and UPDATE are revoked.
+- The Operations Hub now offers explicit email/password sign-in or account creation, session refresh, backup listing, manual snapshot creation, restore and deletion. No data is uploaded on page load or login; a signed-in user must click **Create cloud backup now**.
+- Snapshots include the Operations Hub records and dated linked-source snapshots. Restore writes a local recovery point and archives linked-source snapshots separately; it never overwrites the source tools' localStorage keys.
+- Browser sessions are held in sessionStorage and can be ended with sign-out. The browser uses only the project's public publishable key; no service-role key or AI/provider key is shipped to the client.
+- Cloud snapshots are stored as JSON in the database and are protected by Supabase RLS, but are not end-to-end encrypted by the browser. Do not upload secrets or data you do not want stored in the cloud.
+- This is manual backup/restore, not continuous cross-device synchronization. No Gemini or API-Football requests are used.
+- Migration: `20261111160644_user_workspace_backup_vault.sql`. CI checks the frontend contract and migration security markers; the service-worker cache is advanced to v29.
