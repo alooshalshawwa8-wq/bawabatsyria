@@ -18,6 +18,8 @@ await page.route("**/*", route => {
 
 try {
   await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
+  const welcomeSkip = page.locator("#bawaba-welcome-skip");
+  if (await welcomeSkip.isVisible().catch(() => false)) await welcomeSkip.click();
   await page.waitForFunction(() => Array.isArray(window.BAWABA_SECTIONS) && typeof window.openSection === "function", null, { timeout: 30000 });
 
   const sections = await page.evaluate(() => window.BAWABA_SECTIONS.map(section => ({ id: section.id, title: section.title })));
