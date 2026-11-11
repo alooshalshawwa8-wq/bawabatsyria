@@ -3634,8 +3634,9 @@ if(typeof oldHome==='function'&&!oldHome.__ofoqFadeWrapped){
 })();
 </script>
 
-<script id="ofoq-section-gemini-v1">
-/* Section-aware Gemini assistant. Uses the existing guarded site-assistant endpoint. */
+<script id="ofoq-section-gemini-v2">
+/* OFOQ section-aware Gemini mission console.
+   One explicit send = one request; no background calls or browser-side secrets. */
 (function(){
   const original=window.openSection;
   if(typeof original!=="function" || original.__ofoqGeminiWrapped) return;
@@ -3648,38 +3649,66 @@ if(typeof oldHome==='function'&&!oldHome.__ofoqFadeWrapped){
     health:"health",fitness_coach:"health",fitness_wellness:"health",mirror:"creative",birds_pets:"health",agriculture:"environment",fertilizers:"environment",environment_climate:"environment",sustainable_living:"environment",energy:"environment",water:"environment",
     business:"business",startup_lab:"business",freelance_vip:"business",events_calendar:"culture",culture:"culture",heritage:"culture",nostalgia_archive:"culture",zodiac_world:"entertainment",gaming_arena:"entertainment",science_space:"science",world_encyclopedia:"education",world_history:"education",legal:"legal",news:"culture",terms_of_use:"legal",accessibility_center:"technology",cars:"auto",bikes:"auto",phones:"technology",laptops:"technology",designs:"creative",reports:"syria",solidarity:"syria",realestate:"business",luxury_villas:"business",body_language:"health"
   };
+  const missions=[
+    ["شرح خبير","اشرح الموضوع من الصفر ثم انتقل تدريجياً إلى مستوى متقدم، مع مثال واقعي ومصطلحات أساسية."],
+    ["خطة تنفيذ","حوّل هدفي إلى خطة عملية مرتبة بمراحل، مهام، أدوات، ومؤشرات قياس ومخاطر."],
+    ["تحليل احترافي","حلّل المعلومات التي سأقدمها فقط، افصل الحقائق عن الافتراضات، واذكر البيانات الناقصة."],
+    ["قائمة تحقق","أنشئ قائمة تحقق تنفيذية قبل البدء وأثناء التنفيذ وبعده، مع أخطاء شائعة."],
+    ["اختبر معرفتي","اختبرني بخمسة أسئلة متدرجة، سؤالاً واحداً في كل مرة، ثم صحح إجاباتي."]
+  ];
+  function downloadText(name,content){
+    const blob=new Blob([content],{type:"text/plain;charset=utf-8"});
+    const url=URL.createObjectURL(blob);const a=document.createElement("a");
+    a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
   async function mount(sec){
     const host=document.getElementById("specialTool");
     if(!host || host.querySelector(".ofoq-section-gemini")) return;
     const box=document.createElement("section");box.className="ofoq-section-gemini";
-    box.style.cssText="margin:22px 0;padding:18px;border:1px solid #397b83;border-radius:16px;background:linear-gradient(145deg,#102a3e,#091a2b);";
-    const title=document.createElement("h3");title.textContent="✨ مساعد أُفُق الذكي · Gemini";title.style.cssText="margin:0 0 7px;color:#a4f3e7";
-    const desc=document.createElement("p");desc.textContent="مساعد متخصص بهذا القسم: يشرح، يقارن، يضع خططاً، يحلل المدخلات التي تقدمها، ويجيبك بالعربية. لا يفترض امتلاك بيانات مباشرة أو مصادر لم تُمرّر إليه.";
+    box.style.cssText="margin:22px 0;padding:18px;border:1px solid #397b83;border-radius:18px;background:linear-gradient(145deg,#102a3e,#091a2b);";
+    const style=document.createElement("style");
+    style.textContent=".ofoq-ai-missions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.ofoq-ai-missions button,.ofoq-ai-tools button{border:1px solid #3a6878;border-radius:999px;background:#0a2133;color:#c9f7ef;padding:8px 11px;font:inherit;font-size:12px;cursor:pointer}.ofoq-ai-missions button:hover,.ofoq-ai-tools button:hover{border-color:#80eddd;background:#12384a}.ofoq-ai-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.ofoq-ai-meter{font-size:11px;color:#9db8c8;text-align:left;margin-top:5px}.ofoq-ai-message{padding:12px 14px;border-radius:12px;border:1px solid #294b60;color:#e7f0f5;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.85;font-size:13px}.ofoq-ai-message.user{background:#17374a}.ofoq-ai-message.assistant{background:#0b2032}.ofoq-ai-missions button:focus-visible,.ofoq-ai-tools button:focus-visible{outline:2px solid #8bf2e2;outline-offset:2px}";
+    const title=document.createElement("h3");title.textContent="✨ مركز نَبْراس الذكي · Gemini";title.style.cssText="margin:0 0 7px;color:#a4f3e7";
+    const desc=document.createElement("p");desc.textContent="مساعد متخصص في "+sec.title+"؛ يحوّل طلبك إلى شرح أو خطة أو تحليل أو اختبار. اختر مهمة جاهزة أو اكتب طلبك، ثم أرسل عندما تكون مستعداً.";
     desc.style.cssText="margin:0 0 12px;color:#c5d7e2;line-height:1.8;font-size:13px";
-    const history=[];const log=document.createElement("div");log.setAttribute("aria-live","polite");log.style.cssText="display:grid;gap:8px;margin:12px 0";
-    const input=document.createElement("textarea");input.rows=3;input.maxLength=1200;input.placeholder="اكتب سؤالك أو المهمة التي تريد تنفيذها في "+sec.title+"…";input.style.cssText="width:100%;resize:vertical;background:#071726;color:#fff;border:1px solid #365b70;border-radius:10px;padding:12px;line-height:1.8";
+    const missionLabel=document.createElement("strong");missionLabel.textContent="ابدأ بمهمة ذكية";missionLabel.style.cssText="display:block;color:#a4f3e7;font-size:13px";
+    const missionBar=document.createElement("div");missionBar.className="ofoq-ai-missions";
+    const history=[];let requestCount=0,lastAnswer="";
+    const log=document.createElement("div");log.setAttribute("aria-live","polite");log.style.cssText="display:grid;gap:8px;margin:12px 0";
+    const input=document.createElement("textarea");input.rows=4;input.maxLength=1200;input.placeholder="اكتب سؤالك أو هدفك في "+sec.title+"…";input.setAttribute("aria-label","المهمة الموجهة لمساعد أفق الذكي");input.style.cssText="width:100%;resize:vertical;background:#071726;color:#fff;border:1px solid #365b70;border-radius:10px;padding:12px;line-height:1.8";
+    const meter=document.createElement("div");meter.className="ofoq-ai-meter";meter.textContent="0 / 1200";
+    input.addEventListener("input",()=>meter.textContent=input.value.length+" / 1200");
+    missions.forEach(([label,instruction])=>{const b=document.createElement("button");b.type="button";b.textContent=label;b.addEventListener("click",()=>{input.value="المهمة: "+instruction+"\\n\\nالمجال: "+sec.title+"\\n\\nالمطلوب: ";input.focus();meter.textContent=input.value.length+" / 1200";});missionBar.appendChild(b);});
     const actions=document.createElement("div");actions.style.cssText="display:flex;gap:9px;flex-wrap:wrap;margin-top:10px";
-    const send=document.createElement("button");send.type="button";send.className="btn";send.textContent="اسأل Gemini";
-    const clear=document.createElement("button");clear.type="button";clear.className="btn secondary";clear.textContent="مسح المحادثة";
-    const status=document.createElement("p");status.style.cssText="font-size:12px;color:#a9bbcb;line-height:1.7;margin:9px 0 0";status.textContent="الاستخدام يخضع لسقف الحماية اليومي المشترك للمساعد الذكي.";
-    function add(role,text){const item=document.createElement("div");item.style.cssText="padding:11px 13px;border-radius:10px;background:"+(role==="user"?"#17374a":"#0b2032")+";border:1px solid #294b60;color:#e7f0f5;white-space:pre-wrap;line-height:1.85;font-size:13px";item.textContent=(role==="user"?"أنت: ":"Gemini: ")+text;log.appendChild(item);}
+    const send=document.createElement("button");send.type="button";send.className="btn";send.textContent="نفّذ المهمة مع Gemini";
+    const clear=document.createElement("button");clear.type="button";clear.className="btn secondary";clear.textContent="محادثة جديدة";
+    const tools=document.createElement("div");tools.className="ofoq-ai-tools";
+    const copyLast=document.createElement("button");copyLast.type="button";copyLast.textContent="نسخ آخر إجابة";copyLast.disabled=true;
+    const exportChat=document.createElement("button");exportChat.type="button";exportChat.textContent="تصدير المحادثة";
+    const status=document.createElement("p");status.style.cssText="font-size:12px;color:#a9bbcb;line-height:1.8;margin:10px 0 0";status.textContent="حماية الحصة: سقف مشترك قدره 30 طلباً يومياً للموقع كله. كل إرسال يدوي يستهلك طلباً واحداً؛ لا توجد طلبات تلقائية أو تحديثات خلفية.";
+    function add(role,text){const item=document.createElement("div");item.className="ofoq-ai-message "+role;item.textContent=(role==="user"?"أنت: ":"نَبْراس: ")+text;log.appendChild(item);}
     send.addEventListener("click",async()=>{
       const q=input.value.trim();if(!q||send.disabled)return;
       history.push({role:"user",content:q});if(history.length>10)history.splice(0,history.length-10);
-      add("user",q);input.value="";send.disabled=true;send.textContent="جارٍ التفكير…";status.textContent="يتم إرسال طلب واحد عبر بوابة أُفُق المحمية.";
+      add("user",q);input.value="";meter.textContent="0 / 1200";send.disabled=true;send.textContent="جارٍ التحليل…";status.textContent="طلب واحد قيد المعالجة عبر الخادم المحمي.";
       try{
         const response=await fetch("https://elzquyehghuxhswogsch.supabase.co/functions/v1/site-assistant",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:history,section:profiles[sec.id]||"general"})});
         const data=await response.json().catch(()=>({}));
         if(!response.ok)throw new Error(data.error||"تعذر الاتصال بالمساعد");
-        const answer=String(data.answer||"لم يصل رد قابل للعرض.");history.push({role:"assistant",content:answer});if(history.length>10)history.splice(0,history.length-10);add("assistant",answer);status.textContent="اكتمل الرد. قدّم بياناتك أو مصدرك عند طلب تحليل معلومات مباشرة.";
+        const answer=String(data.answer||"لم يصل رد قابل للعرض.");history.push({role:"assistant",content:answer});if(history.length>10)history.splice(0,history.length-10);
+        lastAnswer=answer;requestCount++;add("assistant",answer);copyLast.disabled=false;
+        status.textContent="اكتمل الطلب رقم "+requestCount+" في هذه الجلسة. يمكنك نسخ الإجابة أو تصدير المحادثة.";
       }catch(error){
         if(history.length&&history[history.length-1].role==="user"&&history[history.length-1].content===q)history.pop();
         status.textContent=error.message||"تعذر الاتصال. حاول لاحقاً.";
-      }
-      finally{send.disabled=false;send.textContent="اسأل Gemini";}
+      }finally{send.disabled=false;send.textContent="نفّذ المهمة مع Gemini";}
     });
-    clear.addEventListener("click",()=>{history.length=0;log.replaceChildren();status.textContent="تم مسح سياق هذه الجلسة من الواجهة."});
-    actions.append(send,clear);box.append(title,desc,log,input,actions,status);host.appendChild(box);
+    clear.addEventListener("click",()=>{history.length=0;log.replaceChildren();lastAnswer="";copyLast.disabled=true;status.textContent="بدأت محادثة جديدة؛ سُياق هذه الجلسة أزيل من الواجهة. لم يتم إرسال أي طلب.";});
+    copyLast.addEventListener("click",async()=>{if(!lastAnswer)return;try{await navigator.clipboard.writeText(lastAnswer);status.textContent="تم نسخ آخر إجابة.";}catch(_){status.textContent="تعذر النسخ التلقائي على هذا الجهاز؛ حدّد نص الإجابة وانسخه يدوياً.";}});
+    exportChat.addEventListener("click",()=>{if(!history.length){status.textContent="لا توجد محادثة لتصديرها بعد.";return;}const transcript=history.map(m=>(m.role==="user"?"أنت":"نَبْراس")+":\\n"+m.content).join("\\n\\n");downloadText("ofoq-"+sec.id+"-ai-session.txt","أُفُق | "+sec.title+"\\n\\n"+transcript);status.textContent="تم تجهيز ملف المحادثة للتنزيل."});
+    input.addEventListener("keydown",event=>{if(event.key==="Enter"&&(event.ctrlKey||event.metaKey)){event.preventDefault();send.click();}});
+    actions.append(send,clear);tools.append(copyLast,exportChat);
+    box.append(style,title,desc,missionLabel,missionBar,log,input,meter,actions,tools,status);host.appendChild(box);
   }
   const wrapped=async function(sec){await original(sec);await mount(sec)};
   wrapped.__ofoqGeminiWrapped=true;window.openSection=wrapped;
