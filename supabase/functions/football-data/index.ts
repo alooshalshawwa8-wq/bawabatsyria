@@ -194,6 +194,41 @@ Deno.serve(async (request: Request) => {
       return reply({ error: "تعذر قراءة لوحة استهلاك المزود حالياً." }, 503);
     }
   }
+  if (action === "plans") {
+    try {
+      const [launchResponse, plansResponse, featuresResponse, mapResponse] = await Promise.all([
+        dbRest("platform_launch_config?select=launch_mode,billing_enabled,paid_features_enforced,trial_free_all_features&limit=1"),
+        dbRest("platform_plan_catalog?select=plan_code,name_ar,description_ar,display_order,billing_interval,price_minor,currency,visible,future_only&order=display_order.asc"),
+        dbRest("platform_feature_catalog?select=feature_code,name_ar,description_ar,category,availability&order=category.asc"),
+        dbRest("platform_plan_features?select=plan_code,feature_code,access_level,usage_limit")
+      ]);
+      if (![launchResponse, plansResponse, featuresResponse, mapResponse].every(response => response.ok)) {
+        throw new Error("Subscription catalog unavailable");
+      }
+      const [launchRows, plans, features, mappings] = await Promise.all([
+        launchResponse.json(), plansResponse.json(), featuresResponse.json(), mapResponse.json()
+      ]);
+      const launch = Array.isArray(launchRows) ? launchRows[0] : null;
+      const catalog = (Array.isArray(plans) ? plans : []).map((plan: Record<string, any>) => ({
+        ...plan,
+        features: (Array.isArray(mappings) ? mappings : [])
+          .filter((mapping: Record<string, any>) => mapping.plan_code === plan.plan_code)
+          .map((mapping: Record<string, any>) => {
+            const feature = (Array.isArray(features) ? features : []).find((item: Record<string, any>) => item.feature_code === mapping.feature_code);
+            return feature ? { ...feature, access_level: mapping.access_level, usage_limit: mapping.usage_limit } : null;
+          }).filter(Boolean)
+      }));
+      return reply({
+        launchMode: launch?.launch_mode ?? "trial",
+        billingEnabled: launch?.billing_enabled ?? false,
+        paidFeaturesEnforced: launch?.paid_features_enforced ?? false,
+        trialFreeAllFeatures: launch?.trial_free_all_features ?? true,
+        plans: catalog
+      });
+    } catch {
+      return reply({ error: "تعذر تحميل باقات أُفُق حالياً." }, 503);
+    }
+  }
   if (!apiKey) return reply({ error: "لم تتم إضافة مفتاح مزود البيانات إلى إعدادات الخادم بعد.", code: "PROVIDER_NOT_CONFIGURED" }, 503);
 
   const params = new URLSearchParams();
