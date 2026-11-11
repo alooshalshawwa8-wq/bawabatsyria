@@ -726,6 +726,14 @@ function renderFootballModule(tool){
 <p class="fb-muted">أمثلة: league=39&season=2025 · team=33 · player=276 · fixture=123456 · search=Messi · country=England · h2h=33-34. بعض الأقسام تتطلب أكثر من معيار.</p>
 <div class="panel-actions"><button class="btn" id="fbApiRun" type="button">اجلب البيانات من API-Football</button><button class="btn secondary" id="fbApiClear" type="button">مسح النتائج</button></div>
 <div class="notice" id="fbApiStatus" role="status">اختر مجموعة بيانات وأدخل المعايير المناسبة لبدء الاستعلام.</div>
+<div class="fb-card" style="margin:12px 0">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+    <div><strong>مركز مراقبة مفتاح API-Football</strong><small>قياس طلبات المزود الفعلية خلال آخر 24 ساعة، مع تمييز البيانات المخزنة مؤقتاً عن الطلبات الجديدة</small></div>
+    <button class="btn secondary" id="fbUsageRefresh" type="button">تحديث مؤشرات الاستهلاك</button>
+  </div>
+  <div class="fb-grid" id="fbUsageMetrics" style="margin-top:12px"><div class="fb-note">اضغط تحديث لقراءة لوحة الاستهلاك من سجل الخادم.</div></div>
+  <div id="fbUsageEndpoints" class="fb-list" style="margin-top:10px"></div>
+</div>
 </div>
 <div id="fbApiResults" class="fb-grid" aria-live="polite"></div>
 <details class="fb-card" style="margin-top:12px"><summary>معلومات الاستجابة الخام من المزود</summary><pre id="fbApiRaw" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:420px;overflow:auto;color:#cbd8e8;font-size:11px"></pre></details>
@@ -839,6 +847,33 @@ function renderFootballModule(tool){
     if(!response.ok)throw new Error(data.error||'تعذر جلب البيانات الرياضية.');
     return data;
   }
+  async function refreshFootballUsage(){
+    const metrics=$('fbUsageMetrics'),list=$('fbUsageEndpoints'),button=$('fbUsageRefresh');
+    if(!metrics||!list)return;
+    if(button)button.disabled=true;
+    metrics.replaceChildren(node('div','جارٍ قراءة سجل الطلبات الفعلية…','fb-note'));
+    list.replaceChildren();
+    try{
+      const u=await footballRequest('usage');
+      const cards=[
+        ['طلبات المزود خلال 24 ساعة',Number(u.requests_24h||0).toLocaleString('ar')],
+        ['الطلبات الناجحة',Number(u.successful_24h||0).toLocaleString('ar')],
+        ['الطلبات المتعثرة',Number(u.failed_24h||0).toLocaleString('ar')],
+        ['متوسط زمن الاستجابة',Number(u.avg_duration_ms||0).toLocaleString('ar')+' ms'],
+        ['المتبقي من الحصة',u.last_remaining==null?'غير متاح من الترويسات':Number(u.last_remaining).toLocaleString('ar')],
+        ['حد الحصة المعلن',u.last_limit==null?'غير متاح من الترويسات':Number(u.last_limit).toLocaleString('ar')]
+      ];
+      metrics.replaceChildren();
+      cards.forEach(([label,value])=>{const card=node('div',undefined,'fb-card');card.append(node('strong',String(value)),node('small',label));metrics.appendChild(card);});
+      const endpoints=Array.isArray(u.by_endpoint)?u.by_endpoint:[];
+      if(!endpoints.length)list.appendChild(node('div','لم تُسجّل طلبات مباشرة للمزود بعد؛ الطلبات التي تأتي من الكاش لا تخصم من الحصة.','fb-note'));
+      endpoints.forEach(item=>{const row=node('div',undefined,'fb-row');row.append(node('span',String(item.endpoint)),node('strong',Number(item.requests||0).toLocaleString('ar')+' طلب · '+Number(item.failures||0).toLocaleString('ar')+' تعثر'));list.appendChild(row);});
+      const stamp=u.last_request_at?new Date(u.last_request_at).toLocaleString('ar-SY'):'لا يوجد';
+      list.appendChild(node('small','آخر اتصال فعلي بالمزود: '+stamp,'fb-muted'));
+    }catch(error){metrics.replaceChildren(node('div',error.message||'تعذر تحميل لوحة الاستهلاك.','fb-note'));}
+    finally{if(button)button.disabled=false;}
+  }
+  $('fbUsageRefresh')?.addEventListener('click',refreshFootballUsage);
   const apiDatasetLabels={
     countries:'الدول',seasons:'المواسم المتاحة',timezones:'المناطق الزمنية',league_list:'البطولات والدوريات والكؤوس',rounds:'جولات البطولة',standings:'جداول الترتيب',
     fixture_list:'المباريات والنتائج',headtohead:'المواجهات المباشرة',fixture_events:'أحداث المباراة',fixture_lineups:'التشكيلات وخطط المدربين',fixture_stats:'إحصاءات المباراة',fixture_players:'تقييمات وإحصاءات اللاعبين',
