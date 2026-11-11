@@ -2375,12 +2375,28 @@ period.style.cssText='padding:9px;border:1px solid var(--line);border-radius:8px
 const metrics=document.createElement('div');metrics.className='calc';
 finance.append(financeTitle,financeNote,period,metrics);
 
+const reports=document.createElement('section');reports.style.cssText='margin-top:18px;padding:15px;border:1px solid var(--line);border-radius:13px;background:rgba(4,18,31,.7)';
+const reportsTitle=document.createElement('h4');reportsTitle.textContent='مركز التقارير والكشوفات';reportsTitle.style.color='var(--gold2)';
+const reportsNote=document.createElement('p');reportsNote.textContent='أنشئ كشفاً للفترة المحددة، أو حركة الصندوق، أو كشف حساب عميل ومورد. التصدير CSV متوافق مع برامج الجداول.';reportsNote.style.cssText='font-size:12px;color:var(--muted);line-height:1.7';
+const reportControls=document.createElement('div');reportControls.className='calc';
+const reportType=document.createElement('select');[['pnl','ملخص الأرباح والخسائر'],['cash','حركة الصندوق الفعلية المسجلة'],['party','كشف حساب عميل أو مورد']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;reportType.appendChild(o);});
+const reportParty=document.createElement('input');reportParty.placeholder='اسم العميل أو المورد للكشف';reportParty.maxLength=80;
+const reportRun=document.createElement('button');reportRun.type='button';reportRun.className='btn';reportRun.textContent='إنشاء التقرير';
+const reportCsv=document.createElement('button');reportCsv.type='button';reportCsv.className='btn secondary';reportCsv.textContent='تصدير CSV';
+const reportPrint=document.createElement('button');reportPrint.type='button';reportPrint.className='btn secondary';reportPrint.textContent='طباعة التقرير';
+reportControls.append(reportType,reportParty,reportRun,reportCsv,reportPrint);
+const reportSummary=document.createElement('p');reportSummary.className='notice';reportSummary.setAttribute('aria-live','polite');
+const reportTable=document.createElement('div');reportTable.style.cssText='overflow-x:auto;margin-top:10px';
+reports.append(reportsTitle,reportsNote,reportControls,reportSummary,reportTable);
+let reportRows=[],reportHeaders=[];
+
+
 const backupRow=document.createElement('div');backupRow.className='calc';backupRow.style.marginTop='10px';
 const exportLedger=document.createElement('button');exportLedger.type='button';exportLedger.className='btn secondary';exportLedger.textContent='تنزيل نسخة دفتر العمليات';
 const importLedger=document.createElement('button');importLedger.type='button';importLedger.className='btn secondary';importLedger.textContent='استيراد دفتر عمليات';
 const ledgerFile=document.createElement('input');ledgerFile.type='file';ledgerFile.accept='application/json,.json';ledgerFile.hidden=true;
 backupRow.append(exportLedger,importLedger,ledgerFile);
-box.append(h,note,form,add,status,summary,finance,history);box.appendChild(backupRow);tool.appendChild(box);
+box.append(h,note,form,add,status,summary,finance,reports,history);box.appendChild(backupRow);tool.appendChild(box);
 const fmt=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits:2});
 function refreshItems(){const old=item.value;item.replaceChildren();readStock().forEach((x,i)=>{const o=document.createElement('option');o.value=String(i);o.textContent=x.name+' · '+x.qty;item.appendChild(o);});if(old!==''&&Number(old)<item.options.length)item.value=old;const x=readStock()[Number(item.value)];if(x)unit.value=type.value==='sale'?x.sale:x.cost;}
 function draw(){
@@ -2400,6 +2416,42 @@ const table=document.createElement('table');table.style.cssText='width:100%;min-
 ['التاريخ','النوع','الصنف','الطرف','الكمية','الإجمالي','المدفوع','المتبقي'].forEach(t=>{const th=document.createElement('th');th.textContent=t;th.style.cssText='padding:8px;text-align:right;color:var(--gold2);border-bottom:1px solid var(--line)';trh.appendChild(th);});table.appendChild(trh);
 rows.slice().reverse().forEach(x=>{const tr=document.createElement('tr');[x.date,x.type==='sale'?'مبيعات':'مشتريات',x.item,x.party||'—',String(x.qty),fmt(x.total),fmt(x.paid),fmt(Math.max(0,x.total-x.paid))].forEach(v=>{const td=document.createElement('td');td.textContent=v;td.style.cssText='padding:8px;border-bottom:1px solid var(--line)';tr.appendChild(td);});table.appendChild(tr);});history.appendChild(table);
 }
+
+function makeReport(){
+const month=period.value||new Date().toISOString().slice(0,7),all=read().filter(x=>String(x.date||'').slice(0,7)===month);
+const fmtNum=n=>Number(n||0).toLocaleString('en-US',{maximumFractionDigits:2});
+if(reportType.value==='pnl'){
+const sales=all.filter(x=>x.type==='sale'),purchases=all.filter(x=>x.type==='purchase'),known=sales.filter(x=>Number.isFinite(x.costAtSale));
+const revenue=sales.reduce((n,x)=>n+x.total,0),cost=known.reduce((n,x)=>n+x.costAtSale*x.qty,0);
+reportHeaders=['البند','القيمة'];reportRows=[['المبيعات',revenue],['المشتريات',purchases.reduce((n,x)=>n+x.total,0)],['تكلفة البضاعة المباعة الموثقة',cost],['مجمل الربح المعروف',known.reduce((n,x)=>n+(x.total-x.costAtSale*x.qty),0)],['عدد مبيعات ذات تكلفة موثقة',known.length],['عدد المبيعات دون تكلفة موثقة',sales.length-known.length]];
+reportSummary.textContent='ملخص '+month+' · لا يشمل المصاريف العامة أو الضرائب أو السحوبات. لا تُعامل كل المشتريات كمصروف مبيعات.';
+}else if(reportType.value==='cash'){
+reportHeaders=['التاريخ','الحركة','الطرف','البيان','داخل','خارج'];
+reportRows=all.map(x=>[x.date||'',x.type==='sale'?'قبض من بيع':'دفع لمشتريات',x.party||'—',x.item+' × '+x.qty,x.type==='sale'?x.paid:0,x.type==='purchase'?x.paid:0]);
+const incoming=reportRows.reduce((n,x)=>n+Number(x[4]),0),outgoing=reportRows.reduce((n,x)=>n+Number(x[5]),0);
+reportSummary.textContent='حركة '+month+' · المقبوض '+fmtNum(incoming)+' · المدفوع '+fmtNum(outgoing)+' · صافي الحركة '+fmtNum(incoming-outgoing)+'. لا يتضمن رصيداً افتتاحياً.';
+}else{
+const name=reportParty.value.trim().toLocaleLowerCase();
+if(!name){reportSummary.textContent='اكتب اسم العميل أو المورد أولاً.';reportRows=[];reportHeaders=[];reportTable.replaceChildren();return;}
+const found=all.filter(x=>(x.party||'').trim().toLocaleLowerCase()===name);
+reportHeaders=['التاريخ','نوع العملية','الصنف','الكمية','قيمة العملية','المدفوع','المتبقي'];
+reportRows=found.map(x=>[x.date||'',x.type==='sale'?'بيع للعميل':'شراء من المورد',x.item,x.qty,x.total,x.paid,Math.max(0,x.total-x.paid)]);
+const due=reportRows.reduce((n,x)=>n+Number(x[6]),0);
+reportSummary.textContent='كشف '+reportParty.value.trim()+' · '+found.length+' عملية · الرصيد المستحق لهذه العمليات '+fmtNum(due)+'.';
+}
+reportTable.replaceChildren();if(!reportRows.length){reportTable.textContent='لا توجد عمليات مطابقة للفترة أو الطرف المحدد.';return;}
+const table=document.createElement('table');table.style.cssText='width:100%;min-width:600px;border-collapse:collapse;font-size:12px';const head=document.createElement('tr');
+reportHeaders.forEach(v=>{const th=document.createElement('th');th.textContent=v;th.style.cssText='padding:9px;text-align:right;color:var(--gold2);border-bottom:1px solid var(--line)';head.appendChild(th);});table.appendChild(head);
+reportRows.forEach(row=>{const tr=document.createElement('tr');row.forEach(v=>{const td=document.createElement('td');td.textContent=String(v);td.style.cssText='padding:8px;border-bottom:1px solid var(--line)';tr.appendChild(td);});table.appendChild(tr);});reportTable.appendChild(table);
+}
+reportRun.addEventListener('click',makeReport);
+period.addEventListener('change',()=>{draw();makeReport();});
+reportType.addEventListener('change',()=>{reportParty.disabled=reportType.value!=='party';});
+reportParty.disabled=true;
+reportCsv.addEventListener('click',()=>{if(!reportHeaders.length)makeReport();if(!reportHeaders.length)return;const safe=v=>{let x=String(v??'');if(/^[=+\-@\t\r]/.test(x))x="'"+x;return '"'+x.replace(/"/g,'""')+'"';};const csv='\uFEFF'+[reportHeaders,...reportRows].map(row=>row.map(safe).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),link=document.createElement('a');link.href=url;link.download='ofoq-report-'+reportType.value+'-'+(period.value||'period')+'.csv';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);});
+reportPrint.addEventListener('click',()=>{if(!reportHeaders.length)makeReport();window.print();});
+makeReport();
+
 type.addEventListener('change',refreshItems);item.addEventListener('change',()=>{const x=readStock()[Number(item.value)];if(x)unit.value=type.value==='sale'?x.sale:x.cost;});
 exportLedger.addEventListener('click',()=>{const payload={app:'ofoq-trade-ledger',version:1,createdAt:new Date().toISOString(),transactions:read()};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='ofoq-trade-ledger-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);status.textContent='تم تجهيز نسخة دفتر العمليات. احفظها في مكان آمن.';});
 importLedger.addEventListener('click',()=>ledgerFile.click());
