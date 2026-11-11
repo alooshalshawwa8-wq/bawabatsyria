@@ -2342,8 +2342,58 @@ renderStock();msg.textContent='تم استيراد '+valid.length+' صنف وإ�
 }catch(error){msg.textContent=error.message||'تعذر قراءة النسخة الاحتياطية.';}
 finally{importFile.value='';}
 };
+
 renderStock();
+/* Local merchant transaction ledger. */
+(function(){
+const key='bawabatsyria_trade_ledger_v1';
+const read=()=>{try{const a=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(a)?a.filter(x=>x&&typeof x.id==='string'&&['sale','purchase'].includes(x.type)&&Number.isFinite(x.total)):[];}catch(e){return [];}};
+const save=a=>{try{localStorage.setItem(key,JSON.stringify(a));return true;}catch(e){return false;}};
+const box=document.createElement('section');box.style.cssText='margin-top:26px;padding:18px;border:1px solid var(--line);border-radius:15px;background:linear-gradient(145deg,#10283b,#0b1b2b)';
+const h=document.createElement('h3');h.textContent='دفتر المبيعات والمشتريات';h.style.color='var(--gold2)';
+const note=document.createElement('p');note.textContent='سجّل العمليات بتاريخها والطرف المقابل وحالة الدفع. البيع يخصم من المخزون والشراء يضيف إليه. البيانات محلية على هذا الجهاز.';note.style.cssText='color:var(--muted);line-height:1.8;font-size:13px';
+const form=document.createElement('div');form.className='calc';
+function make(label,el){const l=document.createElement('label');l.textContent=label;l.appendChild(el);el.style.cssText='display:block;width:100%;margin-top:6px;padding:10px;border:1px solid var(--line);border-radius:9px;background:#071726;color:white';form.appendChild(l);return el;}
+const type=make('نوع العملية',document.createElement('select'));[['sale','مبيعات'],['purchase','مشتريات']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;type.appendChild(o);});
+const date=make('التاريخ',document.createElement('input'));date.type='date';date.value=new Date().toISOString().slice(0,10);
+const item=make('الصنف',document.createElement('select'));
+const qty=make('الكمية',document.createElement('input'));qty.type='number';qty.min='1';qty.step='1';qty.placeholder='عدد صحيح';
+const unit=make('سعر الوحدة',document.createElement('input'));unit.type='number';unit.min='0';unit.step='any';unit.placeholder='السعر';
+const party=make('العميل أو المورد',document.createElement('input'));party.maxLength=80;party.placeholder='اسم الطرف';
+const payment=make('حالة الدفع',document.createElement('select'));[['paid','مدفوع'],['unpaid','غير مدفوع'],['partial','مدفوع جزئياً']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;payment.appendChild(o);});
+const paid=make('المبلغ المدفوع',document.createElement('input'));paid.type='number';paid.min='0';paid.step='any';paid.value='0';
+const add=document.createElement('button');add.type='button';add.className='btn';add.textContent='حفظ العملية';add.style.marginTop='12px';
+const status=document.createElement('p');status.className='notice';status.setAttribute('aria-live','polite');
+const summary=document.createElement('div');summary.className='notice';
+const history=document.createElement('div');history.style.cssText='overflow-x:auto;margin-top:12px';
+box.append(h,note,form,add,status,summary,history);tool.appendChild(box);
+const fmt=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits:2});
+function refreshItems(){const old=item.value;item.replaceChildren();readStock().forEach((x,i)=>{const o=document.createElement('option');o.value=String(i);o.textContent=x.name+' · '+x.qty;item.appendChild(o);});if(old!==''&&Number(old)<item.options.length)item.value=old;const x=readStock()[Number(item.value)];if(x)unit.value=type.value==='sale'?x.sale:x.cost;}
+function draw(){
+const rows=read(),sales=rows.filter(x=>x.type==='sale'),purchases=rows.filter(x=>x.type==='purchase'),revenue=sales.reduce((n,x)=>n+x.total,0),buy=purchases.reduce((n,x)=>n+x.total,0),due=rows.reduce((n,x)=>n+Math.max(0,x.total-x.paid),0);
+summary.textContent='المبيعات: '+fmt(revenue)+' · المشتريات: '+fmt(buy)+' · المتبقي على العمليات المسجلة: '+fmt(due)+' · عدد العمليات: '+rows.length+'. هذه أرقام دفترية وليست كشفاً بنكياً.';
+history.replaceChildren();if(!rows.length){history.textContent='لا توجد عمليات مسجلة بعد.';return;}
+const table=document.createElement('table');table.style.cssText='width:100%;min-width:700px;border-collapse:collapse;font-size:12px';const trh=document.createElement('tr');
+['التاريخ','النوع','الصنف','الطرف','الكمية','الإجمالي','المدفوع','المتبقي'].forEach(t=>{const th=document.createElement('th');th.textContent=t;th.style.cssText='padding:8px;text-align:right;color:var(--gold2);border-bottom:1px solid var(--line)';trh.appendChild(th);});table.appendChild(trh);
+rows.slice().reverse().forEach(x=>{const tr=document.createElement('tr');[x.date,x.type==='sale'?'مبيعات':'مشتريات',x.item,x.party||'—',String(x.qty),fmt(x.total),fmt(x.paid),fmt(Math.max(0,x.total-x.paid))].forEach(v=>{const td=document.createElement('td');td.textContent=v;td.style.cssText='padding:8px;border-bottom:1px solid var(--line)';tr.appendChild(td);});table.appendChild(tr);});history.appendChild(table);
 }
+type.addEventListener('change',refreshItems);item.addEventListener('change',()=>{const x=readStock()[Number(item.value)];if(x)unit.value=type.value==='sale'?x.sale:x.cost;});
+add.addEventListener('click',()=>{
+const before=readStock(),i=Number(item.value),x=before[i],n=Number(qty.value),p=Number(unit.value),total=n*p,amount=Number(paid.value);
+if(!x||!date.value||!Number.isInteger(n)||n<=0||!Number.isFinite(p)||p<0||!Number.isFinite(total)||!Number.isFinite(amount)||amount<0||amount>total){status.textContent='تحقق من الصنف والتاريخ والكمية والسعر والمبلغ المدفوع.';return;}
+if((payment.value==='paid'&&amount!==total)||(payment.value==='unpaid'&&amount!==0)||(payment.value==='partial'&&(amount<=0||amount>=total))){status.textContent='المبلغ المدفوع لا يتوافق مع حالة الدفع المختارة.';return;}
+const updated=before.map(v=>({...v})),target=updated[i];
+if(type.value==='sale'&&target.qty<n){status.textContent='الرصيد غير كافٍ لإتمام البيع.';return;}
+if(type.value==='sale')target.qty-=n;else{const old=target.qty,newQty=old+n;target.cost=(old*Number(target.cost)+n*p)/newQty;target.qty=newQty;}
+if(!saveStock(updated)){status.textContent='تعذر تحديث المخزون.';return;}
+const rows=read();rows.push({id:'tx_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),type:type.value,date:date.value,item:x.name,party:party.value.trim().slice(0,80),qty:n,unitPrice:p,total,paid:amount,payment:payment.value,createdAt:new Date().toISOString()});
+if(!save(rows)){saveStock(before);status.textContent='تعذر حفظ العملية؛ أُعيد المخزون إلى حالته السابقة.';return;}
+status.textContent='حُفظت العملية وتم تحديث رصيد المخزون.';qty.value='';party.value='';paid.value='0';refreshItems();renderStock();draw();
+});
+refreshItems();draw();
+})();
+}
+
 
 function syrianizeSectionInterface(root){
   const replacements=[
