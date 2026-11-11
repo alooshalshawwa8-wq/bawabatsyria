@@ -47,6 +47,8 @@ jobs:
           if missing:
               raise SystemExit("Missing tables: " + ", ".join(sorted(missing)))
           print("D1 schema tables validated.")
+          PY
+      - name: Check e-commerce studio JavaScript
+        run: node --check ecommerce-studio.js
       - name: Run OFOQ portal contract tests
         run: python3 scripts/validate_ofoq.py
-          PY
