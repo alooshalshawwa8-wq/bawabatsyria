@@ -36,9 +36,10 @@ try {
   }
 
   await page.keyboard.press("Control+k");
-  await page.getByRole("dialog").waitFor({ state: "visible", timeout: 5000 });
+  const commandDialog = page.locator("#ofoq-command-overlay");
+  await commandDialog.waitFor({ state: "visible", timeout: 5000 });
   await page.keyboard.press("Escape");
-  await page.getByRole("dialog").waitFor({ state: "hidden", timeout: 5000 });
+  await commandDialog.waitFor({ state: "hidden", timeout: 5000 });
 
   await page.evaluate(async () => {
     const commerce = window.BAWABA_SECTIONS.find(item => item.id === "ecommerce_studio");
