@@ -235,7 +235,7 @@ const createCloudBackup=async()=>{
  }catch(e){setCloudStatus("تعذر إنشاء النسخة: "+(e.message||"تحقق من الاتصال والحساب."));}
 };
 const signOutCloud=async()=>{
- try{const s=readCloudSession();if(s&&s.access_token)await cloudAuth("/logout",{}).catch(()=>{});}
+ try{const s=readCloudSession();if(s&&s.access_token)await fetch(cloudBase+"/auth/v1/logout",{method:"POST",headers:{"apikey":cloudAnon,"Authorization":"Bearer "+s.access_token},cache:"no-store"}).catch(()=>{});}
  finally{clearCloudSession();cloudList.replaceChildren();updateCloudState();setCloudStatus("تم إنهاء الجلسة المحلية.");}
 };
 actions(cloudPanel,btn("تسجيل الدخول",signInCloud),btn("إنشاء حساب",signUpCloud),btn("إنشاء نسخة سحابية الآن",createCloudBackup),btn("تحديث قائمة النسخ",async()=>{try{await loadCloudBackups();setCloudStatus("تم تحديث قائمة النسخ.");}catch(e){setCloudStatus(e.message);}}),btn("تسجيل الخروج",signOutCloud,"oph-btn oph-danger"));
