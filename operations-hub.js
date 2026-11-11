@@ -133,7 +133,7 @@ backup.append(importFile);
 
 const cloudPanel=el("section","oph-cloud-panel");
 cloudPanel.style.cssText="margin-top:18px;padding:15px;border:1px solid #347b83;border-radius:15px;background:#081a29";
-cloudPanel.append(el("h3","","الخزنة السحابية الخاصة"),el("p","oph-note","نسخ احتياطي اختياري لحسابك فقط. لا توجد مزامنة تلقائية. استخدم بريدك وكلمة مرور حساب أُفُق، ثم اضغط إنشاء نسخة بنفسك. لا تُخزّن كلمة المرور في الموقع؛ تحفظ جلسة الدخول مؤقتاً في علامة التبويب."));
+cloudPanel.append(el("h3","","الخزنة السحابية الخاصة"),el("p","oph-note","نسخ احتياطي اختياري لحسابك فقط؛ يحتفظ النظام بآخر 20 نسخة لكل حساب. لا توجد مزامنة تلقائية. استخدم بريدك وكلمة مرور حساب أُفُق، ثم اضغط إنشاء نسخة بنفسك. لا تُخزّن كلمة المرور في الموقع؛ تحفظ جلسة الدخول مؤقتاً في علامة التبويب."));
 const authGrid=el("div","oph-grid");
 const cloudEmail=field(authGrid,"البريد الإلكتروني","cloud-email","email");
 cloudEmail.autocomplete="email";cloudEmail.inputMode="email";
