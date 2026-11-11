@@ -74,3 +74,21 @@ The updated source and test were fetched back from GitHub and their expected cod
 ## Inventory movement trigger hardening verification
 
 The `inventory_movement_apply` trigger invokes `private.apply_inventory_movement()`, a SECURITY DEFINER trigger function. Its definition uses an empty search_path, fully qualifies `public.inventory_items`, requires `auth.uid()` to equal the new movement's `user_id`, constrains the update to the same user's item, and rejects movements that would make quantity negative. Direct EXECUTE is false for `anon`, `authenticated`, and `service_role`; the `private` schema has no USAGE grant for `anon` or `authenticated`. The standard roles `anon` and `authenticated` also have neither superuser nor BYPASSRLS attributes. No database changes were needed for this trigger in this pass.
+
+## Double-entry accounting and local-ledger precision follow-up
+
+Read-only database verification confirmed:
+- `journal_entries` and `journal_lines` are owner-scoped with RLS.
+- Journal lines must be either a positive debit with zero credit or a positive credit with zero debit; negative values and zero-sided lines are rejected.
+- Composite foreign keys bind journal lines to an account and journal entry belonging to the same user.
+- A journal entry starts as `draft`; the `validate_journal_entry_status` trigger rejects posting unless at least two lines exist and debit equals credit with a positive total.
+- Once posted, an entry cannot be reopened or voided through the status-update path. Journal-line insert/update/delete policies permit changes only while the parent entry remains a draft.
+- `post_journal_entry(uuid)` is SECURITY INVOKER and locks the owner's draft row before checking balance and posting. No production ledger rows were inserted or modified during this audit.
+
+Local Operations Hub improvement:
+- The manual operations ledger now sets the amount input to a 0.01 step and accepts only positive values with at most two decimal places.
+- Sub-cent values are rejected with explicit feedback instead of being silently stored and displayed as rounded values.
+- Income and expense totals are summed in integer cents to avoid floating-point accumulation drift.
+- Browser smoke coverage now asserts that 125.567 is rejected without creating a ledger row, while 125.56 is accepted.
+
+The updated source and test files were fetched back from GitHub for marker verification. The browser suite has not been executed in this session, so no browser/CI pass is claimed.
