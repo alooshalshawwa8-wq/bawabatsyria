@@ -11,6 +11,7 @@ assistant = (ROOT / "supabase/functions/site-assistant/index.ts").read_text(enco
 worker = (ROOT / "service-worker.js").read_text(encoding="utf-8")
 ecommerce = (ROOT / "ecommerce-studio.js").read_text(encoding="utf-8")
 career = (ROOT / "career-studio.js").read_text(encoding="utf-8")
+operations = (ROOT / "operations-hub.js").read_text(encoding="utf-8")
 manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
 
 def require(condition, message):
@@ -98,6 +99,13 @@ for token in ("jobs", "freelance_vip", "ofc-studio", "ofoq_career_applications_v
     require(token in career, "career studio feature missing: " + token)
 require("fetch(" not in career and "XMLHttpRequest" not in career and "site-assistant" not in career, "career studio must remain local-first and API-free")
 require("./career-studio.js" in worker, "career studio missing from offline app shell")
+
+# Unified operations hub: local-first project, task, ledger and backup workspace.
+require("operations-hub.js" in html, "operations hub script not loaded by the portal")
+for token in ("ofoq_operations_hub_v1", "ofoq-operations-hub", "transactions", "projects", "tasks", "1024*1024", "persist"):
+    require(token in operations, "operations hub feature missing: " + token)
+require("fetch(" not in operations and "XMLHttpRequest" not in operations and "site-assistant" not in operations, "operations hub must remain local-first and API-free")
+require("./operations-hub.js" in worker and "ofoq-shell-v28" in worker, "operations hub missing from offline shell or cache not refreshed")
 
 # PWA and shell integrity.
 require((ROOT / "manifest.json").is_file(), "manifest missing")
