@@ -37,6 +37,11 @@ try {
     await workspace.waitFor({ state: "visible", timeout: 5000 });
     const workspaceTabs = workspace.getByRole("tab");
     if (await workspaceTabs.count() !== 3) throw new Error("Expected tools/tasks/notes workspace tabs for " + section.id);
+    for (const tabName of ["🗂️ خطة التنفيذ", "📝 ملاحظاتي", "🧰 أدوات القسم"]) {
+      const tab = workspace.getByRole("tab", { name: tabName });
+      await tab.click();
+      if (await tab.getAttribute("aria-selected") !== "true") throw new Error("Workspace tab failed for " + section.id + ": " + tabName);
+    }
     const aiHelper = page.locator("#specialTool .ai-helper");
     await aiHelper.waitFor({ state: "visible", timeout: 5000 });
     const workspaceText = await page.locator("#specialTool").innerText();
