@@ -53,10 +53,28 @@ Deno.serve(async (request: Request) => {
 
   if (action === "fixtures") {
     endpoint = "fixtures";
-    const mode = url.searchParams.get("mode") === "live" ? "live" : "date";
+    const mode = url.searchParams.get("mode") ?? "date";
     if (mode === "live") {
       params.set("live", "all");
       ttl = 20_000;
+    } else if (mode === "season") {
+      const league = url.searchParams.get("league") ?? "";
+      const season = url.searchParams.get("season") ?? "";
+      const from = url.searchParams.get("from") ?? "";
+      const to = url.searchParams.get("to") ?? "";
+      const page = url.searchParams.get("page") ?? "1";
+      if (!/^\\d+$/.test(league) || !/^20\\d{2}$/.test(season) || !/^\\d+$/.test(page)) {
+        return reply({ error: "معرّف البطولة أو الموسم أو الصفحة غير صالح." }, 400);
+      }
+      if ((from && !validDate(from)) || (to && !validDate(to)) || (from && to && from > to)) {
+        return reply({ error: "نطاق التاريخ غير صالح." }, 400);
+      }
+      params.set("league", league);
+      params.set("season", season);
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
+      params.set("page", page);
+      ttl = 15 * 60_000;
     } else {
       const date = url.searchParams.get("date") ?? new Date().toISOString().slice(0, 10);
       if (!validDate(date)) return reply({ error: "صيغة التاريخ غير صحيحة. استخدم YYYY-MM-DD." }, 400);
@@ -64,6 +82,16 @@ Deno.serve(async (request: Request) => {
       ttl = 10 * 60_000;
     }
     params.set("timezone", "Asia/Damascus");
+  } else if (action === "teams") {
+    endpoint = "teams";
+    const league = url.searchParams.get("league") ?? "";
+    const season = url.searchParams.get("season") ?? "";
+    if (!/^\\d+$/.test(league) || !/^20\\d{2}$/.test(season)) {
+      return reply({ error: "معرّف البطولة أو الموسم غير صالح." }, 400);
+    }
+    params.set("league", league);
+    params.set("season", season);
+    ttl = 24 * 60 * 60_000;
   } else if (action === "leagues") {
     endpoint = "leagues";
     const search = (url.searchParams.get("search") ?? "").trim().slice(0, 60);
