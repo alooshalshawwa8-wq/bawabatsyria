@@ -107,6 +107,28 @@ for token in ("ofoq_operations_hub_v1", "ofoq-operations-hub", "transactions", "
 require("fetch(" not in operations and "XMLHttpRequest" not in operations and "site-assistant" not in operations, "operations hub must remain local-first and API-free")
 require("./operations-hub.js" in worker and "ofoq-shell-v28" in worker, "operations hub missing from offline shell or cache not refreshed")
 
+# Cross-tool local data adapters and non-destructive recovery archive.
+for token in (
+    "bawabatsyria_stock_v1",
+    "bawabatsyria_trade_ledger_v1",
+    "bawabatsyria_trade_expenses_v1",
+    "bawabatsyria_trade_settlements_v1",
+    "bawabatsyria_trade_invoice_numbers_v1",
+    "bawabatsyria_trade_parties_v1",
+    "ofoq_career_applications_v1",
+    "ofoq_ecommerce_scenarios_v1",
+    "sourceSnapshot",
+    "renderLinked",
+    "linkedSources",
+    "ofoq_operations_recovery_archive_v1",
+    "ofoq_operations_hub_recovery_v1",
+    "تحديث البيانات الآن",
+):
+    require(token in operations, "cross-tool sync or recovery feature missing: " + token)
+require('localStorage.setItem(ARCHIVE_KEY' in operations, "linked source archive must be stored separately")
+require('localStorage.setItem(RECOVERY_KEY' in operations, "safe pre-write recovery point missing")
+require("fetch(" not in operations and "XMLHttpRequest" not in operations, "cross-tool adapters must stay local-only")
+
 # PWA and shell integrity.
 require((ROOT / "manifest.json").is_file(), "manifest missing")
 require((ROOT / "service-worker.js").is_file(), "service worker missing")
