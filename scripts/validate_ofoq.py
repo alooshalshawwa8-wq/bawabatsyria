@@ -174,6 +174,10 @@ require("const mergedTransactionMap=new Map(current.concat(incoming)" in html an
 # Treasury cash, asset, obligation and reconciliation amounts use the same minor-unit rule.
 for token in ("const treasuryIsCent=v=>Number.isFinite(v)", "treasuryCents((Math.round(rows[i].paid*100)+Math.round(amount*100))/100)", "const difference=treasuryCents(actual-x.bookBalance)", "movementAmount.step='0.01'", "transferAmount.step='0.01'", "obligationPayAmount.step='0.01'", "الرصيد الفعلي الصحيح بمنزلتين عشريتين"):
     require(token in html, "treasury minor-unit precision contract missing: " + token)
+require("const moneyOk=v=>Number.isFinite(v)&&treasuryIsCent(v)" in html, "treasury backup imports must reject sub-cent monetary values")
+require("paidByObligation" in html and "مجموع دفعات الالتزام يتجاوز إجمالي المبلغ المدفوع" in html, "treasury backup imports must reject overpaid obligations")
+require("treasuryCents(Number(account.opening||0)+moves.reduce" in html, "treasury reconciliation book balances must be rounded to cents")
+require("overpaid-treasury-backup.json" in (ROOT / "tests/browser-smoke.mjs").read_text(encoding="utf-8"), "browser suite must reject overpaid treasury backups")
 
 for token in ("unit.step='0.01'", "paid.step='0.01'", "expenseAmount.step='0.01'", "expensePaid.step='0.01'", "settlementAmount.step='0.01'", "Math.round(n*Math.round(p*100))/100", "Math.round(rawAmount*100)/100", "const nextPaid=Math.round("):
     require(token in html, "trade/accounting cent precision contract missing: " + token)
