@@ -125,6 +125,11 @@ try {
   await merchant.locator("#ofoq-ecom-order-qty").fill("6");
   await merchant.getByRole("button", { name: "إضافة طلب" }).click();
   await merchant.getByText(/الكمية تتجاوز المتاح/).waitFor({ state: "visible" });
+  await merchant.getByLabel("حالة الطلب OFOQ-BROWSER-001").selectOption("delivered");
+  await merchant.locator("#ofoq-ecom-order-no").fill("OFOQ-BROWSER-003");
+  await merchant.locator("#ofoq-ecom-order-qty").fill("6");
+  await merchant.getByRole("button", { name: "إضافة طلب" }).click();
+  await merchant.getByText(/الكمية تتجاوز المتاح/).waitFor({ state: "visible" });
   await merchant.getByLabel("حالة الطلب OFOQ-BROWSER-001").selectOption("processing");
   const commerceBackup = await page.evaluate(() => ({
     app: "ofoq-ecommerce-commerce",
