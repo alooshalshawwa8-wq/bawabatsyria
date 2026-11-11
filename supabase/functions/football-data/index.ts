@@ -178,7 +178,7 @@ function requiredFootballFeature(action: string, url: URL): string | null {
   if (["scorers","assists","yellow_cards","red_cards"].includes(dataset)) return "scorers_assists_cards";
   if (["fixture_events","fixture_lineups"].includes(dataset)) return "match_lineups_events";
   if (["fixture_stats","team_stats","odds","odds_live","odds_bets","bookmakers","odds_mapping"].includes(dataset)) return "advanced_match_stats";
-  if (["fixture_players","players","player_seasons","squads","coaches","transfers","sidelined"].includes(dataset)) return "player_profiles_ratings";
+  if (["fixture_players","players","player_seasons","squads","coaches","transfers","sidelined","trophies"].includes(dataset)) return "player_profiles_ratings";
   if (["injuries","predictions"].includes(dataset)) return "injuries_predictions";
   if (dataset === "headtohead") return "head_to_head_history";
   if (["team_list","team_countries","team_seasons","venues"].includes(dataset)) return "basic_team_pages";
@@ -647,6 +647,7 @@ Deno.serve(async (request: Request) => {
       assists: { path: "players/topassists", keys: ["league","season"], ttl: 21600000 },
       yellow_cards: { path: "players/topyellowcards", keys: ["league","season"], ttl: 21600000 },
       red_cards: { path: "players/topredcards", keys: ["league","season"], ttl: 21600000 },
+      trophies: { path: "trophies", keys: ["player","coach"], ttl: 86400000 },
       headtohead: { path: "fixtures/headtohead", keys: ["h2h","date","league","season","last","next","from","to","status","venue","timezone"], ttl: 3600000 },
       venues: { path: "venues", keys: ["id","name","city","country","search"], ttl: 86400000 },
       team_stats: { path: "teams/statistics", keys: ["league","season","team","date"], ttl: 43200000 },
@@ -682,6 +683,7 @@ Deno.serve(async (request: Request) => {
     if (["standings","scorers","assists","yellow_cards","red_cards","rounds"].includes(dataset) && (!params.has("league") || !params.has("season"))) {
       return reply({ error: "يتطلب هذا القسم league و season، مثال league=39&season=2025." }, 400);
     }
+    if (dataset === "trophies" && !((params.has("player") && /^\\d+$/.test(params.get("player")!)) || (params.has("coach") && /^\\d+$/.test(params.get("coach")!)))) return reply({ error: "سجل البطولات يتطلب player=رقم اللاعب أو coach=رقم المدرب." }, 400);
     if (dataset === "team_stats" && (!params.has("team") || !params.has("league") || !params.has("season"))) {
       return reply({ error: "إحصاءات الفريق تتطلب team و league و season." }, 400);
     }
@@ -689,7 +691,7 @@ Deno.serve(async (request: Request) => {
     if (dataset === "team_list" && !params.has("team") && !params.has("id") && !params.has("league") && !params.has("search") && !params.has("country") && !params.has("name") && !params.has("venue")) {
       return reply({ error: "أدخل مُعرّفاً أو معيار بحث صالحاً لهذا القسم." }, 400);
     }
-    if (["players","player_seasons","squads","coaches","transfers","sidelined","injuries","venues","odds_bets","bookmakers"].includes(dataset) && params.size === 0) {
+    if (["players","player_seasons","squads","coaches","transfers","sidelined","injuries","venues","odds_bets","bookmakers","trophies"].includes(dataset) && params.size === 0) {
       return reply({ error: "أدخل معيار بحث واحداً على الأقل لهذا القسم." }, 400);
     }
     if (["fixture_events","fixture_lineups","fixture_stats","fixture_players","predictions","headtohead"].includes(dataset) && !params.has("fixture") && !params.has("h2h")) {
