@@ -986,6 +986,7 @@ function renderFootballModule(tool){
     const box=$('fbArchiveFixtures');
     const now=new Date();
     const selected=archiveSeasons.find(item=>Number(item.year)===Number(season));
+    renderArchiveHistory(selected);
     const isCurrent=Boolean(selected?.current);
     const from=isCurrent?new Date(now.getTime()-7*86400000).toISOString().slice(0,10):(selected?.start||'');
     const toDate=isCurrent?new Date(now.getTime()+60*86400000).toISOString().slice(0,10):(selected?.end||'');
