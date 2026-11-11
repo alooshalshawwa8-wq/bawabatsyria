@@ -877,6 +877,9 @@ function renderFootballModule(tool){
       const endpoints=Array.isArray(u.by_endpoint)?u.by_endpoint:[];
       if(!endpoints.length)list.appendChild(node('div','لم تُسجّل طلبات مباشرة للمزود بعد؛ الطلبات التي تأتي من الكاش لا تخصم من الحصة.','fb-note'));
       endpoints.forEach(item=>{const row=node('div',undefined,'fb-row');row.append(node('span',String(item.endpoint)),node('strong',Number(item.requests||0).toLocaleString('ar')+' طلب · '+Number(item.failures||0).toLocaleString('ar')+' تعثر'));list.appendChild(row);});
+      const usedPercent=b.dailyLimit?Number(b.usedToday||0)/Number(b.dailyLimit)*100:0;
+      const quotaMessage=usedPercent>=90?'حرج: تجاوز الاستهلاك 90% من الميزانية اليومية. الحارس سيمنع تجاوز السقف.':usedPercent>=75?'تحذير: وصل الاستهلاك إلى 75% أو أكثر من الميزانية اليومية. راقب الطلبات غير الضرورية.':'مستقر: الاستهلاك دون عتبة التحذير اليومية.';
+      list.appendChild(node('div',quotaMessage+' ('+usedPercent.toFixed(1)+'%)','notice'));
       const buckets=b.buckets||{},targets=b.bucketTargets||{};
       [['البيانات الأساسية','core'],['المباشر','live'],['الاحتياطي','emergency']].forEach(([label,key])=>{
         const row=node('div',undefined,'fb-row');
