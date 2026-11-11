@@ -1,5 +1,5 @@
-const CACHE_NAME = "ofoq-shell-v25";
-const APP_FILES = ["./", "./index.html", "./manifest.json", "./ecommerce-studio.js"];
+const CACHE_NAME = "ofoq-shell-v26";
+const APP_FILES = ["./", "./index.html", "./manifest.json", "./ecommerce-studio.js", "./career-studio.js"];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_FILES)));
