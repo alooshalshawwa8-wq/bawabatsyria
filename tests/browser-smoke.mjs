@@ -181,10 +181,15 @@ try {
   await hub.getByText("OFOQ task smoke test").waitFor({ state: "visible" });
 
   await hub.getByRole("tab", { name: "＄ الدفتر المالي" }).click();
-  await hub.getByLabel("المبلغ").fill("125");
+  const amountInput = hub.getByLabel("المبلغ");
+  await amountInput.fill("125.567");
   await hub.getByLabel("التصنيف").fill("اختبار");
   await hub.getByRole("button", { name: "تسجيل الحركة" }).click();
-  await hub.getByText("125").first().waitFor({ state: "visible" });
+  await hub.getByText(/المبلغ يجب ألا يتجاوز منزلتين عشريتين/).waitFor({ state: "visible" });
+  if (await hub.locator(".oph-item").filter({ hasText: "إيراد +" }).count() !== 0) throw new Error("Sub-cent amount was incorrectly recorded");
+  await amountInput.fill("125.56");
+  await hub.getByRole("button", { name: "تسجيل الحركة" }).click();
+  await hub.getByText("125.56").first().waitFor({ state: "visible" });
 
   await hub.getByRole("tab", { name: "⇄ البيانات المرتبطة" }).click();
   await hub.getByRole("button", { name: "تحديث البيانات الآن" }).click();
