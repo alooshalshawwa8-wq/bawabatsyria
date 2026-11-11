@@ -2366,16 +2366,34 @@ const add=document.createElement('button');add.type='button';add.className='btn'
 const status=document.createElement('p');status.className='notice';status.setAttribute('aria-live','polite');
 const summary=document.createElement('div');summary.className='notice';
 const history=document.createElement('div');history.style.cssText='overflow-x:auto;margin-top:12px';
+
+const finance=document.createElement('section');finance.style.cssText='margin-top:18px;padding:15px;border:1px solid var(--line);border-radius:13px;background:rgba(4,18,31,.7)';
+const financeTitle=document.createElement('h4');financeTitle.textContent='لوحة المؤشرات المالية';financeTitle.style.color='var(--gold2)';
+const financeNote=document.createElement('p');financeNote.textContent='ملخص الفترة المختارة مع تقييم المخزون. الأرباح الإجمالية تقديرية للعمليات التي تحتوي تكلفة موثقة وقت البيع فقط.';financeNote.style.cssText='font-size:12px;color:var(--muted);line-height:1.7';
+const period=document.createElement('input');period.type='month';period.value=new Date().toISOString().slice(0,7);period.setAttribute('aria-label','الشهر المالي');
+period.style.cssText='padding:9px;border:1px solid var(--line);border-radius:8px;background:#071726;color:white;margin:5px 0 12px';
+const metrics=document.createElement('div');metrics.className='calc';
+finance.append(financeTitle,financeNote,period,metrics);
+
 const backupRow=document.createElement('div');backupRow.className='calc';backupRow.style.marginTop='10px';
 const exportLedger=document.createElement('button');exportLedger.type='button';exportLedger.className='btn secondary';exportLedger.textContent='تنزيل نسخة دفتر العمليات';
 const importLedger=document.createElement('button');importLedger.type='button';importLedger.className='btn secondary';importLedger.textContent='استيراد دفتر عمليات';
 const ledgerFile=document.createElement('input');ledgerFile.type='file';ledgerFile.accept='application/json,.json';ledgerFile.hidden=true;
 backupRow.append(exportLedger,importLedger,ledgerFile);
-box.append(h,note,form,add,status,summary,history);box.appendChild(backupRow);tool.appendChild(box);
+box.append(h,note,form,add,status,summary,finance,history);box.appendChild(backupRow);tool.appendChild(box);
 const fmt=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits:2});
 function refreshItems(){const old=item.value;item.replaceChildren();readStock().forEach((x,i)=>{const o=document.createElement('option');o.value=String(i);o.textContent=x.name+' · '+x.qty;item.appendChild(o);});if(old!==''&&Number(old)<item.options.length)item.value=old;const x=readStock()[Number(item.value)];if(x)unit.value=type.value==='sale'?x.sale:x.cost;}
 function draw(){
 const rows=read(),sales=rows.filter(x=>x.type==='sale'),purchases=rows.filter(x=>x.type==='purchase'),revenue=sales.reduce((n,x)=>n+x.total,0),buy=purchases.reduce((n,x)=>n+x.total,0),due=rows.reduce((n,x)=>n+Math.max(0,x.total-x.paid),0);
+const month=period.value||new Date().toISOString().slice(0,7),scoped=rows.filter(x=>String(x.date||'').slice(0,7)===month),monthSales=scoped.filter(x=>x.type==='sale'),monthPurchases=scoped.filter(x=>x.type==='purchase');
+const sum=(arr,field)=>arr.reduce((n,x)=>n+Number(x[field]||0),0),stock=readStock(),stockCost=stock.reduce((n,x)=>n+Number(x.qty||0)*Number(x.cost||0),0),stockRetail=stock.reduce((n,x)=>n+Number(x.qty||0)*Number(x.sale||0),0);
+const collected=sum(monthSales,'paid'),paidPurchases=sum(monthPurchases,'paid'),receivable=monthSales.reduce((n,x)=>n+Math.max(0,x.total-x.paid),0),payable=monthPurchases.reduce((n,x)=>n+Math.max(0,x.total-x.paid),0);
+const knownProfit=monthSales.filter(x=>Number.isFinite(x.costAtSale)).reduce((n,x)=>n+(Number(x.unitPrice)-x.costAtSale)*x.qty,0),knownCount=monthSales.filter(x=>Number.isFinite(x.costAtSale)).length;
+metrics.replaceChildren();
+[['مبيعات الشهر',fmt(sum(monthSales,'total'))],['مشتريات الشهر',fmt(sum(monthPurchases,'total'))],['المقبوض من المبيعات',fmt(collected)],['المدفوع للموردين',fmt(paidPurchases)],['ذمم العملاء',fmt(receivable)],['ذمم الموردين',fmt(payable)],['قيمة المخزون بالتكلفة',fmt(stockCost)],['قيمة المخزون بسعر البيع',fmt(stockRetail)],['الربح الإجمالي المعروف',knownCount?fmt(knownProfit):'لا تتوفر تكلفة البيع بعد']];
+metrics.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:9px';
+[['مبيعات الشهر',fmt(sum(monthSales,'total'))],['مشتريات الشهر',fmt(sum(monthPurchases,'total'))],['المقبوض من المبيعات',fmt(collected)],['المدفوع للموردين',fmt(paidPurchases)],['ذمم العملاء',fmt(receivable)],['ذمم الموردين',fmt(payable)],['قيمة المخزون بالتكلفة',fmt(stockCost)],['قيمة المخزون بسعر البيع',fmt(stockRetail)],['الربح الإجمالي المعروف',knownCount?fmt(knownProfit):'لا تتوفر تكلفة البيع بعد']].forEach(([label,value])=>{const card=document.createElement('div');card.style.cssText='padding:10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.035)';const l=document.createElement('div');l.textContent=label;l.style.cssText='font-size:11px;color:var(--muted);margin-bottom:7px';const v=document.createElement('strong');v.textContent=value;v.style.cssText='font-size:15px;color:var(--gold2);overflow-wrap:anywhere';card.append(l,v);metrics.appendChild(card);});
+const caveat=document.createElement('p');caveat.textContent='الربح الإجمالي المعروف محسوب للعمليات الجديدة التي سُجلت معها تكلفة الصنف وقت البيع؛ العمليات القديمة لا تتضمن هذه المعلومة. لا يشمل الملخص المصاريف العامة أو الضرائب أو السحوبات.';caveat.style.cssText='font-size:11px;color:var(--muted);line-height:1.7;margin-top:10px';metrics.appendChild(caveat);
 summary.textContent='المبيعات: '+fmt(revenue)+' · المشتريات: '+fmt(buy)+' · المتبقي على العمليات المسجلة: '+fmt(due)+' · عدد العمليات: '+rows.length+'. هذه أرقام دفترية وليست كشفاً بنكياً.';
 history.replaceChildren();if(!rows.length){history.textContent='لا توجد عمليات مسجلة بعد.';return;}
 const table=document.createElement('table');table.style.cssText='width:100%;min-width:700px;border-collapse:collapse;font-size:12px';const trh=document.createElement('tr');
@@ -2394,10 +2412,11 @@ const updated=before.map(v=>({...v})),target=updated[i];
 if(type.value==='sale'&&target.qty<n){status.textContent='الرصيد غير كافٍ لإتمام البيع.';return;}
 if(type.value==='sale')target.qty-=n;else{const old=target.qty,newQty=old+n;target.cost=(old*Number(target.cost)+n*p)/newQty;target.qty=newQty;}
 if(!saveStock(updated)){status.textContent='تعذر تحديث المخزون.';return;}
-const rows=read();rows.push({id:'tx_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),type:type.value,date:date.value,item:x.name,party:party.value.trim().slice(0,80),qty:n,unitPrice:p,total,paid:amount,payment:payment.value,createdAt:new Date().toISOString()});
+const rows=read();rows.push({id:'tx_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),type:type.value,date:date.value,item:x.name,party:party.value.trim().slice(0,80),qty:n,unitPrice:p,costAtSale:type.value==='sale'?Number(x.cost):null,total,paid:amount,payment:payment.value,createdAt:new Date().toISOString()});
 if(!save(rows)){saveStock(before);status.textContent='تعذر حفظ العملية؛ أُعيد المخزون إلى حالته السابقة.';return;}
 status.textContent='حُفظت العملية وتم تحديث رصيد المخزون.';qty.value='';party.value='';paid.value='0';refreshItems();renderStock();draw();
 });
+period.addEventListener('change',draw);
 refreshItems();draw();
 })();
 }
