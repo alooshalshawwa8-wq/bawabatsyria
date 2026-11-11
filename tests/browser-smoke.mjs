@@ -3,7 +3,7 @@ import { chromium } from "playwright";
 const baseUrl = process.env.OFOQ_BASE_URL || "https://alooshalshawwa8-wq.github.io/bawabatsyria/";
 const failures = [];
 const browser = await chromium.launch({ headless: true });
-const context = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
+const context = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1440, height: 1000 }, acceptDownloads: true, reducedMotion: "reduce" });
 const page = await context.newPage();
 const pageErrors = [];
 const externalRequests = [];
@@ -18,6 +18,9 @@ await page.route("**/*", route => {
 
 try {
   await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
+  // Keep browser automation deterministic: the portal intentionally uses smooth page transitions.
+  // Disable motion only in this test context so controls can be checked without racing animations.
+  await page.addStyleTag({ content: "html{scroll-behavior:auto!important}*,*::before,*::after{animation:none!important;transition:none!important}" });
   const welcomeSkip = page.locator("#bawaba-welcome-skip");
   if (await welcomeSkip.isVisible().catch(() => false)) await welcomeSkip.click();
   await page.waitForFunction(() => Array.isArray(window.BAWABA_SECTIONS) && typeof window.openSection === "function", null, { timeout: 30000 });
@@ -90,11 +93,7 @@ try {
     return chain;
   });
   if (!favoriteVisibleBeforeScroll) throw new Error("Current-section favorite action is hidden before scrolling: " + JSON.stringify(favoriteState));
-  // Earlier section opens use smooth scrolling; stop any in-flight scroll before the
-  // favorite interaction so Playwright does not mistake the moving viewport for a hidden control.
-  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
-  await favoriteCurrent.evaluate(element => element.scrollIntoView({ block: "center", inline: "nearest", behavior: "instant" }));
-  await page.waitForTimeout(150);
+  await favoriteCurrent.scrollIntoViewIfNeeded({ timeout: 10000 });
   const lastVisitedTitle = (await page.locator("#detailTitle").innerText()).trim();
   await favoriteCurrent.click({ timeout: 10000 });
   if (await favoriteCurrent.getAttribute("aria-pressed") !== "true") throw new Error("Favorite toggle did not activate");
