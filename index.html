@@ -2969,7 +2969,7 @@ renderSectionWorkspace(sec,tool);
 syrianizeSectionInterface(tool);
 appendFreeAIHelper(sec,tool);
 panel.classList.add('open');const reduceMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true;panel.scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'start'});}
-function showHome(){document.body.classList.remove('section-mode');const detail=document.getElementById('detailPanel');if(detail)detail.classList.remove('open');const member=document.getElementById('membershipPanel');if(member)member.classList.remove('open');window.scrollTo({top:0,behavior:'smooth'});const search=document.getElementById('searchInput');if(search)search.blur();}
+function showHome(){document.body.classList.remove('section-mode');const detail=document.getElementById('detailPanel');if(detail)detail.classList.remove('open');const member=document.getElementById('membershipPanel');if(member)member.classList.remove('open');window.scrollTo({top:0,behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});const search=document.getElementById('searchInput');if(search)search.blur();}
 function doSearch(){const q=document.getElementById('searchInput').value.trim().toLocaleLowerCase('ar');if(!q){render(sections);return;}const titleMatches=sections.filter(s=>s.title.toLocaleLowerCase('ar').includes(q));render(titleMatches.length?titleMatches:sections.filter(s=>s.desc.toLocaleLowerCase('ar').includes(q)));}
 document.getElementById('searchBtn').addEventListener('click',doSearch);document.getElementById('searchInput').addEventListener('input',doSearch);const homeButton=document.getElementById('homeBtn');const backButton=document.getElementById('backBtn');if(homeButton)homeButton.onclick=showHome;if(backButton)backButton.onclick=showHome;
 const membershipPanel=document.getElementById('membershipPanel');
@@ -3347,7 +3347,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
 </style>
 <script id="ofoq-final-navigation">
 (function(){
-  const home=()=>{if(typeof window.showHome==='function')window.showHome();else{document.body.classList.remove('section-mode');document.getElementById('detailPanel')?.classList.remove('open');document.getElementById('membershipPanel')?.classList.remove('open');window.scrollTo({top:0,behavior:'smooth'});}};
+  const home=()=>{if(typeof window.showHome==='function')window.showHome();else{document.body.classList.remove('section-mode');document.getElementById('detailPanel')?.classList.remove('open');document.getElementById('membershipPanel')?.classList.remove('open');window.scrollTo({top:0,behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}};
   window.ofoqShowHome=home;
   const homeButton=document.getElementById('homeBtn');
   const backButton=document.getElementById('backBtn');
@@ -3361,14 +3361,19 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
     const wrapped=async function(section){
       history.pushState({ofoqSection:section.id},'',location.pathname+location.search+'#'+encodeURIComponent(section.id));
       await originalOpen(section);
-      window.scrollTo({top:0,behavior:'smooth'});
+      window.scrollTo({top:0,behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
     };
     wrapped.__ofoqHistoryWrapped=true;
     window.openSection=wrapped;
   }
   window.addEventListener('popstate',()=>{if(document.body.classList.contains('section-mode'))home();});
-  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.body.classList.contains('section-mode'))home();});
-  document.querySelectorAll('[data-open-section]').forEach(link=>link.addEventListener('click',()=>{setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),0);}));
+  document.addEventListener('keydown',event=>{
+    if(event.key!=='Escape'||!document.body.classList.contains('section-mode'))return;
+    const commandOverlay=document.getElementById('ofoq-command-overlay');
+    if(commandOverlay&&!commandOverlay.hidden)return;
+    home();
+  });
+  document.querySelectorAll('[data-open-section]').forEach(link=>link.addEventListener('click',()=>{setTimeout(()=>window.scrollTo({top:0,behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'}),0);}));
 })();
 </script>
 
