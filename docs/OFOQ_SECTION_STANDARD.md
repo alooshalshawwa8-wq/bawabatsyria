@@ -158,3 +158,5 @@ All inventory data remains in browser localStorage on the current device. No API
 - Treasury movements are deliberately not auto-posted from the sales ledger to avoid duplicate cash entries. Users should record a cash movement once when reconciling actual receipts/payments. The treasury is browser-local and is not cloud-synced or tested in a live browser.
 
 - Added internal account transfers as paired outflow/inflow movements sharing a transfer ID, so account-level balances move without changing total treasury cash.
+
+- Treasury refinement: dashboard now flags overdue obligations and those due within 30 days. Treasury backup import validates dates, account/obligation references, record IDs, allowed account types, and field bounds before merging.
