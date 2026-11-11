@@ -63,10 +63,16 @@ try {
   await page.locator("#ofoq-launcher").focus();
   await page.keyboard.press("Escape");
   await commandDialog.waitFor({ state: "hidden", timeout: 5000 });
+  if (!(await page.locator("#detailPanel").evaluate(element => element.classList.contains("open")))) {
+    throw new Error("Escape closed the active section instead of only closing the command center");
+  }
   await page.keyboard.press("Control+k");
   await commandDialog.waitFor({ state: "visible", timeout: 5000 });
   await page.keyboard.press("Escape");
   await commandDialog.waitFor({ state: "hidden", timeout: 5000 });
+  if (!(await page.locator("#detailPanel").evaluate(element => element.classList.contains("open")))) {
+    throw new Error("Escape closed the active section instead of only closing the command center");
+  }
 
   const personalSpace = page.locator("#ofoq-personal-space");
   await personalSpace.waitFor({ state: "visible", timeout: 5000 });
