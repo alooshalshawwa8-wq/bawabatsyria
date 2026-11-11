@@ -16,7 +16,7 @@ Safety: this audit did not call API-Football or consume provider quota.
 
 ## High-cost path identified
 
-The `studio` action starts from a fixture lookup and, on a cold cache, fans out to as many as 17 additional datasets in parallel: events, lineups, players, statistics, predictions, injuries, head-to-head, home/away team statistics, home/away recent fixtures, standings, odds, league coverage and both team records. The budget reservation is performed per provider cache miss, so the global budget guard can deny excess calls; nevertheless, one studio open can consume a material portion of the configured daily budget when many cache keys are cold.
+The `studio` action starts from a fixture lookup and, on a cold cache, fans out to 16 additional datasets in parallel (17 total endpoints including the initial fixture lookup): events, lineups, players, statistics, predictions, injuries, head-to-head, home/away team statistics, home/away recent fixtures, standings, odds, league coverage and both team records. The budget reservation is performed per provider cache miss, so the global budget guard can deny excess calls; nevertheless, one studio open can consume a material portion of the configured daily budget when many cache keys are cold.
 
 ## Follow-up hardening priorities
 
@@ -49,3 +49,8 @@ Read-only inspection of project `elzquyehghuxhswogsch` confirmed:
 ## Updated conclusion
 
 The central football quota guard is materially stronger than a simple per-instance throttle: reservations are serialized in the database, provider blocking is authoritative, and the hard daily/minute caps fail closed. The currently observed `provider_blocked=true` state must be preserved until the owner explicitly authorizes re-enabling provider traffic after reviewing the provider account and quota. Do not run live football tests while this flag is true.
+
+
+## Exact studio fan-out correction
+
+A line-by-line review of the current `studio` branch confirms 16 parallel secondary datasets after the initial fixture lookup (17 endpoint datasets in total, not 17 additional calls). The full report is cached in memory and in the persistent cache with a 60-second TTL for live matches, 6 hours for completed matches, and 15 minutes for other statuses. The initial fixture lookup also has a status-sensitive persistent TTL. The browser's coverage indicator uses the 17-endpoint total.
