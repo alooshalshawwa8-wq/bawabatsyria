@@ -160,3 +160,13 @@ All inventory data remains in browser localStorage on the current device. No API
 - Added internal account transfers as paired outflow/inflow movements sharing a transfer ID, so account-level balances move without changing total treasury cash.
 
 - Treasury refinement: dashboard now flags overdue obligations and those due within 30 days. Treasury backup import validates dates, account/obligation references, record IDs, allowed account types, and field bounds before merging.
+
+
+## Account and cash reconciliation — 2026-11-11
+
+- Added a reconciliation workspace for each cash/bank/wallet account with a statement date and externally observed actual balance.
+- The book balance is calculated from the account opening balance plus/minus dated treasury movements through the selected statement date; the difference is actual minus book balance, with an immediate preview.
+- Saved reconciliation snapshots locally with account, date, book balance, actual balance, difference and optional statement reference.
+- Added per-account printable statement output and CSV export, including the dated movements used in the calculation.
+- Upgraded the separate treasury backup format to version 2 to include reconciliation history. Import remains compatible with version 1, validates account references and numeric/date fields, merges by ID, and attempts rollback if local storage writes fail.
+- This is a manual reconciliation tool: it does not connect to banks, fetch statements, automatically create adjustment entries, or change the underlying ledger. Users must compare against a reliable physical cash count or official bank statement. No live-browser or deployment test is claimed.
