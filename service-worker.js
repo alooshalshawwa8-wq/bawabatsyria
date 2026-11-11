@@ -1,4 +1,4 @@
-const CACHE_NAME = "ofoq-shell-v26";
+const CACHE_NAME = "ofoq-shell-v27";
 const APP_FILES = ["./", "./index.html", "./manifest.json", "./ecommerce-studio.js", "./career-studio.js"];
 
 self.addEventListener("install", event => {
