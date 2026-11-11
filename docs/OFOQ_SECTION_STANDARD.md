@@ -262,3 +262,5 @@ All inventory data remains in browser localStorage on the current device. No API
 - Merchant safety refinement: catalogue records can be edited; non-cancelled orders reserve the entered stock quantity for validation, and an order that would exceed the recorded available stock is rejected. Cancelled orders release that reservation. Stock is still not auto-decremented, preserving manual reconciliation with the accounting inventory ledger. PWA cache advanced to v33.
 
 - Cloud restore validation now checks optional product and order snapshots (record shapes, statuses and 500/1,000 row limits) before archiving them. The backup panel explicitly lists these merchant records; PWA cache advanced to v34.
+
+- Operations Hub overview now surfaces merchant product count, order count and the total value of non-cancelled locally recorded orders, clearly distinguished from confirmed payments. PWA cache advanced to v36.
