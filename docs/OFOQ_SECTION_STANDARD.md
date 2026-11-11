@@ -222,3 +222,13 @@ All inventory data remains in browser localStorage on the current device. No API
 - Restore is local-only; no merchant data is uploaded or sent to an API.
 - Extended the portal contract test to require the restore workflow and its file-size guard.
 - Bumped the service-worker shell cache to `ofoq-shell-v27` so installed clients refresh the updated module.
+
+
+## 2026-11-11 — Unified operations command hub
+
+- Added `operations-hub.js`, mounted in the Business and Startup Lab sections after their existing section renderers.
+- Provides a local dashboard, project register (up to 100), task tracker (up to 300), and income/expense register (up to 500), with completion/deletion controls and summary totals.
+- Added JSON export/import with a 1 MB file limit, schema/version checks, record-count and value validation, and explicit confirmation before replacing current local data.
+- Added quick navigation to the e-commerce, accounting, jobs, freelance, trading academy and personal-finance workspaces. This is navigation, not an automatic data sync; its dashboard metrics reflect only records entered in the hub.
+- No network requests, Gemini calls, API provider usage, analytics, or server storage are used. Data remains in browser localStorage; users should export backups before clearing browser data or changing devices.
+- Added CI syntax checking and contract assertions; included the module in the offline shell and advanced its cache to `ofoq-shell-v28`.
