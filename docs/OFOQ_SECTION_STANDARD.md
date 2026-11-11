@@ -213,3 +213,12 @@ All inventory data remains in browser localStorage on the current device. No API
 - Application records are stored locally (up to 100 entries) and can be exported by the user. No network requests, AI calls, third-party analytics, or provider quotas are used by this module.
 - Added the script to the PWA offline app shell and advanced the cache version to v26. Both CI workflows now syntax-check the module; the contract suite verifies both career sections, core features, API-free operation and offline-shell inclusion.
 - Automated checks verify source structure only; actual interaction, clipboard permissions and mobile layout still require browser/device testing.
+
+
+## 2026-11-11 — Merchant workspace backup and restore
+
+- Added validated JSON restore for saved e-commerce pricing scenarios, complementing the existing export action.
+- Restore accepts only the expected app/version envelope, limits files to 500 KB, filters malformed or out-of-range values, merges with existing scenarios, and retains the newest 40 entries.
+- Restore is local-only; no merchant data is uploaded or sent to an API.
+- Extended the portal contract test to require the restore workflow and its file-size guard.
+- Bumped the service-worker shell cache to `ofoq-shell-v27` so installed clients refresh the updated module.
