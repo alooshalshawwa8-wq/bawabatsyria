@@ -3678,7 +3678,7 @@ if(typeof oldHome==='function'&&!oldHome.__ofoqFadeWrapped){
     const input=document.createElement("textarea");input.rows=4;input.maxLength=1200;input.placeholder="اكتب سؤالك أو هدفك في "+sec.title+"…";input.setAttribute("aria-label","المهمة الموجهة لمساعد أفق الذكي");input.style.cssText="width:100%;resize:vertical;background:#071726;color:#fff;border:1px solid #365b70;border-radius:10px;padding:12px;line-height:1.8";
     const meter=document.createElement("div");meter.className="ofoq-ai-meter";meter.textContent="0 / 1200";
     input.addEventListener("input",()=>meter.textContent=input.value.length+" / 1200");
-    missions.forEach(([label,instruction])=>{const b=document.createElement("button");b.type="button";b.textContent=label;b.addEventListener("click",()=>{input.value="المهمة: "+instruction+"\\n\\nالمجال: "+sec.title+"\\n\\nالمطلوب: ";input.focus();meter.textContent=input.value.length+" / 1200";});missionBar.appendChild(b);});
+    missions.forEach(([label,instruction])=>{const b=document.createElement("button");b.type="button";b.textContent=label;b.addEventListener("click",()=>{input.value="المهمة: "+instruction+"\n\nالمجال: "+sec.title+"\n\nالمطلوب: ";input.focus();meter.textContent=input.value.length+" / 1200";});missionBar.appendChild(b);});
     const actions=document.createElement("div");actions.style.cssText="display:flex;gap:9px;flex-wrap:wrap;margin-top:10px";
     const send=document.createElement("button");send.type="button";send.className="btn";send.textContent="نفّذ المهمة مع Gemini";
     const clear=document.createElement("button");clear.type="button";clear.className="btn secondary";clear.textContent="محادثة جديدة";
@@ -3705,7 +3705,7 @@ if(typeof oldHome==='function'&&!oldHome.__ofoqFadeWrapped){
     });
     clear.addEventListener("click",()=>{history.length=0;log.replaceChildren();lastAnswer="";copyLast.disabled=true;status.textContent="بدأت محادثة جديدة؛ سُياق هذه الجلسة أزيل من الواجهة. لم يتم إرسال أي طلب.";});
     copyLast.addEventListener("click",async()=>{if(!lastAnswer)return;try{await navigator.clipboard.writeText(lastAnswer);status.textContent="تم نسخ آخر إجابة.";}catch(_){status.textContent="تعذر النسخ التلقائي على هذا الجهاز؛ حدّد نص الإجابة وانسخه يدوياً.";}});
-    exportChat.addEventListener("click",()=>{if(!history.length){status.textContent="لا توجد محادثة لتصديرها بعد.";return;}const transcript=history.map(m=>(m.role==="user"?"أنت":"نَبْراس")+":\\n"+m.content).join("\\n\\n");downloadText("ofoq-"+sec.id+"-ai-session.txt","أُفُق | "+sec.title+"\\n\\n"+transcript);status.textContent="تم تجهيز ملف المحادثة للتنزيل."});
+    exportChat.addEventListener("click",()=>{if(!history.length){status.textContent="لا توجد محادثة لتصديرها بعد.";return;}const transcript=history.map(m=>(m.role==="user"?"أنت":"نَبْراس")+":\n"+m.content).join("\n\n");downloadText("ofoq-"+sec.id+"-ai-session.txt","أُفُق | "+sec.title+"\n\n"+transcript);status.textContent="تم تجهيز ملف المحادثة للتنزيل."});
     input.addEventListener("keydown",event=>{if(event.key==="Enter"&&(event.ctrlKey||event.metaKey)){event.preventDefault();send.click();}});
     actions.append(send,clear);tools.append(copyLast,exportChat);
     box.append(style,title,desc,missionLabel,missionBar,log,input,meter,actions,tools,status);host.appendChild(box);
