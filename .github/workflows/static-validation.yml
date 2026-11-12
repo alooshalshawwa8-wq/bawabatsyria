@@ -93,7 +93,9 @@ jobs:
             'assets/file_000000008668821282987c991b233d13.png'
           ]) assert.ok(fs.existsSync(image), 'Missing welcome image: ' + image);
           assert.ok(!html.includes('ofoq-founder.jpg'), 'Broken founder avatar reference remains');
-          assert.ok(!html.includes('file_00000000dce882129102a05013969410-480.webp'), 'Missing WebP variant referenced by page');
+          for (const stem of ['file_00000000dce882129102a05013969410', 'file_000000008668821282987c991b233d13']) {
+            for (const width of [480, 828, 1400]) assert.ok(html.includes(stem + '-' + width + '.webp'), 'Responsive WebP source missing: ' + stem + '-' + width);
+          }
           assert.ok(html.includes("navigator.serviceWorker.register('./service-worker.js')"), 'Service worker registration missing');
           assert.ok(fs.existsSync('service-worker.js'), 'Registered service worker file missing');
 
