@@ -81,7 +81,7 @@ main{max-width:1180px;margin:auto;padding:28px 18px 60px}.hero{padding:34px 26px
 @media(max-width:600px){header{padding:11px 14px}.brand strong{font-size:16px}.brand small{font-size:11px}.hero{padding:24px 17px}.searchrow{flex-direction:column}.searchrow .btn{width:100%}.section-head{align-items:start;flex-direction:column}}
 
 .ai-helper{margin-top:22px;padding:18px;border:1px solid #526b8e;border-radius:14px;background:linear-gradient(145deg,#142642,#0e192b)}.ai-helper h3,.ai-catalog h3{color:var(--gold2);margin:0 0 8px}.ai-helper p,.ai-catalog p{font-size:13px;color:#c2ccda;line-height:1.8}.ai-helper textarea{display:block;width:100%;min-height:120px;margin-top:8px;background:#0b1527;border:1px solid var(--line);border-radius:9px;padding:12px;color:white;line-height:1.8}.ai-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.ai-links a{display:inline-flex;align-items:center;border:1px solid #405879;border-radius:9px;padding:8px 11px;color:#e8d29b;text-decoration:none;font-size:13px}.ai-links a:hover{border-color:var(--gold);background:#1b2d49}.ai-catalog{margin-top:18px;padding:16px;border:1px solid var(--line);border-radius:12px;background:#0d192b}.ai-catalog-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.ai-catalog-card{border:1px solid var(--line);border-radius:10px;padding:12px;background:#14233a}.ai-catalog-card strong{display:block;color:var(--gold2);margin-bottom:6px}.ai-catalog-card a{display:block;color:#d7e5fa;text-decoration:none;font-size:13px;padding:4px 0}.ai-catalog-card a:hover{text-decoration:underline}.ai-tag{font-size:11px;color:#aebed2}
-#bawaba-welcome{position:fixed;inset:0;z-index:10050;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at 50% 42%,#294b70,#101c35 52%,#080e1b);overflow:hidden;transition:opacity .4s,visibility .4s}
+#bawaba-welcome{position:fixed;inset:0;z-index:10050;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at 50% 42%,#294b70,#101c35 52%,#080e1b);overflow:hidden;transition:opacity .3s,visibility .3s}
 #bawaba-welcome.is-leaving{opacity:0;visibility:hidden;pointer-events:none}
 .welcome-stars{position:absolute;inset:-20%;background-image:radial-gradient(2px 2px at 15% 25%,#fff 98%,transparent),radial-gradient(2px 2px at 72% 18%,#ffe39a 98%,transparent),radial-gradient(1px 1px at 42% 70%,#fff 98%,transparent),radial-gradient(2px 2px at 88% 62%,#fff 98%,transparent);background-size:270px 230px;animation:welcomeStarDrift 18s linear infinite}
 .welcome-content{position:relative;z-index:2;width:min(700px,100%);text-align:center;animation:welcomeRise 1s both}
@@ -165,11 +165,11 @@ header{background:#081727eF;border-bottom:1px solid #31536a;box-shadow:0 8px 35p
 .welcome-photo-sequence{position:absolute;inset:0;z-index:0;overflow:hidden;background:#061321}
 .welcome-photo-sequence::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,#04101b66,#061a2c33 50%,#06132177),linear-gradient(0deg,#06132166,transparent 72%);pointer-events:none}
 .welcome-photo-sequence picture{display:contents}.welcome-photo-sequence img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;opacity:0;filter:saturate(1.08) contrast(1.04);will-change:opacity;background:#061321}
-.welcome-photo-sequence picture:first-child img{animation:ofoqSceneOne 1.5s ease-in-out forwards}
-.welcome-photo-sequence picture:nth-child(2) img{opacity:0;animation:ofoqSceneTwo 1.5s ease-in-out forwards;object-position:center}
+.welcome-photo-sequence picture:first-child img{animation:ofoqSceneOne 1.1s ease-in-out forwards}
+.welcome-photo-sequence picture:nth-child(2) img{opacity:0;animation:ofoqSceneTwo 1.1s ease-in-out forwards;object-position:center}
 @keyframes ofoqSceneOne{0%,4%{opacity:0}10%,42%{opacity:1}56%,100%{opacity:0}}
 @keyframes ofoqSceneTwo{0%,34%{opacity:0}46%{opacity:.72}58%,88%{opacity:1}100%{opacity:0}}
-.welcome-founder-overlay{position:absolute;z-index:2;inset:auto 18px 12%;text-align:center;opacity:0;animation:ofoqFounderCaption 1.5s ease-in-out forwards;pointer-events:none}
+.welcome-founder-overlay{position:absolute;z-index:2;inset:auto 18px 12%;text-align:center;opacity:0;animation:ofoqFounderCaption 1.1s ease-in-out forwards;pointer-events:none}
 .welcome-founder-overlay strong{display:inline-block;padding:12px 26px;border:1px solid #ffe2a0;border-radius:999px;background:#07152599;color:#ffe4aa;font-size:clamp(20px,4vw,34px);text-shadow:0 3px 24px #000;box-shadow:0 0 34px #e6b95c44;backdrop-filter:blur(8px)}
 .welcome-founder-overlay span{display:block;margin-top:8px;color:#f5fbff;font-size:clamp(12px,2vw,17px);text-shadow:0 2px 14px #000}
 @keyframes ofoqFounderCaption{0%,55%{opacity:0;transform:translateY(18px)}68%,90%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-8px)}}
@@ -304,11 +304,11 @@ header{background:#081727eF;border-bottom:1px solid #31536a;box-shadow:0 8px 35p
 .welcome-photo-sequence{position:absolute;inset:0;z-index:0;overflow:hidden;background:#061321}
 .welcome-photo-sequence::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,#04101b66,#061a2c33 50%,#06132177),linear-gradient(0deg,#06132166,transparent 72%);pointer-events:none}
 .welcome-photo-sequence picture{display:contents}.welcome-photo-sequence img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;opacity:0;filter:saturate(1.08) contrast(1.04);will-change:opacity;background:#061321}
-.welcome-photo-sequence picture:first-child img{animation:ofoqSceneOne 1.5s ease-in-out forwards}
-.welcome-photo-sequence picture:nth-child(2) img{opacity:0;animation:ofoqSceneTwo 1.5s ease-in-out forwards;object-position:center}
+.welcome-photo-sequence picture:first-child img{animation:ofoqSceneOne 1.1s ease-in-out forwards}
+.welcome-photo-sequence picture:nth-child(2) img{opacity:0;animation:ofoqSceneTwo 1.1s ease-in-out forwards;object-position:center}
 @keyframes ofoqSceneOne{0%,4%{opacity:0}10%,42%{opacity:1}56%,100%{opacity:0}}
 @keyframes ofoqSceneTwo{0%,34%{opacity:0}46%{opacity:.72}58%,88%{opacity:1}100%{opacity:0}}
-.welcome-founder-overlay{position:absolute;z-index:2;inset:auto 18px 12%;text-align:center;opacity:0;animation:ofoqFounderCaption 1.5s ease-in-out forwards;pointer-events:none}
+.welcome-founder-overlay{position:absolute;z-index:2;inset:auto 18px 12%;text-align:center;opacity:0;animation:ofoqFounderCaption 1.1s ease-in-out forwards;pointer-events:none}
 .welcome-founder-overlay strong{display:inline-block;padding:12px 26px;border:1px solid #ffe2a0;border-radius:999px;background:#07152599;color:#ffe4aa;font-size:clamp(20px,4vw,34px);text-shadow:0 3px 24px #000;box-shadow:0 0 34px #e6b95c44;backdrop-filter:blur(8px)}
 .welcome-founder-overlay span{display:block;margin-top:8px;color:#f5fbff;font-size:clamp(12px,2vw,17px);text-shadow:0 2px 14px #000}
 @keyframes ofoqFounderCaption{0%,55%{opacity:0;transform:translateY(18px)}68%,90%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-8px)}}
@@ -3264,7 +3264,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
 })();
 </script>
 
-<script>(function(){const p=document.getElementById('bawaba-welcome');if(!p)return;let closed=false,t;function close(){if(closed)return;closed=true;clearTimeout(t);p.classList.add('is-leaving');setTimeout(()=>p.remove(),500)}document.getElementById('bawaba-welcome-skip').addEventListener('click',close);t=setTimeout(close,1500);document.addEventListener('keydown',e=>{if(e.key==='Escape')close()})})();</script>
+<script>(function(){const p=document.getElementById('bawaba-welcome');if(!p)return;let closed=false,t;function close(){if(closed)return;closed=true;clearTimeout(t);p.classList.add('is-leaving');setTimeout(()=>p.remove(),400)}document.getElementById('bawaba-welcome-skip').addEventListener('click',close);t=setTimeout(close,1100);document.addEventListener('keydown',e=>{if(e.key==='Escape')close()})})();</script>
 
 <script>
 /* OFOQ knowledge, free-access and visual catalogue layer */
