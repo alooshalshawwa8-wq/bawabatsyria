@@ -27,6 +27,30 @@ function pathOf(url: URL) {
   return index >= 0 ? (url.pathname.slice(index + marker.length) || "/") : "/";
 }
 
+async function readBoundedText(request: Request, maxBytes: number) {
+  const reader = request.body?.getReader();
+  if (!reader) return "";
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      throw new Error("BODY_TOO_LARGE");
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+}
+
 async function supabaseFetch(path: string, token?: string, init: RequestInit = {}) {
   const headers = new Headers(init.headers);
   headers.set("apikey", API_KEY);
@@ -202,7 +226,12 @@ async function syncStripeSubscription(subscriptionId: string, fallbackUserId?: s
 
 async function processStripeWebhook(request: Request) {
   if (!STRIPE_WEBHOOK_SECRET || !STRIPE_SECRET_KEY || !SERVICE_ROLE_KEY) return reply({ error: "Stripe webhook configuration is incomplete; no event was accepted." }, 503);
-  const payload = await request.text();
+  let payload: string;
+  try {
+    payload = await readBoundedText(request, 262_144);
+  } catch {
+    return reply({ error: "Stripe webhook payload is too large or invalid." }, 413);
+  }
   if (!(await verifyStripeSignature(payload, request.headers.get("Stripe-Signature") ?? ""))) return reply({ error: "Invalid Stripe signature" }, 400);
   let event: Record<string, unknown>;
   try { event = JSON.parse(payload); } catch { return reply({ error: "Invalid webhook payload" }, 400); }
@@ -299,7 +328,9 @@ Deno.serve(async (request: Request) => {
 
     if (request.method === "POST" && path === "/api/points/grant") {
       if (!user.owner) return reply({ error: "Platform owner access required" }, 403);
-      const body = await request.json().catch(() => null);
+      const body = await readBoundedText(request, 8_192)
+        .then(raw => JSON.parse(raw))
+        .catch(() => null);
       const targetUserId = typeof body?.userId === "string" ? body.userId.trim() : "";
       const delta = Number(body?.delta);
       const reason = typeof body?.reason === "string" ? body.reason.trim() : "";
@@ -320,7 +351,9 @@ Deno.serve(async (request: Request) => {
     if (request.method === "POST" && path === "/api/checkout") {
       if (!PAYMENTS_ENABLED) return reply({ error: "الاشتراكات والدفع مؤجلان حالياً؛ جميع أقسام المنصة متاحة مجاناً." }, 403);
       if (!STRIPE_SECRET_KEY || !STRIPE_WEBHOOK_SECRET || !SERVICE_ROLE_KEY) return reply({ error: "الدفع غير مهيأ بعد؛ يلزم إعداد مفاتيح Stripe وSupabase الآمنة." }, 503);
-      const body = await request.json().catch(() => null);
+      const body = await readBoundedText(request, 8_192)
+        .then(raw => JSON.parse(raw))
+        .catch(() => null);
       const planId = typeof body?.planId === "string" ? body.planId.trim() : "";
       if (!["pro_monthly", "vip_monthly", "business_monthly"].includes(planId)) return reply({ error: "خطة اشتراك غير صالحة" }, 400);
       if (!user.email) return reply({ error: "يلزم وجود بريد إلكتروني صالح في الحساب" }, 400);
