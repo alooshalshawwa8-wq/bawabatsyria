@@ -10,6 +10,7 @@ const cors = {
 };
 const JSON_HEADERS = { ...cors, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" };
 const hits = new Map<string, number[]>();
+let lastRateMapPruneAt = 0;
 
 function reply(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: JSON_HEADERS });
@@ -19,6 +20,22 @@ function reply(data: unknown, status = 200) {
 // configured at the provider/gateway because Edge isolates are ephemeral.
 function rateAllowed(ip: string) {
   const now = Date.now();
+  if (now - lastRateMapPruneAt >= 60_000) {
+    for (const [key, timestamps] of hits) {
+      const active = timestamps.filter(time => now - time < 60_000);
+      if (active.length) hits.set(key, active);
+      else hits.delete(key);
+    }
+    lastRateMapPruneAt = now;
+  }
+  if (!hits.has(ip) && hits.size >= 10_000) {
+    const oldest = hits.keys();
+    while (hits.size > 8_000) {
+      const entry = oldest.next();
+      if (entry.done) break;
+      hits.delete(entry.value);
+    }
+  }
   const recent = (hits.get(ip) ?? []).filter(time => now - time < 60_000);
   if (recent.length >= 12) return false;
   recent.push(now);
