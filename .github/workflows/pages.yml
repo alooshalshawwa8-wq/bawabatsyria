@@ -197,6 +197,8 @@ jobs:
           export CHROME_PATH="$(find "$HOME/.cache/ms-playwright" -type f -name chrome-headless-shell -print -quit)"
           test -n "$CHROME_PATH"
           npx --no-install lighthouse "$OFOQ_BASE_URL" --chrome-flags="--headless --no-sandbox" --only-categories=performance,accessibility,best-practices,seo --output=json --output=html --output-path=./lighthouse-report --quiet
+      - name: Enforce Lighthouse performance and quality budgets
+        run: node scripts/validate_lighthouse.mjs
       - name: Upload Lighthouse reports
         if: always()
         uses: actions/upload-artifact@v4
