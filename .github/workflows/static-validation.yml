@@ -48,6 +48,7 @@ jobs:
           const sitemap = read('sitemap.xml');
           const worker = read('service-worker.js');
           const assistant = read('supabase/functions/site-assistant/index.ts');
+          const football = read('supabase/functions/football-data/index.ts');
           const membership = read('supabase/functions/membership-api/index.ts');
           const base = 'https://alooshalshawwa8-wq.github.io/bawabatsyria/';
 
@@ -93,6 +94,9 @@ jobs:
           assert.ok(worker.includes('request.destination'), 'Static asset caching must be destination-scoped');
           assert.ok(assistant.includes('readBoundedBody(request, 24_000)'), 'Assistant request body must be size-bounded while streaming');
           assert.ok(assistant.includes('BODY_TOO_LARGE'), 'Assistant must reject oversized request bodies');
+          assert.ok(assistant.includes('hits.size >= 10_000'), 'Assistant rate limiter state must be bounded');
+          assert.ok(football.includes('requests.size >= 10_000'), 'Football rate limiter state must be bounded');
+          assert.ok(football.includes('lastRateMapPruneAt >= 60_000'), 'Football rate limiter must prune expired clients');
           assert.ok(membership.includes('readBoundedText(request, 262_144)'), 'Stripe webhook body must be bounded');
           assert.ok(membership.includes('readBoundedText(request, 8_192)'), 'Membership JSON bodies must be bounded');
           assert.ok(sitemap.includes(base), 'Sitemap must contain the canonical site URL');
