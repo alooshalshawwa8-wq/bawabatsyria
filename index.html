@@ -3342,11 +3342,26 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
     search.addEventListener('input',()=>{const q=search.value.trim().toLocaleLowerCase('ar');grid.querySelectorAll('.ofoq-knowledge-card').forEach(card=>card.hidden=!card.textContent.toLocaleLowerCase('ar').includes(q));});
     box.append(h,intro,search,grid);host.appendChild(box);
   }
+  const ofoqTileBgObserver = 'IntersectionObserver' in window ? new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(!entry.isIntersecting)return;
+      const el=entry.target;
+      if(el.dataset.ofoqBackground)el.style.backgroundImage=el.dataset.ofoqBackground;
+      delete el.dataset.ofoqBackground;
+      ofoqTileBgObserver.unobserve(el);
+    });
+  },{rootMargin:'500px 0px'}) : null;
+  window.ofoqSetTileBackground = function(el,value){
+    if(!el)return;
+    if(!ofoqTileBgObserver){el.style.backgroundImage=value;return;}
+    el.dataset.ofoqBackground=value;
+    ofoqTileBgObserver.observe(el);
+  };
   function decorateTiles(){
     document.querySelectorAll('.tile').forEach(tile=>{
       const heading=tile.querySelector('h3');if(!heading||tile.querySelector('.tile-cover'))return;
       const sec=(window.BAWABA_SECTIONS||[]).find(x=>x.title===heading.textContent);if(!sec)return;
-      const cover=document.createElement('div');cover.className='tile-cover';cover.style.backgroundImage='linear-gradient(180deg,#07132105,#071321aa),url("'+imageUrl(sec.id)+'")';cover.setAttribute('aria-hidden','true');tile.insertBefore(cover,tile.firstChild);
+      const cover=document.createElement('div');cover.className='tile-cover';window.ofoqSetTileBackground(cover,'linear-gradient(180deg,#07132105,#071321aa),url("'+imageUrl(sec.id)+'")');cover.setAttribute('aria-hidden','true');tile.insertBefore(cover,tile.firstChild);
     });
   }
   const oldRender=window.render;
@@ -3526,14 +3541,14 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
       if(lead){
         tile.classList.add('ofoq-featured-tile');
         tile.dataset.featuredSection=section.id;
-        cover.style.backgroundImage='url("'+lead.image+'")';
+        window.ofoqSetTileBackground(cover,'url("'+lead.image+'")');
         let meta=tile.querySelector('.ofoq-featured-meta');
         if(!meta){meta=document.createElement('span');meta.className='ofoq-featured-meta';tile.insertBefore(meta,heading);}
         meta.textContent=lead.label;
       }else if(!cover.style.backgroundImage){
         const profile=typeof ofoqSectionProfile==='function'?ofoqSectionProfile(section):null;
         const image=profile&&profile.image?profile.image:null;
-        cover.style.backgroundImage=image?'url("https://images.unsplash.com/'+image+'?auto=format&fit=crop&w=1200&q=85")':'url("'+fallback+'")';
+        window.ofoqSetTileBackground(cover,image?'url("https://images.unsplash.com/'+image+'?auto=format&fit=crop&w=1200&q=85")':'url("'+fallback+'")');
       }
     });
   }
