@@ -26,6 +26,30 @@ function rateAllowed(ip: string) {
   return true;
 }
 
+async function readBoundedBody(request: Request, maxBytes: number) {
+  const reader = request.body?.getReader();
+  if (!reader) return "";
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      throw new Error("BODY_TOO_LARGE");
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+}
+
 const SYSTEM_PROMPT = `أنت "رفيق أُفُق"، مساعد استقبال وإرشاد داخل منصة أُفُق العالمية.
 تحدث دائماً باللهجة السورية الشامية الودودة والطبيعية، بعبارات بسيطة مثل: أهلا وسهلا فيك، أكيد، خليني دلّك، ولا يهمك. لا تبالغ بالمصطلحات ولا تستخدم لهجات أخرى.
 مهمتك استقبال الزائر وفهم حاجته وتوجيهه للقسم المناسب، مع العمل كمساعد متخصص بحسب موضوع السؤال لا كمجيب عام فقط. حدّد المجال تلقائياً (تجارة، تعليم، برمجة، تسويق، سفر، محاسبة، رياضة، زراعة، منزل، صحة عامة، قانون وإجراءات، تداول تعليمي، أو معلومات سوريا)، ثم قدّم خطوات عملية منظمة وقوائم أو جداول نصية عند الحاجة، واذكر المدخلات الناقصة بوضوح. لا تدّع الوصول إلى الإنترنت أو بيانات مباشرة أو ملفات أو تنفيذ إجراء ما لم تُمرّر لك فعلاً أداة أو بيانات تثبت ذلك. اسأل سؤالاً واحداً واضحاً عندما تحتاج توضيحاً.
@@ -62,9 +86,20 @@ Deno.serve(async (request: Request) => {
   if (!apiKey) return reply({ error: "المساعد يعمل حالياً بوضع الإرشاد الأساسي؛ خدمة الإجابات الذكية المتقدمة غير متاحة مؤقتاً." }, 503);
 
   const contentLength = Number(request.headers.get("content-length") ?? "0");
-  if (contentLength > 24_000) return reply({ error: "المحادثة طويلة كتير. اختصر آخر الرسائل وجرب من جديد." }, 413);
+  if (Number.isFinite(contentLength) && contentLength > 24_000) {
+    return reply({ error: "المحادثة طويلة كتير. اختصر آخر الرسائل وجرب من جديد." }, 413);
+  }
 
-  const body = await request.json().catch(() => null);
+  let body: Record<string, unknown> | null = null;
+  try {
+    const rawBody = await readBoundedBody(request, 24_000);
+    body = JSON.parse(rawBody);
+  } catch (error) {
+    if (error instanceof Error && error.message === "BODY_TOO_LARGE") {
+      return reply({ error: "المحادثة طويلة كتير. اختصر آخر الرسائل وجرب من جديد." }, 413);
+    }
+    return reply({ error: "صيغة المحادثة غير صالحة." }, 400);
+  }
   if (!body || !Array.isArray(body.messages) || body.messages.length < 1 || body.messages.length > 12) {
     return reply({ error: "صيغة المحادثة غير صالحة." }, 400);
   }
