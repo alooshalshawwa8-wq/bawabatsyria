@@ -121,7 +121,7 @@ Deno.serve(async (request: Request) => {
     return reply({ error: "صيغة المحادثة غير صالحة." }, 400);
   }
 
-  const contents = [];
+  const contents: Array<{ role: "user" | "model"; parts: Array<{ text: string }> }> = [];
   for (const item of body.messages) {
     if (!item || !["user", "assistant"].includes(item.role) || typeof item.content !== "string") continue;
     const content = item.content.trim().slice(0, 2000);
