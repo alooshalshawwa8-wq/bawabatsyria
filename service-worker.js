@@ -1,48 +1,90 @@
-const CACHE_NAME = "ofoq-shell-v47";
-const APP_FILES = ["./", "./index.html", "./manifest.json", "./ecommerce-studio.js", "./career-studio.js", "./operations-hub.js", "./ofoq-core.js"];
+"use strict";
+
+/*
+ * OFOQ offline shell service worker.
+ * Cache only same-origin app-shell assets; never cache API/auth responses.
+ */
+const CACHE_PREFIX = "ofoq-shell-";
+const CACHE_NAME = CACHE_PREFIX + "v48";
+const APP_FILES = [
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "./ofoq-icon.svg",
+  "./ecommerce-studio.js",
+  "./career-studio.js",
+  "./operations-hub.js",
+  "./ofoq-core.js"
+];
+
+const APP_SCOPE = new URL("./", self.location.href);
+const INDEX_URL = new URL("./index.html", self.location.href).href;
+
+function isInAppScope(url) {
+  return url.origin === APP_SCOPE.origin && url.pathname.startsWith(APP_SCOPE.pathname);
+}
 
 self.addEventListener("install", event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_FILES)));
-  self.skipWaiting();
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.addAll(APP_FILES);
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener("activate", event => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)))
-    )
-  );
-  self.clients.claim();
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys
+      .filter(key => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME)
+      .map(key => caches.delete(key)));
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener("fetch", event => {
   const request = event.request;
-  if (request.method !== "GET" || new URL(request.url).origin !== self.location.origin) return;
+  if (request.method !== "GET") return;
 
-  const isPage = request.mode === "navigate" || new URL(request.url).pathname.endsWith("/index.html");
+  const url = new URL(request.url);
+  if (!isInAppScope(url) || url.search) return;
+
+  const isPage = request.mode === "navigate" || url.pathname.endsWith("/index.html");
 
   if (isPage) {
-    event.respondWith(
-      fetch(request).then(response => {
-        if (response.ok) {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      try {
+        const response = await fetch(request);
+        if (response.ok && response.type === "basic") {
+          await cache.put(request, response.clone());
         }
         return response;
-      }).catch(() => caches.match(request).then(cached => cached || caches.match("./index.html")))
-    );
+      } catch (_) {
+        return (await cache.match(request)) ||
+          (await cache.match(INDEX_URL)) ||
+          Response.error();
+      }
+    })());
     return;
   }
 
-  event.respondWith(
-    caches.match(request).then(cached =>
-      cached || fetch(request).then(response => {
-        if (response.ok) {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
-        }
-        return response;
-      })
-    )
-  );
+  // Cache-first only for versioned app assets, never arbitrary API/data requests.
+  if (!["script", "style", "image", "font", "manifest"].includes(request.destination)) return;
+
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    const cached = await cache.match(request);
+    if (cached) return cached;
+
+    try {
+      const response = await fetch(request);
+      if (response.ok && response.type === "basic") {
+        await cache.put(request, response.clone());
+      }
+      return response;
+    } catch (_) {
+      return Response.error();
+    }
+  })());
 });
