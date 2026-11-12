@@ -44,6 +44,8 @@ jobs:
                   resized.thumbnail((width, width), Image.Resampling.LANCZOS)
                   target = assets / f"{source.stem}-{width}.webp"
                   resized.save(target, "WEBP", quality=72, method=6)
+                  if not target.is_file() or target.stat().st_size == 0:
+                      raise SystemExit(f"Responsive WebP generation failed: {target}")
                   print(f"{target}: {target.stat().st_size} bytes")
           PY
       - name: Validate site files and JavaScript
