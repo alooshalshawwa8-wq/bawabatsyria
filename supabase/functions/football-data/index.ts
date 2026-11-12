@@ -11,6 +11,7 @@ const cors = {
 const headers = { ...cors, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" };
 const cache = new Map<string, { until: number; data: unknown }>();
 const requests = new Map<string, number[]>();
+let lastRateMapPruneAt = 0;
 const providerFetchInFlight = new Map<string, Promise<Record<string, any>>>();
 let providerStatusCheckAt = 0;
 
@@ -19,7 +20,23 @@ function reply(data: unknown, status = 200) {
 }
 function rateAllowed(ip: string) {
   const now = Date.now();
-  const recent = (requests.get(ip) ?? []).filter(t => now - t < 60_000);
+  if (now - lastRateMapPruneAt >= 60_000) {
+    for (const [key, timestamps] of requests) {
+      const active = timestamps.filter(time => now - time < 60_000);
+      if (active.length) requests.set(key, active);
+      else requests.delete(key);
+    }
+    lastRateMapPruneAt = now;
+  }
+  if (!requests.has(ip) && requests.size >= 10_000) {
+    const oldest = requests.keys();
+    while (requests.size > 8_000) {
+      const entry = oldest.next();
+      if (entry.done) break;
+      requests.delete(entry.value);
+    }
+  }
+  const recent = (requests.get(ip) ?? []).filter(time => now - time < 60_000);
   if (recent.length >= 30) return false;
   recent.push(now);
   requests.set(ip, recent);
