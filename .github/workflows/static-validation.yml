@@ -27,6 +27,15 @@ jobs:
           node --check career-studio.js
           node --check operations-hub.js
           node --check ofoq-core.js
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check Supabase Edge Functions
+        run: |
+          deno check supabase/functions/site-assistant/index.ts
+          deno check supabase/functions/membership-api/index.ts
+          deno check supabase/functions/football-data/index.ts
       - name: Validate static app contracts
         run: |
           node --input-type=module <<'NODE'
@@ -38,6 +47,7 @@ jobs:
           const manifest = JSON.parse(read('manifest.json'));
           const sitemap = read('sitemap.xml');
           const worker = read('service-worker.js');
+          const assistant = read('supabase/functions/site-assistant/index.ts');
           const base = 'https://alooshalshawwa8-wq.github.io/bawabatsyria/';
 
           assert.ok(html.includes('<html lang="ar" dir="rtl">'), 'Arabic RTL document metadata missing');
@@ -74,6 +84,8 @@ jobs:
 
           assert.ok(worker.includes('key.startsWith(CACHE_PREFIX)'), 'Cache cleanup must be scoped to OFOQ caches');
           assert.ok(worker.includes('request.destination'), 'Static asset caching must be destination-scoped');
+          assert.ok(assistant.includes('readBoundedBody(request, 24_000)'), 'Assistant request body must be size-bounded while streaming');
+          assert.ok(assistant.includes('BODY_TOO_LARGE'), 'Assistant must reject oversized request bodies');
           assert.ok(sitemap.includes(base), 'Sitemap must contain the canonical site URL');
           console.log('OFOQ static contracts passed.');
           NODE
