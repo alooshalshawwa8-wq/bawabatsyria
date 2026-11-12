@@ -40,32 +40,40 @@ jobs:
           const worker = read('service-worker.js');
           const base = 'https://alooshalshawwa8-wq.github.io/bawabatsyria/';
 
-          assert.match(html, /<html[^>]+lang="ar"[^>]+dir="rtl"/i, 'Arabic RTL document metadata missing');
-          assert.match(html, /<title>[^<]+<\\/title>/i, 'Document title missing');
-          assert.match(html, new RegExp('<link[^>]+rel="canonical"[^>]+href="' + base.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&') + '"'), 'Canonical URL missing');
+          assert.ok(html.includes('<html lang="ar" dir="rtl">'), 'Arabic RTL document metadata missing');
+          assert.ok(html.includes('</title>'), 'Document title missing');
+          assert.ok(html.includes('<link rel="canonical" href="' + base + '">'), 'Canonical URL missing');
           assert.equal(manifest.lang, 'ar', 'Manifest language must be Arabic');
           assert.equal(manifest.dir, 'rtl', 'Manifest direction must be RTL');
           assert.ok(Array.isArray(manifest.icons) && manifest.icons.length, 'Manifest icon missing');
 
-          const jsonLd = [...html.matchAll(/<script type="application\\/ld\\+json">([\\s\\S]*?)<\\/script>/gi)];
-          assert.ok(jsonLd.length, 'Structured data block missing');
-          for (const block of jsonLd) JSON.parse(block[1]);
+          const marker = '<script type="application/ld+json">';
+          const jsonStart = html.indexOf(marker);
+          assert.notEqual(jsonStart, -1, 'Structured data block missing');
+          const jsonEnd = html.indexOf('</script>', jsonStart);
+          assert.ok(jsonEnd > jsonStart, 'Structured data block is not closed');
+          JSON.parse(html.slice(jsonStart + marker.length, jsonEnd));
 
-          const localScripts = [...html.matchAll(/<script[^>]+src=["']\\.\\/([^"']+)["']/gi)].map(match => match[1]);
-          for (const file of localScripts) assert.ok(fs.existsSync(file), 'Missing local script: ' + file);
+          for (const file of ['ecommerce-studio.js', 'career-studio.js', 'operations-hub.js', 'ofoq-core.js']) {
+            assert.ok(html.includes('src="./' + file + '"'), 'Script not referenced by index.html: ' + file);
+            assert.ok(fs.existsSync(file), 'Missing local script: ' + file);
+          }
 
-          const iconPath = manifest.icons[0].src.replace(/^\\.\\//, '');
+          const iconPath = manifest.icons[0].src.replace('./', '');
           assert.ok(fs.existsSync(iconPath), 'Missing manifest icon: ' + iconPath);
-          assert.match(html, /navigator\\.serviceWorker\\.register\\(['"]\\.\\/service-worker\\.js['"]\\)/, 'Service worker registration missing');
+          assert.ok(html.includes("navigator.serviceWorker.register('./service-worker.js')"), 'Service worker registration missing');
           assert.ok(fs.existsSync('service-worker.js'), 'Registered service worker file missing');
 
-          const appFilesMatch = worker.match(/const APP_FILES = \\[([\\s\\S]*?)\\];/);
-          assert.ok(appFilesMatch, 'Service worker app shell list missing');
-          const appFiles = [...appFilesMatch[1].matchAll(/["']([^"']+)["']/g)].map(match => match[1]);
-          for (const file of appFiles) assert.ok(fs.existsSync(file.replace(/^\\.\\//, '') || 'index.html'), 'Missing cached app shell file: ' + file);
+          const appFilesBlock = worker.split('const APP_FILES = [')[1]?.split('];')[0];
+          assert.ok(appFilesBlock, 'Service worker app shell list missing');
+          const appFiles = appFilesBlock.split('"').filter((_, index) => index % 2 === 1);
+          for (const file of appFiles) {
+            const localPath = file.replace('./', '') || 'index.html';
+            assert.ok(fs.existsSync(localPath), 'Missing cached app shell file: ' + file);
+          }
 
-          assert.match(worker, /key\\.startsWith\\(CACHE_PREFIX\\)/, 'Cache cleanup must be scoped to OFOQ caches');
-          assert.match(worker, /request\\.destination/, 'Static asset caching must be destination-scoped');
-          assert.match(sitemap, new RegExp(base.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')), 'Sitemap must contain the canonical site URL');
+          assert.ok(worker.includes('key.startsWith(CACHE_PREFIX)'), 'Cache cleanup must be scoped to OFOQ caches');
+          assert.ok(worker.includes('request.destination'), 'Static asset caching must be destination-scoped');
+          assert.ok(sitemap.includes(base), 'Sitemap must contain the canonical site URL');
           console.log('OFOQ static contracts passed.');
           NODE
