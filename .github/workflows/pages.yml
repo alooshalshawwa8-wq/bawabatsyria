@@ -168,6 +168,7 @@ jobs:
           node --check service-worker.js
           node --check ofoq-core.js
           node --check tests/browser-smoke.mjs
+          node --check tests/mobile-smoke.mjs
       - name: Check e-commerce studio JavaScript
         run: node --check ecommerce-studio.js
       - name: Check career studio JavaScript
