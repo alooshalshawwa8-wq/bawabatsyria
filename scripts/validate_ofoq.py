@@ -203,7 +203,7 @@ require("./ofoq-core.js" in worker and cache_version, "OFOQ core missing from of
 # PWA and shell integrity.
 require((ROOT / "manifest.json").is_file(), "manifest missing")
 require((ROOT / "service-worker.js").is_file(), "service worker missing")
-require("ofoq-shell-v" in worker, "service worker cache version missing")
+require(bool(re.search(r'const CACHE_NAME = CACHE_PREFIX \\+ "v\\d+"', worker)), "service worker cache version missing")
 require(bool(manifest.get("name")) and bool(manifest.get("start_url")), "manifest metadata incomplete")
 
 print(
