@@ -74,11 +74,11 @@ jobs:
           const iconPath = manifest.icons[0].src.replace('./', '');
           assert.ok(fs.existsSync(iconPath), 'Missing manifest icon: ' + iconPath);
           const localFileRefs = new Set();
-          for (const match of html.matchAll(/\\b(?:src|href)=["'](\\.\\/[^"'#?]+)["']/g)) {
-            if (/\\.(?:js|css|svg|png|webp|jpe?g|woff2?|ico|json)$/i.test(match[1])) localFileRefs.add(match[1].replace(/^\\.\\//, ''));
+          for (const match of html.matchAll(/\b(?:src|href)=["'](\.\/[^"'#?]+)["']/g)) {
+            if (/\.(?:js|css|svg|png|webp|jpe?g|woff2?|ico|json)$/i.test(match[1])) localFileRefs.add(match[1].replace(/^\.\//, ''));
           }
-          for (const match of html.matchAll(/url\\(\\s*["']?(\\.\\/assets\\/[^"')?#]+)["']?\\s*\\)/g)) {
-            localFileRefs.add(match[1].replace(/^\\.\\//, ''));
+          for (const match of html.matchAll(/url\(\s*["']?(\.\/assets\/[^"')?#]+)["']?\s*\)/g)) {
+            localFileRefs.add(match[1].replace(/^\.\//, ''));
           }
           for (const file of localFileRefs) assert.ok(fs.existsSync(file), 'Broken local asset reference: ' + file);
           for (const image of [
