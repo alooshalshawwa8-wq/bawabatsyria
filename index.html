@@ -20,7 +20,7 @@
 <meta name="twitter:description" content="اكتشف موسوعات وأدوات ومعارف العالم في منصة رقمية عربية واحدة.">
 <meta name="twitter:image" content="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=85">
 <link rel="canonical" href="https://alooshalshawwa8-wq.github.io/bawabatsyria/">
-<link rel="preload" as="image" type="image/webp" href="./assets/file_00000000dce882129102a05013969410-1400.webp" imagesrcset="./assets/file_00000000dce882129102a05013969410-828.webp 828w, ./assets/file_00000000dce882129102a05013969410-1400.webp 1400w" imagesizes="100vw" fetchpriority="high">
+<link rel="preload" as="image" type="image/webp" href="./assets/file_00000000dce882129102a05013969410-1400.webp" imagesrcset="./assets/file_00000000dce882129102a05013969410-480.webp 480w, ./assets/file_00000000dce882129102a05013969410-480.webp 480w, ./assets/file_00000000dce882129102a05013969410-828.webp 828w, ./assets/file_00000000dce882129102a05013969410-1400.webp 1400w" imagesizes="100vw" fetchpriority="high">
 <link rel="preload" as="image" href="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&amp;fit=crop&amp;w=1200&amp;q=78" fetchpriority="high">
 <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -546,7 +546,7 @@ main{position:relative}
 </head>
 
 <body>
-<section id="bawaba-welcome" role="dialog" aria-modal="true" aria-label="الافتتاحية السينمائية ثم صورة المؤسس"><div class="welcome-photo-sequence" aria-hidden="true"><picture><source type="image/webp" srcset="./assets/file_00000000dce882129102a05013969410-828.webp 828w, ./assets/file_00000000dce882129102a05013969410-1400.webp 1400w" sizes="100vw"><img src="./assets/file_00000000dce882129102a05013969410.png" alt="الصورة الترحيبية الأولى" fetchpriority="high" decoding="async"></picture><picture><source type="image/webp" srcset="./assets/file_000000008668821282987c991b233d13-828.webp 828w, ./assets/file_000000008668821282987c991b233d13-1400.webp 1400w" sizes="100vw"><img src="./assets/file_000000008668821282987c991b233d13.png" alt="الصورة الترحيبية الثانية" decoding="async"></picture></div><div class="welcome-stars"></div><div class="welcome-founder-overlay"><strong>❤️Aloosh alshawwa ❤️</strong><span>مؤسس وصاحب البوابة — أهلاً بكم في عالم المعرفة والإبداع</span></div><div class="welcome-content"><button class="welcome-skip" id="bawaba-welcome-skip" type="button">تخطي المقدمة</button></div></section>
+<section id="bawaba-welcome" role="dialog" aria-modal="true" aria-label="الافتتاحية السينمائية ثم صورة المؤسس"><div class="welcome-photo-sequence" aria-hidden="true"><picture><source type="image/webp" srcset="./assets/file_00000000dce882129102a05013969410-828.webp 828w, ./assets/file_00000000dce882129102a05013969410-1400.webp 1400w" sizes="100vw"><img src="./assets/file_00000000dce882129102a05013969410.png" alt="الصورة الترحيبية الأولى" fetchpriority="high" decoding="async"></picture><picture><source type="image/webp" srcset="./assets/file_000000008668821282987c991b233d13-480.webp 480w, ./assets/file_000000008668821282987c991b233d13-828.webp 828w, ./assets/file_000000008668821282987c991b233d13-1400.webp 1400w" sizes="100vw"><img src="./assets/file_000000008668821282987c991b233d13.png" alt="الصورة الترحيبية الثانية" decoding="async"></picture></div><div class="welcome-stars"></div><div class="welcome-founder-overlay"><strong>❤️Aloosh alshawwa ❤️</strong><span>مؤسس وصاحب البوابة — أهلاً بكم في عالم المعرفة والإبداع</span></div><div class="welcome-content"><button class="welcome-skip" id="bawaba-welcome-skip" type="button">تخطي المقدمة</button></div></section>
 <header><div class="brand"><div class="mark">✦</div><div><strong>أُفُق | OFOQ</strong><small>الموسوعة والخدمات الرقمية</small></div></div><div style="display:flex;gap:8px;align-items:center"><button class="btn secondary" id="membershipBtn">العضوية والمحفظة</button><button class="btn secondary" id="homeBtn" type="button" aria-label="العودة إلى الواجهة الرئيسية">الرئيسية</button></div></header>
 <section class="ofoq-founder-top" aria-label="مؤسس بوابة أفق">
   <div class="ofoq-founder-avatar"><img src="./assets/ofoq-founder.jpg" alt="الصورة الشخصية لمؤسس بوابة أُفُق"></div>
@@ -722,7 +722,7 @@ function render(list){
   const remaining=list.filter(sec=>!assigned.has(sec.id));
   if(remaining.length){const heading=document.createElement('h3');heading.className='catalog-group-heading';heading.textContent='موسوعات وأدلة إضافية';grid.appendChild(heading);remaining.forEach(appendTile);}
   function appendTile(sec){
-    const b=document.createElement('button');b.className='tile';b.type='button';b.dataset.ofoqSectionId=sec.id;b.setAttribute('aria-label','افتح قسم '+sec.title);
+    const b=document.createElement('button');b.className='tile';b.type='button';b.dataset.ofoqSectionId=sec.id;b.setAttribute('aria-label',sec.icon+' '+sec.title+'. '+sec.desc);
     const icon=document.createElement('div');icon.className='ico';icon.textContent=sec.icon;
     const h=document.createElement('h3');h.textContent=sec.title;
     const p=document.createElement('p');p.textContent=sec.desc;
@@ -2397,11 +2397,11 @@ function activateSectionPage(sec){
   document.body.classList.add('section-mode');
   const hero=document.getElementById('sectionHero');
   const visuals={
-    auto_moto_gallery:{image:'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1800&q=90',kicker:'السيارات والدراجات وقطع الغيار'},
-    tech_devices:{image:'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1800&q=90',kicker:'أحدث التقنيات والأجهزة'},
-    luxury_villas:{image:'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1800&q=90',kicker:'العمارة والفخامة والتصميم'},
+    auto_moto_gallery:{image:'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1200&q=75',kicker:'السيارات والدراجات وقطع الغيار'},
+    tech_devices:{image:'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=75',kicker:'أحدث التقنيات والأجهزة'},
+    luxury_villas:{image:'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=75',kicker:'العمارة والفخامة والتصميم'},
     sports_radar:{image:'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=2000&q=92',kicker:'OFOQ FOOTBALL GALAXY · ادخل إلى قلب اللعبة'},
-    trading_academy:{image:'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1800&q=90',kicker:'OFOQ TRADING INTELLIGENCE · أكاديمية التداول'}
+    trading_academy:{image:'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1200&q=75',kicker:'OFOQ TRADING INTELLIGENCE · أكاديمية التداول'}
   };
   const visual=visuals[sec.id];
   hero.style.backgroundImage=visual?'linear-gradient(90deg,#07101d99,#07101d33),url("'+visual.image+'")':'linear-gradient(120deg,#1b3555,#101a30 65%,#40301c)';
@@ -3307,7 +3307,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
     laptops:'photo-1496181133206-80ce9b88a853',
     designs:'photo-1545235617-9465d2a55698'
   };
-  const imageUrl=id=>'https://images.unsplash.com/'+(imageIds[id]||'photo-1451187580459-43490279c0fa')+'?auto=format&fit=crop&w=1600&q=90';
+  const imageUrl=id=>'https://images.unsplash.com/'+(imageIds[id]||'photo-1451187580459-43490279c0fa')+'?auto=format&fit=crop&w=1200&q=75';
   const knowledge={
     privacy_center:[['تقليل البيانات','اجمع الحد الأدنى اللازم لتقديم الخدمة فقط، ولا تطلب معلومات حساسة دون ضرورة واضحة.'],['الشفافية','اشرح ما يُجمع ولماذا وكيف يُستخدم ومع من يُشارك ومدة الاحتفاظ به.'],['حقوق المستخدم','وفّر آلية واضحة لطلبات الوصول والتصحيح والحذف حيث تفرض القوانين ذلك.'],['الأمن','استخدم صلاحيات محدودة وتشفيراً مناسباً وخططاً للتعامل مع الحوادث.'],['النسخ السحابية الاختيارية في أُفُق','لا تُرفع سجلات مركز القيادة تلقائياً. يتطلب النسخ السحابي تسجيل الدخول والضغط الصريح على إنشاء نسخة. تحفظ النسخ في حساب المستخدم مع عزل الصفوف عبر RLS، ويمكن عرضها أو استعادتها أو حذفها. النسخ ليست مشفرة تشفيراً طرفياً من المتصفح؛ لا ترفع كلمات مرور أو أسراراً أو معلومات لا تريد تخزينها سحابياً.']],
     terms_of_use:[['نطاق الخدمة','اشرح الخدمات المتاحة وحدودها وما إذا كانت معلومات أو أدوات تعليمية وليست استشارات مهنية.'],['الاستخدام المحظور','امنع الاحتيال والضرر وانتهاك الحقوق ومحاولات الوصول غير المصرح به.'],['حقوق المحتوى','احترم حقوق النشر والعلامات التجارية والتراخيص ولا تنشر مواد دون إذن.'],['الأطراف الخارجية','وضّح الخدمات الخارجية والروابط وممارساتها وحدود سيطرتك عليها.']],
@@ -3490,7 +3490,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
   #sectionsGrid .tile.ofoq-cinematic-tile{min-height:205px;padding:120px 14px 15px;border-radius:16px}
   #sectionsGrid .tile.ofoq-featured-tile{grid-column:1/-1;min-height:245px;padding:154px 17px 19px;border-radius:17px}
   #sectionsGrid .tile.ofoq-cinematic-tile h3{font-size:16px}
-  #sectionsGrid .tile.ofoq-cinematic-tile p{font-size:11px;line-height:1.75}
+  #sectionsGrid .tile.ofoq-cinematic-tile p{font-size:12px;line-height:1.75}
   #sectionsGrid .tile.ofoq-featured-tile h3{font-size:20px}
   #sectionsGrid .tile.ofoq-featured-tile p{font-size:12px}
 }
@@ -3502,12 +3502,12 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
 <script id="ofoq-cinematic-featured">
 (function(){
   const featured={
-    sports_radar:{image:'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1800&q=90',label:'كرة القدم · البطولات العالمية'},
-    trading_academy:{image:'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1800&q=90',label:'الأسواق المالية · العملات الرقمية'},
-    social_media_hub:{image:'https://images.unsplash.com/photo-1611262588024-d12430b98920?auto=format&fit=crop&w=1800&q=90',label:'منصات التواصل · صناعة المحتوى'},
-    ai_lab:{image:'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1800&q=90',label:'النماذج الذكية · أدوات المستقبل'}
+    sports_radar:{image:'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1200&q=75',label:'كرة القدم · البطولات العالمية'},
+    trading_academy:{image:'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1200&q=75',label:'الأسواق المالية · العملات الرقمية'},
+    social_media_hub:{image:'https://images.unsplash.com/photo-1611262588024-d12430b98920?auto=format&fit=crop&w=1200&q=75',label:'منصات التواصل · صناعة المحتوى'},
+    ai_lab:{image:'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1200&q=75',label:'النماذج الذكية · أدوات المستقبل'}
   };
-  const fallback='https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1600&q=90';
+  const fallback='https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=75';
   function decorateAllCards(){
     const grid=document.getElementById('sectionsGrid');
     if(!grid)return;
