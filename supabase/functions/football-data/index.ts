@@ -562,6 +562,7 @@ Deno.serve(async (request: Request) => {
     const persistentStudio = await persistentCacheGet(studioCacheKey);
     if (persistentStudio && typeof persistentStudio === "object") return reply({ ...persistentStudio as Record<string, unknown>, cached: true });
     const ttlFor = (path: string) => path === "fixtures/events" || path === "fixtures/statistics" || path === "fixtures/players" ? 60_000 : path === "fixtures/lineups" ? 15 * 60_000 : path === "odds" ? 3 * 60 * 60_000 : path === "predictions" ? 60 * 60_000 : 6 * 60 * 60_000;
+    let matchIsLive = false;
     const apiFetch = async (path: string, query: Record<string,string> = {}) => {
       const body = await providerFetch(path, query, ttlFor(path), tracker, matchIsLive ? "live" : "core");
       return body.response;
@@ -571,7 +572,7 @@ Deno.serve(async (request: Request) => {
       const fixtureRows = fixtureRowsData.response;
       const match = fixtureRows[0];
       if (!match) return reply({ error: "لم يعثر API-Football على المباراة بهذا الرقم." }, 404);
-      const matchIsLive = ["1H","HT","2H","ET","BT","P","LIVE"].includes(String(match.fixture?.status?.short ?? ""));
+      matchIsLive = ["1H","HT","2H","ET","BT","P","LIVE"].includes(String(match.fixture?.status?.short ?? ""));
       const fixtureStatusForTtl = String(match.fixture?.status?.short ?? "");
       const fixtureTtl = ["1H","HT","2H","ET","BT","P","LIVE"].includes(fixtureStatusForTtl) ? 30_000 : (["FT","AET","PEN"].includes(fixtureStatusForTtl) ? 6 * 60 * 60_000 : 15 * 60_000);
       const fixtureCacheKey = "fixtures?id=" + fixtureId + "&timezone=Asia%2FDamascus";
