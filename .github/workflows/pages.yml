@@ -189,6 +189,7 @@ jobs:
           npm install --no-save --no-package-lock playwright@1.65.0
           PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=30000 npx --no-install playwright install --only-shell chromium
           node tests/browser-smoke.mjs
+          node tests/mobile-smoke.mjs
       - name: Run Lighthouse quality audit
         env:
           OFOQ_BASE_URL: ${{ steps.deployment.outputs.page_url }}
