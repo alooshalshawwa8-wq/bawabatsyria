@@ -55,7 +55,10 @@ try {
 
   // Simulate Supabase's recovery callback and prove that the user can complete
   // the password reset through the authenticated Auth user endpoint.
-  await page.goto(baseUrl + "#access_token=ofoq-smoke-access&refresh_token=ofoq-smoke-refresh&expires_in=3600&type=recovery", { waitUntil: "domcontentloaded" });
+  const recoveryUrl = new URL(baseUrl);
+  recoveryUrl.searchParams.set("ofoq-auth-recovery-smoke", "1");
+  recoveryUrl.hash = "access_token=ofoq-smoke-access&refresh_token=ofoq-smoke-refresh&expires_in=3600&type=recovery";
+  await page.goto(recoveryUrl.toString(), { waitUntil: "domcontentloaded" });
   await page.locator("#membershipNewPasswordWrap").waitFor({ state: "visible", timeout: 5000 });
   await page.locator("#membershipNewPassword").fill("OfoqSmokePassword2026!");
   await page.locator("#membershipSetNewPassword").click();
