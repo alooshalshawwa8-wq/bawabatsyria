@@ -238,6 +238,30 @@ async function syncStripeSubscription(subscriptionId: string, fallbackUserId?: s
   }
 }
 
+async function recordRevenueEvent(input: { eventId: string; userId?: string; eventType: string; amount: number; currency: string; occurredAt: number }) {
+  if (!input.eventId || !Number.isSafeInteger(input.amount) || input.amount < 0) return;
+  const currency = input.currency.toUpperCase();
+  if (!/^[A-Z]{3}$/.test(currency)) return;
+  const response = await adminFetch("/rest/v1/ofoq_revenue_events?on_conflict=provider_event_id", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Prefer": "resolution=ignore-duplicates,return=minimal" },
+    body: JSON.stringify({
+      user_id: input.userId || null, provider: "stripe", provider_event_id: input.eventId,
+      event_type: input.eventType, amount_minor: input.amount, currency,
+      occurred_at: new Date(input.occurredAt * 1000).toISOString(),
+    }),
+  });
+  if (!response.ok) throw new Error("Unable to record verified Stripe revenue event");
+}
+
+async function resolveSubscriptionOwner(subscriptionId: string): Promise<string | undefined> {
+  if (!subscriptionId) return undefined;
+  const response = await adminFetch("/rest/v1/subscriptions?select=user_id&provider_subscription_id=eq." + encodeURIComponent(subscriptionId) + "&limit=1");
+  if (!response.ok) throw new Error("Unable to resolve subscription owner");
+  const rows = await response.json();
+  return typeof rows?.[0]?.user_id === "string" ? rows[0].user_id : undefined;
+}
+
 async function processStripeWebhook(request: Request) {
   if (!STRIPE_WEBHOOK_SECRET || !STRIPE_SECRET_KEY || !SERVICE_ROLE_KEY) return reply({ error: "Stripe webhook configuration is incomplete; no event was accepted." }, 503);
   let payload: string;
@@ -265,6 +289,44 @@ async function processStripeWebhook(request: Request) {
     const sub = data.subscription ?? details.subscription;
     const subscriptionId = typeof sub === "string" ? sub : String((sub as Record<string, unknown> | null)?.id ?? "");
     if (subscriptionId) await syncStripeSubscription(subscriptionId);
+  } else if (eventType === "invoice.paid") {
+    const parent = (data.parent ?? {}) as Record<string, unknown>;
+    const details = (parent.subscription_details ?? {}) as Record<string, unknown>;
+    const sub = data.subscription ?? details.subscription;
+    const subscriptionId = typeof sub === "string" ? sub : String((sub as Record<string, unknown> | null)?.id ?? "");
+    const metadata = (details.metadata ?? data.metadata ?? {}) as Record<string, unknown>;
+    const userId = String(metadata.user_id ?? "") || await resolveSubscriptionOwner(subscriptionId);
+    const billingReason = String(data.billing_reason ?? "");
+    await recordRevenueEvent({
+      eventId: String(event.id ?? ""), userId, eventType: billingReason === "subscription_create" ? "subscription_started" : "subscription_renewed",
+      amount: Number(data.amount_paid ?? 0), currency: String(data.currency ?? "USD"),
+      occurredAt: Number(event.created ?? Math.floor(Date.now() / 1000)),
+    });
+  } else if (eventType === "charge.refunded") {
+    const customerId = String(data.customer ?? "");
+    let userId: string | undefined;
+    if (customerId) {
+      const ownerResponse = await adminFetch("/rest/v1/subscriptions?select=user_id&provider_customer_id=eq." + encodeURIComponent(customerId) + "&order=updated_at.desc&limit=1");
+      if (!ownerResponse.ok) throw new Error("Unable to resolve refunded customer");
+      const owners = await ownerResponse.json();
+      userId = typeof owners?.[0]?.user_id === "string" ? owners[0].user_id : undefined;
+    }
+    await recordRevenueEvent({
+      eventId: String(event.id ?? ""), userId, eventType: "refund_succeeded",
+      amount: Number(data.amount_refunded ?? 0), currency: String(data.currency ?? "USD"),
+      occurredAt: Number(event.created ?? Math.floor(Date.now() / 1000)),
+    });
+  } else if (eventType === "customer.subscription.deleted") {
+    const metadata = (data.metadata ?? {}) as Record<string, unknown>;
+    const subscriptionId = String(data.id ?? "");
+    const userId = String(metadata.user_id ?? "") || await resolveSubscriptionOwner(subscriptionId);
+    const firstItem = ((data.items as Record<string, unknown> | undefined)?.data as Record<string, unknown>[] | undefined)?.[0];
+    const price = firstItem?.price as Record<string, unknown> | undefined;
+    await recordRevenueEvent({
+      eventId: String(event.id ?? ""), userId, eventType: "subscription_canceled",
+      amount: 0, currency: String(price?.currency ?? "USD"),
+      occurredAt: Number(event.created ?? Math.floor(Date.now() / 1000)),
+    });
   }
   return reply({ received: true });
 }
@@ -309,6 +371,39 @@ Deno.serve(async (request: Request) => {
 
     const user = await authenticatedUser(request);
     if (!user) return reply({ error: "Authentication required" }, 401);
+
+    if (request.method === "GET" && path === "/api/admin/metrics") {
+      if (!user.owner) return reply({ error: "Platform owner access required" }, 403);
+      const since = new Date(Date.now() - 30 * 86400000).toISOString();
+      const [usageResponse, revenueResponse] = await Promise.all([
+        adminFetch("/rest/v1/ofoq_usage_events?select=user_id,event_name,section_id,created_at&created_at=gte." + encodeURIComponent(since) + "&limit=20000"),
+        adminFetch("/rest/v1/ofoq_revenue_events?select=event_type,amount_minor,currency,occurred_at&occurred_at=gte." + encodeURIComponent(since) + "&limit=20000"),
+      ]);
+      if (!usageResponse.ok || !revenueResponse.ok) return reply({ error: "Unable to load platform metrics" }, 503);
+      const usage = await usageResponse.json();
+      const revenue = await revenueResponse.json();
+      const uniqueUsers = new Set(usage.map((row: Record<string, unknown>) => String(row.user_id))).size;
+      const byEvent: Record<string, number> = {};
+      const bySection: Record<string, number> = {};
+      for (const row of usage as Record<string, unknown>[]) {
+        const eventName = String(row.event_name ?? "");
+        const sectionId = String(row.section_id ?? "");
+        byEvent[eventName] = (byEvent[eventName] ?? 0) + 1;
+        bySection[sectionId] = (bySection[sectionId] ?? 0) + 1;
+      }
+      const revenueByCurrency: Record<string, { grossMinor: number; refundsMinor: number; payments: number }> = {};
+      for (const row of revenue as Record<string, unknown>[]) {
+        const currency = String(row.currency ?? "USD");
+        const bucket = revenueByCurrency[currency] ?? { grossMinor: 0, refundsMinor: 0, payments: 0 };
+        if (row.event_type === "refund_succeeded") bucket.refundsMinor += Number(row.amount_minor ?? 0);
+        else if (row.event_type === "payment_succeeded" || row.event_type === "subscription_started" || row.event_type === "subscription_renewed") {
+          bucket.grossMinor += Number(row.amount_minor ?? 0);
+          bucket.payments += 1;
+        }
+        revenueByCurrency[currency] = bucket;
+      }
+      return reply({ periodDays: 30, usageEvents: usage.length, uniqueUsers, byEvent, bySection, revenueByCurrency });
+    }
 
     if (request.method === "GET" && path === "/api/me") {
       const token = request.headers.get("Authorization")!.slice(7);
