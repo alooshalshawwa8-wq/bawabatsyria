@@ -251,6 +251,7 @@ require("ofoq-ecom-import-file" in ecommerce and "استيراد نسخة الك
 require("commerceBackup" in (ROOT / "tests/browser-smoke.mjs").read_text(encoding="utf-8"), "browser suite must exercise merchant backup restore")
 require("reserved+qty>productRow.stock" in ecommerce and "button(\"تعديل\"" in ecommerce, "merchant stock reservation and product editing checks missing")
 require("لا يمكن إعادة تفعيل الطلب" in ecommerce and "archived!==true" in ecommerce and "button(\"أرشفة\"" in ecommerce, "merchant order reactivation and reversible archive guards missing")
+require("ofoq_ecommerce_deleted_orders_v1" in ecommerce and "ORDER_DELETE_KEY" in commerce_cloud and "method: \"DELETE\"" in commerce_cloud, "cancelled-order deletion must be queued locally and synced with owner-scoped DELETE")
 require('x.status!=="cancelled"' in ecommerce and "بعد التسليم حدّث المخزون يدوياً" in ecommerce, "all non-cancelled orders, including delivered orders, must remain allocated until manual stock reconciliation")
 require("commerceProducts" in operations and "commerceOrders" in operations, "merchant records missing from unified backup snapshot")
 require("ls.commerceProducts.length<=500" in operations and "ls.commerceOrders.length<=1000" in operations, "cloud backup must validate merchant snapshot bounds and records")
