@@ -255,16 +255,30 @@ for token in ("ofoq_personal_space_v1", "getFavorites", "getRecent", "toggleFavo
 require("fetch(" not in core and "XMLHttpRequest" not in core, "OFOQ personal space must remain local-only")
 require("./ofoq-core.js" in worker and cache_version, "OFOQ core missing from offline shell or cache version is invalid")
 
-# Public/private boundary: the Pages artifact must not publish repository-only internals.
+# Public/private boundary: assemble a dedicated public artifact without deleting the test workspace.
 pages_workflow = (ROOT / ".github/workflows/pages.yml").read_text(encoding="utf-8")
 for token in (
-    "Exclude repository-only and internal files from public Pages artifact",
-    "rm -rf .github docs tests scripts supabase backend",
-    "rm -f ./*.md ./*.py ./*.mjs ./*.sql",
-    "test ! -e docs",
-    "test ! -e supabase",
-    "test ! -e backend",
-    "path: .",
+    "Assemble public-only Pages artifact without mutating test workspace",
+    "mkdir -p dist",
+    "--exclude='.github/'",
+    "--exclude='docs/'",
+    "--exclude='tests/'",
+    "--exclude='scripts/'",
+    "--exclude='supabase/'",
+    "--exclude='backend/'",
+    "test -f dist/index.html",
+    "test -f dist/manifest.json",
+    "test -f dist/service-worker.js",
+    "test -f dist/ofoq-core.js",
+    "test ! -e dist/docs",
+    "test ! -e dist/tests",
+    "test ! -e dist/scripts",
+    "test ! -e dist/supabase",
+    "test ! -e dist/backend",
+    "test -f tests/browser-smoke.mjs",
+    "test -f tests/mobile-smoke.mjs",
+    "test -f scripts/validate_lighthouse.mjs",
+    "path: dist",
 ):
     require(token in pages_workflow, "public Pages artifact boundary missing: " + token)
 
