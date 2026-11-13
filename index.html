@@ -570,7 +570,7 @@ main{position:relative}
 <label>البريد الإلكتروني<input id="membershipEmail" type="email" autocomplete="email" placeholder="name@example.com"></label>
 <label>كلمة المرور<input id="membershipPassword" type="password" autocomplete="current-password" minlength="8" placeholder="8 أحرف على الأقل"></label>
 </div>
-<div class="panel-actions"><button class="btn" id="membershipLogin" type="button">تسجيل الدخول</button><button class="btn secondary" id="membershipSignup" type="button">إنشاء حساب جديد</button><button class="btn secondary" id="membershipRecover" type="button">نسيت كلمة المرور؟</button><button class="btn secondary" id="membershipLogout" type="button">تسجيل الخروج</button></div>
+<div class="panel-actions"><button class="btn" id="membershipLogin" type="button">تسجيل الدخول</button><button class="btn secondary" id="membershipSignup" type="button">إنشاء حساب جديد</button><button class="btn secondary" id="membershipRecover" type="button">نسيت كلمة المرور؟</button><button class="btn secondary" id="membershipResend" type="button">إعادة إرسال رسالة التأكيد</button><button class="btn secondary" id="membershipLogout" type="button">تسجيل الخروج</button></div>
 <div class="notice" id="membershipAuthStatus" role="status">يمكنك التصفح دون حساب. لإنشاء حساب شخصي أدخل بريدك وكلمة مرورك ثم اختر «إنشاء حساب جديد».</div>
 <div class="notice" id="membershipStatus" role="status">يتم التحقق من إعداد خدمة العضوية…</div>
 <div class="grid" id="membershipPlans" style="margin-top:16px"></div>
@@ -3095,6 +3095,19 @@ else status.textContent='تم إرسال طلب إنشاء الحساب. افح�
 document.getElementById('membershipLogin').addEventListener('click',()=>membershipAuth('login'));
 document.getElementById('membershipSignup').addEventListener('click',()=>membershipAuth('signup'));
 document.getElementById('membershipRecover').addEventListener('click',recoverMembershipPassword);
+document.getElementById('membershipResend').addEventListener('click',resendMembershipConfirmation);
+async function resendMembershipConfirmation(){
+const email=document.getElementById('membershipEmail').value.trim();
+const status=document.getElementById('membershipAuthStatus');
+if(!email||! /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){status.textContent='أدخل البريد الإلكتروني الذي أنشأت به الحساب أولاً.';return;}
+status.textContent='جارٍ إرسال رسالة تأكيد جديدة…';
+try{
+const redirectTo=window.location.origin+window.location.pathname;
+const response=await fetch(authUrl+'/auth/v1/resend',{method:'POST',headers:{'content-type':'application/json',apikey:authAnonKey},body:JSON.stringify({type:'signup',email,options:{emailRedirectTo:redirectTo}})});
+if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.msg||data.message||data.error_description||'تعذر إعادة إرسال رسالة التأكيد.');}
+status.textContent='إذا كان الحساب بحاجة إلى تأكيد، فستصلك رسالة جديدة. افحص الوارد والرسائل غير المرغوب فيها.';
+}catch(error){status.textContent=error.message||'تعذر إعادة إرسال رسالة التأكيد حالياً.';}
+}
 document.getElementById('membershipLogout').addEventListener('click',()=>{clearMembershipSession();membershipAuthStatusReset();loadMembership();});
 async function recoverMembershipPassword(){
 const email=document.getElementById('membershipEmail').value.trim();
