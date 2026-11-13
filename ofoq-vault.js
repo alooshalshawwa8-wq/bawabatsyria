@@ -166,7 +166,7 @@
       });
     };
     const loadBackups = async () => {
-      const rows = await api(TABLE + "?select=id,label,created_at,schema_version,payload&backup_type=eq.all_local&order=created_at.desc&limit=20");
+      const rows = await api(TABLE + "?select=id,label,created_at,schema_version&backup_type=eq.all_local&order=created_at.desc&limit=20");
       backups = Array.isArray(rows) ? rows : [];
       renderBackups();
       setStatus("عدد النسخ الشاملة المحفوظة في حسابك: " + backups.length + ". النسخ تخص هذا الحساب فقط.");
@@ -206,7 +206,8 @@
       if (!confirm("ستُستبدل مفاتيح مساحة العمل المسموح بها فقط بالبيانات الموجودة في هذه النسخة. لن تتغير جلسة الدخول أو كلمات المرور أو محادثات المساعد. هل تريد المتابعة؟")) return;
       setBusy(true);
       try {
-        const payload = selected.payload;
+        const selectedRows = await api(TABLE + "?select=id,payload,schema_version&backup_type=eq.all_local&id=eq." + encodeURIComponent(selected.id) + "&limit=1");
+        const payload = Array.isArray(selectedRows) && selectedRows[0] ? selectedRows[0].payload : null;
         if (!payload || payload.app !== "ofoq-full-local-workspace" || payload.version !== 1 ||
             !payload.keys || typeof payload.keys !== "object" || Array.isArray(payload.keys)) {
           throw new Error("صيغة النسخة غير متوافقة.");
