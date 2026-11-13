@@ -391,6 +391,9 @@ for token in ("enable row level security", "to authenticated", "auth.uid()", "gr
 require("add column archived boolean not null default false" in archive_sql, "commerce product archiving migration missing")
 require("Archived products cannot receive new orders" in archive_guard_sql and "A product with active orders cannot be archived" in archive_guard_sql, "archived product order guard missing")
 
+owner_keys_sql = (ROOT / "supabase/migrations/20261113135325_ofoq_store_composite_owner_primary_keys.sql").read_text(encoding="utf-8")
+require("primary key (user_id, id)" in owner_keys_sql and "foreign key (user_id, product_id)" in owner_keys_sql, "merchant primary and foreign keys must be account-scoped")
+
 # PWA and shell integrity.
 require((ROOT / "manifest.json").is_file(), "manifest missing")
 require((ROOT / "service-worker.js").is_file(), "service worker missing")
