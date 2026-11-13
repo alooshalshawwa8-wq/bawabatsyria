@@ -84,6 +84,44 @@ Security advisor snapshot (2026-11-13):
 Performance advisor snapshot:
 - 15 unused-index informational findings. Do not drop indexes based only on this snapshot; confirm workload/query plans and retention requirements first.
 
+## 6A. Follow-up read-only security audit (2026-11-13)
+
+### Public-schema table exposure
+
+A fresh catalog query compared RLS state, policy presence, and table grants. The 10 tables flagged by the Supabase advisor as RLS-enabled with no policies are:
+- `ai_provider_daily_usage`
+- `football_api_budget_policy`
+- `football_api_budget_reservations`
+- `football_api_cache`
+- `football_api_rate_limits`
+- `football_api_usage`
+- `platform_feature_catalog`
+- `platform_launch_config`
+- `platform_plan_catalog`
+- `platform_plan_features`
+
+For all 10, the current table-grant query showed grants only to `postgres` and `service_role`, with no direct `anon` or `authenticated` table grants. This supports a backend-only access design and means the advisor warning is not, by itself, evidence of public table exposure. Continue verifying views, RPCs, and every service-role call path. No policies or grants were changed.
+
+### Function and view exposure
+
+- `reserve_ai_provider_request(text,integer)` remains SECURITY DEFINER; EXECUTE is restricted to `service_role` (confirmed in the earlier audit).
+- `post_journal_entry(uuid)` is SECURITY INVOKER and EXECUTE is granted to `authenticated`.
+- `football_rate_limit_hit(text,integer,integer)` is SECURITY INVOKER and is used by the football Edge Function.
+- `trim_user_workspace_backup_history()` is a SECURITY INVOKER trigger function, but catalog ACL inspection shows EXECUTE grants inherited/available to `anon` and `authenticated`. Trigger functions cannot be invoked as ordinary RPC functions; nevertheless, the unnecessary API-role EXECUTE grants should be reviewed and, if confirmed safe against existing trigger dependencies, revoked through a reviewed migration. No privilege changes were made.
+- The `points_balances` view has SELECT granted to `authenticated`; verify its owner/definition and security-invoker behavior as part of the view audit.
+
+### Edge Function route review (source inspection, not penetration testing)
+
+- `membership-api` version 20: `/api/me`, `/api/points`, and `/api/points/grant` require a bearer token validated through Supabase Auth; owner-only points grants also validate app metadata, bound the body, validate UUID/delta/reason/idempotency key, and use idempotent inserts. `/api/plans` and health are intentionally public. Stripe webhook handling has signature verification code. Checkout remains hard-disabled unless the owner enables `PAYMENTS_ENABLED`; current source returns 403 while disabled. No explicit request-rate limiter was found in this function; add one before enabling checkout or broadening privileged routes.
+- `site-assistant` version 19: POST-only, exact-origin check, bounded request body (24 KB), maximum 12 messages, content truncation, per-runtime IP throttle, and global database-backed Gemini daily budget of 30 requests. The in-memory IP throttle is best-effort only because Edge isolates are ephemeral.
+- `football-data` version 44: GET-only, exact-origin check, per-runtime throttle plus persistent database-backed rate limiting, backend service-role access to cache/usage/config tables, authenticated owner-only usage dashboard, and entitlement checks for gated features. The rate limiter derives its client key from the first `x-forwarded-for` entry; verify the Supabase gateway's header-trust behavior before relying on it as a security boundary.
+- These are static source observations, not live endpoint tests, fuzzing, or a complete audit of all route branches.
+
+### Current advisor snapshot
+
+- Security: 10 RLS/no-policy informational findings; leaked-password protection remains disabled (owner decision required).
+- Performance: 15 unused-index informational findings. No indexes were dropped; usage statistics alone are insufficient evidence for removal.
+
 ## 7. Monetization and safety
 
 The inspected `membership-api` source explicitly states payments remain disabled until the platform owner enables monetization. Preserve this state unless the owner explicitly authorizes a payment launch and all provider/legal/readiness checks are satisfied. Do not run real payment transactions or alter production payment/auth settings without explicit authorization.
