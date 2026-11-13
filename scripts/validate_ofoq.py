@@ -71,10 +71,39 @@ for token in (
     'Number.isSafeInteger(delta)',
     'on_conflict=idempotency_key',
     'checkout.stripe.com/',
+    'async function billingGateOpen(): Promise<boolean>',
+    '/rest/v1/platform_launch_config?select=launch_mode,billing_enabled,paid_features_enforced&singleton=eq.true&limit=1',
+    'config?.launch_mode === "production"',
+    'config?.billing_enabled === true',
+    'config?.paid_features_enforced === true',
+    'PAYMENTS_ENABLED && await billingGateOpen()',
+    'if (!await billingGateOpen()) return reply(',
 ):
     require(token in membership, "membership API security/monetization guard missing: " + token)
 require("SUPABASE_SERVICE_ROLE_KEY" not in html and "STRIPE_SECRET_KEY" not in html, "membership provider secrets must not enter browser HTML")
 require('Access-Control-Allow-Origin": "https://alooshalshawwa8-wq.github.io"' in membership, "membership API exact-origin CORS contract missing")
+
+# Football provider must remain fail-closed when the provider account is blocked.
+football = (ROOT / "supabase/functions/football-data/index.ts").read_text(encoding="utf-8")
+for token in (
+    'if (action === "status")',
+    'providerBlocked',
+    'available: false',
+    '!budgetSnapshot?.providerBlocked',
+):
+    require(token in football, "football provider suspension guard missing: " + token)
+
+# Database migration source for the hardened internal quota helper must be tracked.
+quota_migration = ROOT / "supabase/migrations/20261113131859_harden_ai_provider_reservation_search_path.sql"
+require(quota_migration.is_file(), "quota helper hardening migration is not tracked")
+require("ALTER FUNCTION public.reserve_ai_provider_request(text, integer) SET search_path = '';" in quota_migration.read_text(encoding="utf-8"), "quota helper migration must pin an empty search_path")
+
+# Scope reconciliation is explicit and must preserve the expanded catalogue.
+scope_doc = ROOT / "docs/OFOQ_SCOPE_RECONCILIATION.md"
+require(scope_doc.is_file(), "scope reconciliation document missing")
+scope_text = scope_doc.read_text(encoding="utf-8")
+for token in ("46", "42", "78", "70", "no sections or tools were removed"):
+    require(token in scope_text, "scope reconciliation record missing: " + token)
 
 # AI assistant request hardening: exact-origin POST, bounded payloads, and fail-closed global budget.
 for token in (
@@ -289,6 +318,7 @@ public_docs = (
     ROOT / "docs/OFOQ_FOOTBALL_QUOTA_AUDIT.md",
     ROOT / "docs/OFOQ_GLOBAL_EXCELLENCE_ROADMAP.md",
     ROOT / "docs/OFOQ_SECTION_STANDARD.md",
+    ROOT / "docs/OFOQ_SCOPE_RECONCILIATION.md",
     ROOT / "GEMINI_ASSISTANT_SETUP.md",
     ROOT / "MONETIZATION_SETUP.md",
     ROOT / "PAYMENT_SETUP_SYRIA.md",

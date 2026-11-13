@@ -339,7 +339,39 @@ Deno.serve(async (request: Request) => {
   const url = new URL(request.url);
   const action = url.searchParams.get("action") ?? "status";
   if (action === "status") {
-    return reply({ provider: "API-Football", configured: Boolean(apiKey), message: apiKey ? "مزود البيانات جاهز." : "أضف API_FOOTBALL_KEY إلى أسرار Supabase لتفعيل البيانات." });
+    try {
+      const budgetResponse = await dbRest("rpc/football_api_budget_status", { method: "POST", body: "{}" });
+      if (!budgetResponse.ok) {
+        return reply({
+          provider: "API-Football",
+          configured: Boolean(apiKey),
+          providerBlocked: true,
+          available: false,
+          message: "تعذر التحقق من حالة المزود؛ أوقفنا الاتصالات به لحماية الحصة."
+        }, 503);
+      }
+      const budgetSnapshot = await budgetResponse.json();
+      const providerBlocked = budgetSnapshot?.providerBlocked === true;
+      return reply({
+        provider: "API-Football",
+        configured: Boolean(apiKey),
+        providerBlocked,
+        available: Boolean(apiKey) && !providerBlocked,
+        message: providerBlocked
+          ? "مزود البيانات موقوف مؤقتًا؛ لن نرسل طلبات خارجية حتى يُحل تعليق الحساب."
+          : apiKey
+            ? "مفتاح المزود مضبوط؛ لم نرسل طلبًا خارجيًا ضمن فحص الحالة."
+            : "أضف API_FOOTBALL_KEY إلى أسرار Supabase لتفعيل البيانات."
+      });
+    } catch {
+      return reply({
+        provider: "API-Football",
+        configured: Boolean(apiKey),
+        providerBlocked: true,
+        available: false,
+        message: "تعذر التحقق من حالة المزود؛ أوقفنا الاتصالات به لحماية الحصة."
+      }, 503);
+    }
   }
   if (action === "usage") {
     try {
@@ -355,7 +387,7 @@ Deno.serve(async (request: Request) => {
       if (!usageResponse.ok || !budgetResponse.ok) throw new Error("Usage or budget summary unavailable");
       let budgetSnapshot = await budgetResponse.json();
       const providerHeaderAt = budgetSnapshot?.providerHeaderAt ? Date.parse(budgetSnapshot.providerHeaderAt) : 0;
-      if (apiKey && Date.now() - providerHeaderAt > 30 * 60_000 && Date.now() - providerStatusCheckAt > 30 * 60_000) {
+      if (apiKey && !budgetSnapshot?.providerBlocked && Date.now() - providerHeaderAt > 30 * 60_000 && Date.now() - providerStatusCheckAt > 30 * 60_000) {
         providerStatusCheckAt = Date.now();
         const statusStarted = Date.now();
         try {
