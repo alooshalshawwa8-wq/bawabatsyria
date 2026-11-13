@@ -271,6 +271,10 @@ for token in (
 # Public documentation must not expose project-specific operational identifiers.
 public_docs = (
     ROOT / "docs/ALOOSH_FUTURE_INTELLIGENCE_MASTER_STATE.md",
+    ROOT / "docs/OFOQ_AUTH_COMMERCE_AUDIT.md",
+    ROOT / "docs/OFOQ_FOOTBALL_QUOTA_AUDIT.md",
+    ROOT / "docs/OFOQ_GLOBAL_EXCELLENCE_ROADMAP.md",
+    ROOT / "docs/OFOQ_SECTION_STANDARD.md",
     ROOT / "GEMINI_ASSISTANT_SETUP.md",
     ROOT / "MONETIZATION_SETUP.md",
     ROOT / "PAYMENT_SETUP_SYRIA.md",
@@ -278,8 +282,13 @@ public_docs = (
 for public_doc in public_docs:
     if public_doc.is_file():
         public_text = public_doc.read_text(encoding="utf-8")
-        for forbidden in ("elzquyehghuxhswogsch", "SUPABASE_SERVICE_ROLE_KEY", "STRIPE_SECRET_KEY", "GEMINI_API_KEY"):
-            require(forbidden not in public_text, "public documentation contains operational secret identifier: " + public_doc.name)
+        for forbidden in (
+            "elzquyehghuxhswogsch", "SUPABASE_SERVICE_ROLE_KEY", "STRIPE_SECRET_KEY", "GEMINI_API_KEY",
+            "football_api_budget_reserve", "football_rate_limit_hit", "reserve_ai_provider_request",
+            "PAYMENTS_ENABLED", "payment_methods", "payment_orders", "trial_free_all_features",
+            "football_api_cache", "membership-api", "site-assistant", "football-data",
+        ):
+            require(forbidden not in public_text, "public documentation contains internal operational detail: " + public_doc.name + " / " + forbidden)
 
 # PWA and shell integrity.
 require((ROOT / "manifest.json").is_file(), "manifest missing")
