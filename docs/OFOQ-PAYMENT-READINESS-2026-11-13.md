@@ -49,3 +49,22 @@ The payment foundation is partially implemented, but production collection is no
 - Do not grant public access to payment orders, subscriptions, or private proof files.
 - Do not activate entitlements from a client-submitted receipt or unverified webhook.
 - Do not mutate production billing configuration as part of this audit.
+
+## Follow-up engineering work completed on the development branch
+
+- Added authenticated `POST /api/billing-portal` to create Stripe Billing Portal sessions.
+- The route is gated by both `PAYMENTS_ENABLED` and the production billing configuration.
+- The Stripe customer ID is selected server-side from a current subscription belonging to the authenticated user; the browser cannot submit a customer ID.
+- The route only accepts a current Stripe subscription with a valid customer identifier and a future period end.
+- The return URL is derived from the configured HTTPS site URL, and the returned portal URL must use the Stripe Billing Portal HTTPS host.
+- Extended `GET /api/me` to expose the subscription provider field needed by the account UI.
+- Added a hidden-by-default account control that appears only when the signed-in user has a current Stripe subscription; it requests a portal session without supplying customer identifiers.
+- Added `tests/membership-api-contract.mjs` and wired it into `.github/workflows/monetization-checks.yml`.
+
+## Verification status after the follow-up
+
+- The updated API, account UI, test file, and CI workflow were fetched again from the development branch and inspected.
+- Static source checks confirmed the route, both billing gates, user-scoped subscription lookup, server-derived customer ID, HTTPS URL validation, UI wiring, and CI test step.
+- The GitHub branch remains ahead of `main` and has no commits behind it.
+- A completed GitHub Actions run for the new commit was not available through the current workflow-run query at the time of this audit. Therefore, the new test is committed and wired into CI, but its execution result is not claimed here.
+- The function has not been deployed to production. The live deployed version remains unchanged.
