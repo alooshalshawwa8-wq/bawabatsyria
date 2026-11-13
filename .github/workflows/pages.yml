@@ -186,6 +186,17 @@ jobs:
             --exclude='scripts/' \
             --exclude='supabase/' \
             --exclude='backend/' \
+            --exclude='secrets/' \
+            --exclude='private/' \
+            --exclude='.wrangler/' \
+            --exclude='.env*' \
+            --exclude='.dev.vars*' \
+            --exclude='*.pem' \
+            --exclude='*.key' \
+            --exclude='*.p12' \
+            --exclude='*.pfx' \
+            --exclude='*.sqlite*' \
+            --exclude='*.db' \
             --exclude='dist/' \
             --exclude='*.md' \
             --exclude='*.py' \
@@ -201,6 +212,10 @@ jobs:
           test ! -e dist/scripts
           test ! -e dist/supabase
           test ! -e dist/backend
+          if find dist -type f \\( -name '.env*' -o -name '.dev.vars*' -o -name '*.pem' -o -name '*.key' -o -name '*.p12' -o -name '*.pfx' -o -name '*.sqlite*' -o -name '*.db' \\) -print -quit | grep -q .; then
+            echo 'Potential secret or database file found in public artifact.'
+            exit 1
+          fi
           test -f tests/browser-smoke.mjs
           test -f tests/mobile-smoke.mjs
           test -f scripts/validate_lighthouse.mjs

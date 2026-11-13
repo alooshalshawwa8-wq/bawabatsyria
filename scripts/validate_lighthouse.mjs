@@ -27,4 +27,5 @@ for (const key of ["accessibility", "best-practices", "seo"]) {
 if (!Number.isFinite(categories.performance?.score) || categories.performance.score < 0.8) {
   throw new Error("Lighthouse performance score must remain at or above 80/100");
 }
+console.log("performance: " + Math.round(categories.performance.score * 100) + "/100");
 console.log("OFOQ Lighthouse budgets passed.");
