@@ -75,3 +75,14 @@
 - This is manual backup/restore, not live or automatic cross-device synchronization. Favorites and visit history reach the cloud only when the user explicitly creates an optional cloud backup.
 - Static contract checks now protect this integration from regressions.
 - Source change: operations-hub.js, commit e36a3c8d4f16bb274360c679f98849b4da5116d4.
+
+
+## تحسين الخدمات والتجارة — 2026-11-13
+
+- تمت إضافة مصفوفة جاهزية تغطي الأقسام الـ78 وتفصل مسارات الواجهة عن الخدمات الحية والتشغيل التجاري: `docs/OFOQ_SERVICE_READINESS_MATRIX.md`.
+- تم توصيل استوديو التجارة الإلكترونية بطبقة بيانات سحابية اختيارية: منتجات وطلبات مملوكة للحساب، سياسات RLS، قيود مخزون وطلبات على مستوى قاعدة البيانات، وأرشفة قابلة للعكس.
+- أضيف جسر مزامنة يدوي يستعمل جلسة المستخدم الحالية من الخزنة السحابية في مركز الأعمال؛ لا توجد أسرار خادم في المتصفح ولا نشر عام للمنتجات ولا معالجة مدفوعات.
+- أضيفت اختبارات متصفح للتحقق من ظهور الجسر، واختبار أرشفة المنتج دون حذف سجله، مع توسيع فحوصات JavaScript وPython للتحقق من عقد المزامنة والترحيلات.
+- ترحيلات قاعدة البيانات المطبقة: `20261113134758_ofoq_store_cloud_catalog_and_orders`, `20261113134838_ofoq_store_product_archiving`, `20261113134941_ofoq_store_archived_product_order_guard`.
+- تم التحقق من RLS والمنح: `authenticated` فقط لديه منح CRUD مع سياسات ملكية، ولا توجد منح لـ`anon`. اختبارات SQL عابرة انتهت بـROLLBACK بعد نجاح اختبارات الملكية ولقطة السعر وحجز المخزون والأرشفة.
+- يظل تفعيل الدفع الحقيقي، ومزود كرة القدم، والبيانات الحية لبقية الأقسام خارج نطاق هذا التغيير حتى تتوفر بيانات الاعتماد والموافقات اللازمة.
