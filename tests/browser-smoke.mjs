@@ -15,9 +15,9 @@ await page.route("**/*", async route => {
   const url = new URL(route.request().url());
   if (["alooshalshawwa8-wq.github.io", "127.0.0.1", "localhost"].includes(url.hostname)) return route.continue();
   if (url.hostname === "elzquyehghuxhswogsch.supabase.co" &&
-      ((route.request().method() === "POST" && ["/auth/v1/resend", "/auth/v1/recover"].includes(url.pathname)) ||
+      ((route.request().method() === "POST" && ["/auth/v1/signup", "/auth/v1/resend", "/auth/v1/recover"].includes(url.pathname)) ||
        (route.request().method() === "PUT" && url.pathname === "/auth/v1/user"))) {
-    mockedAuthRequests.push({ path: url.pathname, method: route.request().method(), body: route.request().postData() || "", authorization: route.request().headers()["authorization"] || "" });
+    mockedAuthRequests.push({ path: url.pathname, method: route.request().method(), url: route.request().url(), body: route.request().postData() || "", authorization: route.request().headers()["authorization"] || "" });
     return route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
   }
   externalRequests.push(url.hostname);
@@ -42,6 +42,16 @@ try {
 
   await page.locator("#membershipBtn").click();
   await page.locator("#membershipEmail").fill("ofoq-smoke@example.com");
+  await page.locator("#membershipPassword").fill("x".repeat(12));
+  await page.locator("#membershipSignup").click();
+  await page.locator("#membershipAuthStatus").getByText(/تم إرسال طلب إنشاء الحساب/).waitFor({ state: "visible", timeout: 5000 });
+  const signupRequest = mockedAuthRequests.find(item => item.path === "/auth/v1/signup" && item.method === "POST");
+  if (!signupRequest || !signupRequest.body.includes("ofoq-smoke@example.com")) {
+    throw new Error("Signup did not submit the expected email to Supabase Auth");
+  }
+  if (!signupRequest.url || !signupRequest.url.includes("redirect_to=")) {
+    throw new Error("Signup did not configure the email confirmation redirect URL");
+  }
   await page.locator("#membershipResend").click();
   await page.locator("#membershipAuthStatus").getByText(/إذا كان الحساب بحاجة إلى تأكيد/).waitFor({ state: "visible", timeout: 5000 });
   await page.locator("#membershipRecover").click();
