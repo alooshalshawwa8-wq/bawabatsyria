@@ -281,7 +281,7 @@ header{background:#081727eF;border-bottom:1px solid #31536a;box-shadow:0 8px 35p
 .welcome-kicker{color:#a4f3e7}
 .welcome-enter{border-color:#a4f3e7;background:linear-gradient(135deg,#168f91,#8af0df);color:#06272c}
 .welcome-skip{color:#d1e6ef}
-#membershipBtn,#membershipPanel{display:none!important}
+#membershipBtn{display:inline-flex!important;align-items:center;white-space:nowrap}
 .ofoq-footer{margin-top:40px;padding:28px 18px;border-top:1px solid #31576b;background:#081827;color:#b8cbd8;text-align:center;line-height:1.9}
 .ofoq-footer>strong{color:#a4f3e7;font-size:19px}
 .ofoq-footer p{max-width:850px;margin:8px auto;font-size:13px}
@@ -544,7 +544,7 @@ main{position:relative}
 
 <body>
 <section id="bawaba-welcome" role="dialog" aria-modal="true" aria-label="الافتتاحية السينمائية ثم صورة المؤسس"><div class="welcome-photo-sequence" aria-hidden="true"><picture><source type="image/webp" srcset="./assets/file_00000000dce882129102a05013969410-480.webp 480w, ./assets/file_00000000dce882129102a05013969410-828.webp 828w, ./assets/file_00000000dce882129102a05013969410-1400.webp 1400w" sizes="100vw"><img src="./assets/file_00000000dce882129102a05013969410.png" alt="الصورة الترحيبية الأولى" fetchpriority="high" decoding="async"></picture><picture><source type="image/webp" srcset="./assets/file_000000008668821282987c991b233d13-480.webp 480w, ./assets/file_000000008668821282987c991b233d13-828.webp 828w, ./assets/file_000000008668821282987c991b233d13-1400.webp 1400w" sizes="100vw"><img src="./assets/file_000000008668821282987c991b233d13.png" alt="الصورة الترحيبية الثانية" fetchpriority="low" decoding="async"></picture></div><div class="welcome-stars"></div><div class="welcome-founder-overlay"><strong>❤️Aloosh alshawwa ❤️</strong><span>مؤسس وصاحب البوابة — أهلاً بكم في عالم المعرفة والإبداع</span></div><div class="welcome-content"><button class="welcome-skip" id="bawaba-welcome-skip" type="button">تخطي المقدمة</button></div></section>
-<header><div class="brand"><div class="mark">✦</div><div><strong>أُفُق | OFOQ</strong><small>الموسوعة والخدمات الرقمية</small></div></div><div style="display:flex;gap:8px;align-items:center"><button class="btn secondary" id="membershipBtn" type="button" aria-label="تسجيل الدخول أو إنشاء حساب جديد">دخول / إنشاء حساب</button><button class="btn secondary" id="homeBtn" type="button" aria-label="العودة إلى الواجهة الرئيسية">الرئيسية</button></div></header>
+<header><div class="brand"><div class="mark">✦</div><div><strong>أُفُق | OFOQ</strong><small>الموسوعة والخدمات الرقمية</small></div></div><div style="display:flex;gap:8px;align-items:center"><button class="btn secondary" id="membershipBtn" type="button" aria-label="الحساب الشخصي: إنشاء حساب أو تسجيل الدخول">حسابي · دخول / إنشاء حساب</button><button class="btn secondary" id="homeBtn" type="button" aria-label="العودة إلى الواجهة الرئيسية">الرئيسية</button></div></header>
 <section class="ofoq-founder-top" aria-label="مؤسس بوابة أفق">
   <div class="ofoq-founder-avatar" aria-hidden="true">✦</div>
   <div class="ofoq-founder-copy">
@@ -564,14 +564,14 @@ main{position:relative}
 <div class="stats"><span>✦ واجهة عربية كاملة</span><span>◈ تصميم متوافق مع الهاتف</span><span>▦ أقسام منظمة وقابلة للبحث</span></div></section>
 <section class="panel" id="membershipPanel" aria-live="polite">
 <button class="btn secondary" id="membershipBack">← العودة للأقسام</button>
-<h2 style="margin-top:16px">العضوية والنقاط والمحفظة</h2>
-<p>اختر مستوى العضوية المناسب. تُفعّل الصلاحيات بعد تأكيد الاشتراك من خادم الدفع، ولا تُحتسب النقاط من المتصفح.</p>
+<h2 style="margin-top:16px">الحساب الشخصي في أُفُق</h2>
+<p>تصفّح الأقسام العامة مجاناً دون تسجيل. الحساب الشخصي اختياري لحفظ بياناتك والوصول إلى ميزات الحساب. هذا الدخول منفصل عن بوابة الأعمال والخزنة السحابية.</p>
 <div class="calc">
 <label>البريد الإلكتروني<input id="membershipEmail" type="email" autocomplete="email" placeholder="name@example.com"></label>
 <label>كلمة المرور<input id="membershipPassword" type="password" autocomplete="current-password" minlength="8" placeholder="8 أحرف على الأقل"></label>
 </div>
-<div class="panel-actions"><button class="btn" id="membershipLogin" type="button">تسجيل الدخول</button><button class="btn secondary" id="membershipSignup" type="button">إنشاء حساب</button><button class="btn secondary" id="membershipLogout" type="button">تسجيل الخروج</button></div>
-<div class="notice" id="membershipAuthStatus" role="status">يتطلب تسجيل الدخول إعداد مشروع Supabase Auth وربطه بإعدادات البوابة.</div>
+<div class="panel-actions"><button class="btn" id="membershipLogin" type="button">تسجيل الدخول</button><button class="btn secondary" id="membershipSignup" type="button">إنشاء حساب جديد</button><button class="btn secondary" id="membershipRecover" type="button">نسيت كلمة المرور؟</button><button class="btn secondary" id="membershipLogout" type="button">تسجيل الخروج</button></div>
+<div class="notice" id="membershipAuthStatus" role="status">يمكنك التصفح دون حساب. لإنشاء حساب شخصي أدخل بريدك وكلمة مرورك ثم اختر «إنشاء حساب جديد».</div>
 <div class="notice" id="membershipStatus" role="status">يتم التحقق من إعداد خدمة العضوية…</div>
 <div class="grid" id="membershipPlans" style="margin-top:16px"></div>
 <div class="notice" id="membershipWallet" style="margin-top:16px">المحفظة وسجل النقاط يظهران بعد تسجيل الدخول وربط حسابك بالخدمة.</div>
@@ -3081,8 +3081,20 @@ else status.textContent='تم إرسال طلب إنشاء الحساب. افح�
 }
 document.getElementById('membershipLogin').addEventListener('click',()=>membershipAuth('login'));
 document.getElementById('membershipSignup').addEventListener('click',()=>membershipAuth('signup'));
+document.getElementById('membershipRecover').addEventListener('click',recoverMembershipPassword);
 document.getElementById('membershipLogout').addEventListener('click',()=>{clearMembershipSession();membershipAuthStatusReset();loadMembership();});
-function membershipAuthStatusReset(){document.getElementById('membershipAuthStatus').textContent='تم تسجيل الخروج من هذه الجلسة.';}
+async function recoverMembershipPassword(){
+const email=document.getElementById('membershipEmail').value.trim();
+const status=document.getElementById('membershipAuthStatus');
+if(!email||!/^\\S+@\\S+\\.\\S+$/.test(email)){status.textContent='أدخل بريدك الإلكتروني أولاً، ثم اضغط «نسيت كلمة المرور؟».';return;}
+status.textContent='جارٍ إرسال رابط استعادة كلمة المرور…';
+try{
+const response=await fetch(authUrl+'/auth/v1/recover',{method:'POST',headers:{'content-type':'application/json',apikey:authAnonKey},body:JSON.stringify({email})});
+if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.msg||data.message||data.error_description||'تعذر إرسال رابط الاستعادة.');}
+status.textContent='إذا كان البريد مسجلاً، فستصلك رسالة لاستعادة كلمة المرور. افحص الوارد والرسائل غير المرغوب فيها.';
+}catch(error){status.textContent=error.message||'تعذر إرسال رابط الاستعادة حالياً.';}
+}
+function membershipAuthStatusReset(){document.getElementById('membershipAuthStatus').textContent='تم تسجيل الخروج من هذه الجلسة. يمكنك متابعة التصفح دون حساب.';}
 function membershipNode(tag,text,className){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;}
 function openMembership(){document.body.classList.remove('section-mode');panel.classList.remove('open');membershipPanel.classList.add('open');membershipPanel.scrollIntoView({behavior:'smooth',block:'start'});loadMembership();}
 async function loadMembership(){
@@ -3239,7 +3251,8 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
     }
     if(/باق|عضوي|اشتراك|vip|pro|مجاني|سعر/.test(s))return 'أُفُق مفتوح ومجاني حالياً، وما في اشتراكات أو مدفوعات مفعّلة. فيك تستخدم الأقسام المفتوحة مباشرة من دون عضوية أو دفع.';
     if(/تجرب|سبع|7 أيام|اسبوع|أسبوع/.test(s))return 'حالياً ما في حاجة لتجربة أو اشتراك؛ الأقسام المفتوحة في أُفُق متاحة مجاناً. إذا تغيّرت سياسة الوصول رح نوضح ذلك داخل الموقع.';
-    if(/حساب|دخول|سجل|كلمة مرور|نسيت/.test(s))return 'استخدام الأقسام المفتوحة لا يحتاج منك مشاركة كلمة مرور أو رمز تحقق. إذا واجهتك مشكلة محددة، اكتبلي نص رسالة الخطأ من دون أي بيانات سرية.';
+    if(/نسيت|استعادة.*كلمة|كلمة.*مرور/.test(s))return 'لاستعادة كلمة المرور: افتح «حسابي · دخول / إنشاء حساب» أعلى الصفحة، أدخل بريدك الإلكتروني، ثم اضغط «نسيت كلمة المرور؟». راجع بريدك الوارد والرسائل غير المرغوب فيها.';
+    if(/حساب|دخول|سجل|إنشاء.*حساب|اعمل.*حساب/.test(s))return 'أكيد! اضغط زر «حسابي · دخول / إنشاء حساب» أعلى الصفحة، ثم أدخل بريدك الإلكتروني وكلمة مرور لا تقل عن 8 أحرف واضغط «إنشاء حساب جديد». إذا طُلب تأكيد البريد، افتح رسالة التأكيد ثم ارجع وسجّل الدخول. التصفح العام مجاني ولا يحتاج حساباً، وهذا الحساب الشخصي منفصل عن بوابة الأعمال والخزنة السحابية. لا ترسل لي كلمة مرورك أو رمز التحقق.';
     if(/شام كاش|دفع|تحويل/.test(s))return 'الدفع عبر شام كاش قيد التجهيز والتحقق، ولسه مو مفعّل. لا تحوّل أي مبلغ لأي حساب قبل الإعلان الرسمي عن تفعيل الدفع داخل الموقع.';
     if(/مساعدة|مساعد|ذكاء|ai|روبوت|مرشد/.test(s))return 'أنا نَبْراس، مرشد أُفُق. فيني ساعدك تفهم الأقسام، ترتّب أفكارك، وتوصل لخطوات عملية. خبرني شو بدك تعمل.';
     if(/شكرا|شكراً|يسلمو|مشكور/.test(s))return 'أهلاً وسهلاً فيك، هاد واجبي! ❤️ إذا بدك شي تاني أنا هون.';
