@@ -57,19 +57,26 @@ The latest commit's combined status endpoint returned no status entries. The com
 Canonical Pages URL:
 `https://alooshalshawwa8-wq.github.io/bawabatsyria/`
 
-Verified successful deployment run:
-- Workflow: Deploy static site to GitHub Pages, run #515.
-- Run ID: `43427370696`.
-- Deployed source SHA: `57264a8b0c7c8b3df223011407f177aef617e7b3`.
-- Result: **success**, completed 2026-11-13T12:43:45Z.
-- Job steps confirmed successful: WebP generation, site/SEO/JavaScript validation, OFOQ portal contract tests, Pages artifact upload, deployment, Playwright browser smoke tests (including mobile), Lighthouse audit, and Lighthouse budget enforcement.
-- Run: https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/43427370696
-- Lighthouse artifact: `ofoq-lighthouse-reports`, artifact ID `14038172668`, retained and downloadable at inspection time.
-- Lighthouse category scores: Performance **90**, Accessibility **100**, Best Practices **100**, SEO **100**.
-- Lighthouse lab metrics: FCP 1.8 s, LCP 2.9 s, Speed Index 2.1 s, Total Blocking Time 210 ms, CLS 0, Interactive 3.0 s.
-- The deployed browser smoke suite completed successfully against the Pages URL, checking the 78-section portal and mobile viewport. This is runtime evidence from CI, not a guarantee for every device/network.
+Latest verified successful deployment:
+- Workflow: Deploy static site to GitHub Pages, run #520.
+- Run ID: `43428258771`.
+- Deployed source SHA: `1d51d2dd935f719451a3ca555875f86d1704cee3`.
+- Result: **success**, completed 2026-11-13T12:50:04Z.
+- Successful steps: responsive WebP generation; site/JavaScript validation; e-commerce and career studio syntax checks; OFOQ portal contract tests; Pages artifact upload/deployment; browser smoke tests; Lighthouse audit; Lighthouse quality-budget enforcement.
+- Browser smoke suite verified all 78 section workspaces, command-center keyboard controls, favorites/recent filters, Operations Hub tabs and CRUD, local JSON export, cloud-backup guardrails, and mobile horizontal-overflow check.
+- Run: https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/43428258771
+- Lighthouse artifact: `ofoq-lighthouse-reports`, artifact ID `14037979073`, retained at inspection time.
 
-The latest documentation-only commit is `cc89f5e99a82c45914d95f3fc30e423ad3be2088`. Its three push-triggered workflows (Pages deploy #516, static validation #33, membership/portal validation #536) were **queued** at the last status check; their final outcomes and the deployment of that exact SHA are not yet verified. The web fetcher could not independently load the Pages URL, so no separate external HTTP check is claimed.
+Lighthouse results for the deployed Pages URL:
+- Performance **94**, Accessibility **100**, Best Practices **100**, SEO **100**.
+- FCP 1.74 s, LCP 2.86 s, Speed Index 2.03 s, Total Blocking Time 65 ms, CLS 0, Interactive 2.89 s, server response 7.7 ms.
+- These are one CI lab run, not a field-data/Core Web Vitals guarantee for all users.
+
+The static validation workflow #37 and membership/portal validation workflow #540 also completed successfully for the same SHA:
+- Static validation: https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/43428258694
+- Membership/portal validation: https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/43428258736
+
+No separate external manual browser session was available. The Pages deployment and its CI-run browser tests are verified; universal availability across networks/devices is not claimed.
 
 ## 6. Supabase state (read-only inspection)
 
@@ -140,25 +147,23 @@ The inspected `membership-api` source explicitly states payments remain disabled
 
 ## 8. Missing or unverified items
 
-- `docs/ALOOSH_FUTURE_INTELLIGENCE_MASTER_STATE.md` did not exist at the inspected path before this record was created.
-- Live Pages response and current deployed commit.
-- Actual latest GitHub Actions run and Lighthouse report.
-- Full runtime execution of browser/mobile smoke tests.
-- Exact reconciliation of the historic 46-section/42-tool acceptance inventory with the current 78-section test registry.
-- Complete route-by-route security review of all Edge Functions.
-- Review of the 10 RLS/no-policy tables' grants and intended backend-only exposure.
-- Auth leaked-password protection decision.
-- Full list of the 15 unused indexes and evidence-based retention decisions.
+- Exact reconciliation of the historic 46-section/42-tool acceptance inventory with the current 78-section source/test registry; the original itemized inventory is not present in the current `docs/` directory.
+- Complete route-by-route security review and abuse testing of all Edge Functions; current findings are source review, not penetration testing.
+- Persistent centralized rate limiting for `membership-api`; the current source has no explicit limiter. Do not rely on per-isolate in-memory throttles as a security boundary.
+- Verify the trust boundary of the first `x-forwarded-for` entry used by `football-data` before treating IP throttling as robust.
+- Auth leaked-password protection decision remains with the owner.
+- Evidence-based review of all 15 unused-index advisor findings.
+- Real-device field performance and Core Web Vitals data; current Lighthouse scores are CI lab measurements.
 
 ## 9. Next execution queue (priority ordered)
 
-1. Verify the deployed Pages URL, deployment SHA, latest Actions run, and Lighthouse artifacts.
-2. Reconcile section/tool acceptance inventory against the actual source registry and renderers without deleting features.
-3. Complete a read-only Supabase access audit for each RLS/no-policy table, including grants, views, RPC exposure, and Edge Function access paths.
-4. Review Edge Function authorization, rate limits, request validation, CORS, and abuse controls route by route.
-5. Address the leaked-password protection warning through an explicit owner-approved Auth setting change.
-6. Validate core user journeys and mobile/desktop behavior in a real browser.
-7. Only after the baseline is verified, implement the next isolated, tested improvement and record its commit and deployment evidence.
+1. Recover or reconstruct the exact historic 46-section/42-tool acceptance inventory from prior approved project records; compare item-by-item to the 78-section registry and actual renderers without deleting functionality.
+2. Design and implement a persistent, abuse-resistant membership API rate limiter with route-specific thresholds, trusted identity keys, bounded storage, and fail-safe behavior. First stage code/tests and migration; do not deploy a database schema or production Edge Function change without reviewing the migration and rollout.
+3. Verify trusted client-IP semantics for the football Edge Function and harden the limiter identity if required.
+4. Complete static route-by-route review and targeted negative tests for all Edge Functions, including auth failures, owner-only paths, invalid payloads, CORS, replay, and provider outages.
+5. Review the 15 unused-index findings with query plans and workload evidence; make no removals without proof.
+6. Owner decision on Supabase Auth leaked-password protection.
+7. Expand browser coverage for critical end-user journeys beyond current smoke coverage, then capture field performance when real-user telemetry is available.
 
 ## 10. Evidence and reporting rules
 
