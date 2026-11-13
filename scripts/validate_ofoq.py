@@ -76,6 +76,40 @@ for token in (
 require("SUPABASE_SERVICE_ROLE_KEY" not in html and "STRIPE_SECRET_KEY" not in html, "membership provider secrets must not enter browser HTML")
 require('Access-Control-Allow-Origin": "https://alooshalshawwa8-wq.github.io"' in membership, "membership API exact-origin CORS contract missing")
 
+# AI assistant request hardening: exact-origin POST, bounded payloads, and fail-closed global budget.
+for token in (
+    'request.method !== "POST"',
+    'origin !== ALLOWED_ORIGIN',
+    'request.headers.get("x-forwarded-for")',
+    'rateAllowed(ip)',
+    'readBoundedBody(request, 24_000)',
+    'body.messages.length > 12',
+    'item.content.trim().slice(0, 2000)',
+    'reserve_ai_provider_request',
+    'budgetAllowed !== true',
+):
+    require(token in assistant, "AI assistant abuse-control contract missing: " + token)
+
+# Football provider protection: GET-only, local burst guard, persistent quota, and fail-closed storage.
+football = (ROOT / "supabase/functions/football-data/index.ts").read_text(encoding="utf-8")
+for token in (
+    'request.method !== "GET"',
+    'origin !== ALLOWED_ORIGIN',
+    'request.headers.get("x-forwarded-for")',
+    'rateAllowed(ip)',
+    'persistentRateAllowed(await hashClientKey(ip), 60)',
+    'persistentRate === null',
+    'if (!persistentRate)',
+    'p_window_seconds: 60',
+    'p_max_requests: maxRequests',
+    'async function hashClientKey(value: string)',
+):
+    require(token in football, "Football API abuse-control contract missing: " + token)
+require('user.appMetadata?.role === "OWNER" && user.appMetadata?.owner === true' in football,
+        "Football owner-only authorization metadata contract missing")
+require('const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")' in football,
+        "Football provider data access must use server-side service credentials")
+
 # Frontend section assistant must be explicit-send only and must not expose secrets.
 gemini = re.search(r'<script id="ofoq-section-gemini-v2">([\s\S]*?)</script>', html)
 require(gemini, "section Gemini panel missing")
