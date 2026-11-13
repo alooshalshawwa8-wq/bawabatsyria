@@ -19,24 +19,22 @@ The approved display name is **❤️Aloosh alshawwa ❤️**.
 
 ## 3. Latest verified source state
 
-Latest application commit observed on `main` before creating this state record:
-- SHA: `9f09e8279255cdca5b597d794019042d20b41b0c`
-- Message: `ci: validate mobile smoke test syntax before deployment`
-- Timestamp: `2026-11-12T19:55:38Z`
-- Change: adds `node --check tests/mobile-smoke.mjs` to `.github/workflows/pages.yml`.
+Latest source commit on `main`:
+- SHA: `afd43e06705ed9765e71608a6289acb305aae8af`
+- Message: `test: enforce AI and football Edge Function abuse controls in CI`
+- This commit adds static CI contracts for the AI assistant's POST/origin/body-size/message-count/global-budget protections and the football API's GET/origin/local-throttle/persistent-quota/fail-closed/owner-gate protections.
+- Deno type-checking and the expanded static contract validator passed.
 
-Recent preceding commits added mobile viewport smoke coverage, Lighthouse regression budgets, responsive WebP generation/validation, and related CI checks.
+Previous code-quality commit:
+- SHA: `1d51d2dd935f719451a3ca555875f86d1704cee3`
+- Added CI assertions for membership API authentication, owner-only points grants, Stripe webhook signature/timestamp checks, bounded payloads, idempotency, disabled-checkout guard, and browser-secret exclusion.
 
-The current workflow `.github/workflows/pages.yml` contains:
-- HTML/manifest/JSON-LD/SEO/robots/sitemap validation.
-- Section registry uniqueness, priority mapping, and renderer coverage checks.
-- Node syntax checks for inline scripts and supporting JavaScript.
-- `scripts/validate_ofoq.py` contract checks.
-- GitHub Pages artifact upload and deployment.
-- Playwright browser and mobile smoke tests.
-- Lighthouse performance/accessibility/best-practices/SEO audit and budget enforcement.
+Verified workflows for latest source SHA `afd43e0...`:
+- OFOQ static validation #39: success.
+- Membership/portal validation #542: success.
+- GitHub Pages deployment #522: success; see deployment evidence below.
 
-The latest commit's combined status endpoint returned no status entries. The commit-specific workflow-runs endpoint also returned no runs (that endpoint only surfaces PR-triggered runs). Therefore CI success for this commit is **not verified** by the available evidence.
+The static validator also verifies unique section IDs, priority mappings, renderer coverage, and key frontend contracts. CI source assertions protect against accidental removal of backend security controls; they do not replace runtime authorization tests or penetration testing.
 
 ## 3A. Master-state record commits
 
@@ -52,31 +50,52 @@ The latest commit's combined status endpoint returned no status entries. The com
 - `ofoq-core.js` stores only section IDs for favorites/recent visits in localStorage on the current browser; it is local-device state, not account-synced storage.
 - The page includes the Gemini-backed `site-assistant` endpoint and section-aware helper UI. Do not expose provider credentials in public code.
 
+## 4A. Recovered historical acceptance context (partial)
+
+Earlier project records confirm the historic targets of **46 interactive sections** and **42 tool modules**, but do not contain a complete itemized list of their exact names. Do not fabricate the missing names or infer that the current 78-section registry is a one-to-one replacement.
+
+Recovered historical scope categories include:
+- Commerce, profit, and inventory.
+- Marketing, advertising, and video.
+- Energy, fuel, real estate, and investment.
+- Study, CV/resume, and travel.
+- Agriculture, fertilizers, and water.
+- Digital security and transactions.
+- Heritage, tourism, and community initiatives.
+- Medical appointment organization.
+
+One explicitly named tool is **`مستشار التسويق ومولد الإعلانات VIP`**, with ad-copy generation, audience/benefit framing, price and offer support, platform/tone selection, and copy-ready output. Verify its present mapping and completeness against the actual registry before marking it complete.
+
+Previously named strategic capability modules: `OFOQ CORE`, `OFOQ UNIVERSE`, `OFOQ NEXUS`, `OFOQ AI COUNCIL`, `OFOQ PULSE`, `OFOQ EXPERIENCE`, `OFOQ SHIELD`, and `OFOQ LAUNCH`.
+
+Historical membership requirements included Professional/VIP/Business plan concepts, monthly Stripe subscriptions, server-verified VIP access, five VIP sections, points ledger/balance, wallet, and administrative controls. This is historical product scope, not evidence that billing is currently live. Current payment state remains disabled.
+
 ## 5. Deployment state
 
 Canonical Pages URL:
 `https://alooshalshawwa8-wq.github.io/bawabatsyria/`
 
 Latest verified successful deployment:
-- Workflow: Deploy static site to GitHub Pages, run #520.
-- Run ID: `43428258771`.
-- Deployed source SHA: `1d51d2dd935f719451a3ca555875f86d1704cee3`.
-- Result: **success**, completed 2026-11-13T12:50:04Z.
-- Successful steps: responsive WebP generation; site/JavaScript validation; e-commerce and career studio syntax checks; OFOQ portal contract tests; Pages artifact upload/deployment; browser smoke tests; Lighthouse audit; Lighthouse quality-budget enforcement.
+- Workflow: Deploy static site to GitHub Pages, run #522.
+- Run ID: `43428711168`.
+- Deployed source SHA: `afd43e06705ed9765e71608a6289acb305aae8af`.
+- Result: **success**, completed 2026-11-13T12:53:24Z.
+- Successful steps: responsive WebP generation; site/JavaScript validation; e-commerce and career studio syntax checks; OFOQ portal contract tests; Pages artifact upload/deployment; Playwright browser smoke tests; Lighthouse audit; Lighthouse quality-budget enforcement.
 - Browser smoke suite verified all 78 section workspaces, command-center keyboard controls, favorites/recent filters, Operations Hub tabs and CRUD, local JSON export, cloud-backup guardrails, and mobile horizontal-overflow check.
-- Run: https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/43428258771
-- Lighthouse artifact: `ofoq-lighthouse-reports`, artifact ID `14037979073`, retained at inspection time.
+- Run: https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/43428711168
+- Lighthouse artifact: `ofoq-lighthouse-reports`, artifact ID `14038835202`, retained at inspection time.
 
-Lighthouse results for the deployed Pages URL:
-- Performance **94**, Accessibility **100**, Best Practices **100**, SEO **100**.
-- FCP 1.74 s, LCP 2.86 s, Speed Index 2.03 s, Total Blocking Time 65 ms, CLS 0, Interactive 2.89 s, server response 7.7 ms.
-- These are one CI lab run, not a field-data/Core Web Vitals guarantee for all users.
+Lighthouse results for this run:
+- Performance **90**, Accessibility **100**, Best Practices **100**, SEO **100**.
+- FCP 1.75 s, LCP 3.45 s, Speed Index 2.05 s, Total Blocking Time 76 ms, CLS 0, Interactive 3.54 s, server response 4.8 ms.
+- Compared with the immediately preceding lab run (#520: Performance 94, LCP 2.86 s), this run shows expected lab variability and a slower LCP. The Lighthouse budget still passed. Treat these as lab measurements, not field Core Web Vitals.
+- The LCP element was the main hero H1, with approximately 2.85 s render delay in this run. Main-thread work was about 2.4 s; image-delivery and cache-lifetime audits also identified opportunities. Prioritize initial render/JS/layout work before sacrificing welcome-image visual quality.
 
-The static validation workflow #37 and membership/portal validation workflow #540 also completed successfully for the same SHA:
-- Static validation: https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/43428258694
-- Membership/portal validation: https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/43428258736
+Static validation #39 and membership/portal validation #542 also completed successfully for the same source SHA:
+- Static validation: https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/43428711173
+- Membership/portal validation: https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/43428711189
 
-No separate external manual browser session was available. The Pages deployment and its CI-run browser tests are verified; universal availability across networks/devices is not claimed.
+No separate external manual browser session was available. Pages deployment and CI-run browser tests are verified; universal availability across all networks/devices is not claimed.
 
 ## 6. Supabase state (read-only inspection)
 
@@ -147,23 +166,26 @@ The inspected `membership-api` source explicitly states payments remain disabled
 
 ## 8. Missing or unverified items
 
-- Exact reconciliation of the historic 46-section/42-tool acceptance inventory with the current 78-section source/test registry; the original itemized inventory is not present in the current `docs/` directory.
-- Complete route-by-route security review and abuse testing of all Edge Functions; current findings are source review, not penetration testing.
-- Persistent centralized rate limiting for `membership-api`; the current source has no explicit limiter. Do not rely on per-isolate in-memory throttles as a security boundary.
-- Verify the trust boundary of the first `x-forwarded-for` entry used by `football-data` before treating IP throttling as robust.
+- Exact itemized historic 46-section/42-tool acceptance inventory. Earlier records only provide counts, categories, one named tool, and strategic module names; the full exact list remains unrecovered.
+- Completeness of each of the 78 current sections beyond registry/rendering and smoke-test coverage.
+- Persistent centralized rate limiting for `membership-api`; the current source has no explicit limiter.
+- Trusted client-IP semantics for the first `x-forwarded-for` entry used by both `site-assistant` and `football-data`; verify the actual hosted gateway trust boundary before treating IP-based throttling as a security boundary.
+- Complete route-by-route negative/runtime testing and penetration testing of all Edge Functions.
 - Auth leaked-password protection decision remains with the owner.
 - Evidence-based review of all 15 unused-index advisor findings.
-- Real-device field performance and Core Web Vitals data; current Lighthouse scores are CI lab measurements.
+- Real-user field performance/Core Web Vitals data; current Lighthouse results are CI lab measurements.
+- Reduce initial main-thread/layout/render delay and investigate LCP variability without degrading the welcome sequence or visual quality.
 
 ## 9. Next execution queue (priority ordered)
 
-1. Recover or reconstruct the exact historic 46-section/42-tool acceptance inventory from prior approved project records; compare item-by-item to the 78-section registry and actual renderers without deleting functionality.
-2. Design and implement a persistent, abuse-resistant membership API rate limiter with route-specific thresholds, trusted identity keys, bounded storage, and fail-safe behavior. First stage code/tests and migration; do not deploy a database schema or production Edge Function change without reviewing the migration and rollout.
-3. Verify trusted client-IP semantics for the football Edge Function and harden the limiter identity if required.
-4. Complete static route-by-route review and targeted negative tests for all Edge Functions, including auth failures, owner-only paths, invalid payloads, CORS, replay, and provider outages.
-5. Review the 15 unused-index findings with query plans and workload evidence; make no removals without proof.
-6. Owner decision on Supabase Auth leaked-password protection.
-7. Expand browser coverage for critical end-user journeys beyond current smoke coverage, then capture field performance when real-user telemetry is available.
+1. Design a persistent, abuse-resistant membership API rate limiter with route-specific thresholds, a trusted identity strategy, bounded storage/retention, and explicit failure behavior. Reuse of the existing football quota RPC is only a candidate; review schema semantics and storage growth first. Implement and test in isolation before any production deployment.
+2. Verify the trusted client-IP contract for hosted Supabase Edge Functions. The current first-entry `x-forwarded-for` parsing must not be treated as spoof-resistant until the proxy chain is confirmed. Prefer authenticated user identity for member endpoints where possible.
+3. Recover the exact historic 46-section/42-tool list from archived project records and map each item to the current 78-section registry, renderers, and behavior without deleting functionality.
+4. Add targeted negative tests for Edge Function auth failures, owner-only routes, invalid payloads, quota exhaustion, CORS, replay, and provider outages.
+5. Profile the initial page's render delay, main-thread work, DOM size, and cache lifetimes; isolate the biggest cause and validate each optimization against Lighthouse plus browser smoke tests.
+6. Review the 15 unused-index findings with query plans and workload evidence; make no removals without proof.
+7. Owner decision on Supabase Auth leaked-password protection.
+8. Expand browser coverage for high-value user journeys and collect field performance data when real-user telemetry is available.
 
 ## 10. Evidence and reporting rules
 
