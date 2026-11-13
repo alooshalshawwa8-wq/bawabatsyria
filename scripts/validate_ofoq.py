@@ -105,6 +105,29 @@ scope_text = scope_doc.read_text(encoding="utf-8")
 for token in ("46", "42", "78", "70", "no sections or tools were removed"):
     require(token in scope_text, "scope reconciliation record missing: " + token)
 
+# Public-schema defaults and sequence access must remain least-privilege.
+default_acl_migration = ROOT / "supabase/migrations/20261113132339_revoke_postgres_client_default_privileges.sql"
+require(default_acl_migration.is_file(), "client default-privilege migration missing")
+default_acl_sql = default_acl_migration.read_text(encoding="utf-8")
+for token in (
+    "ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public",
+    "REVOKE ALL ON TABLES FROM anon, authenticated",
+    "REVOKE ALL ON SEQUENCES FROM anon, authenticated",
+    "REVOKE EXECUTE ON FUNCTIONS FROM anon, authenticated",
+    "REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC",
+):
+    require(token in default_acl_sql, "least-privilege default ACL contract missing: " + token)
+
+sequence_migration = ROOT / "supabase/migrations/20261113132420_revoke_client_public_sequence_access.sql"
+require(sequence_migration.is_file(), "client sequence access migration missing")
+sequence_sql = sequence_migration.read_text(encoding="utf-8")
+for token in ("REVOKE ALL ON SEQUENCE", "football_api_budget_reservations_id_seq", "football_api_usage_id_seq", "journal_entries_entry_number_seq", "FROM anon, authenticated"):
+    require(token in sequence_sql, "client sequence access restriction missing: " + token)
+
+trigger_acl_migration = ROOT / "supabase/migrations/20261113132427_restrict_workspace_backup_trigger_function.sql"
+require(trigger_acl_migration.is_file(), "trigger-only function privilege migration missing")
+require("REVOKE EXECUTE ON FUNCTION public.trim_user_workspace_backup_history() FROM PUBLIC, anon, authenticated;" in trigger_acl_migration.read_text(encoding="utf-8"), "trigger-only helper must not be exposed as client RPC")
+
 # AI assistant request hardening: exact-origin POST, bounded payloads, and fail-closed global budget.
 for token in (
     'request.method !== "POST"',
