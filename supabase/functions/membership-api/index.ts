@@ -109,6 +109,20 @@ async function adminFetch(path: string, init: RequestInit = {}) {
   return fetch(SUPABASE_URL + path, { ...init, headers });
 }
 
+async function billingGateOpen(): Promise<boolean> {
+  try {
+    const response = await adminFetch("/rest/v1/platform_launch_config?select=launch_mode,billing_enabled,paid_features_enforced&singleton=eq.true&limit=1");
+    if (!response.ok) return false;
+    const rows = await response.json();
+    const config = Array.isArray(rows) ? rows[0] : null;
+    return config?.launch_mode === "production" &&
+      config?.billing_enabled === true &&
+      config?.paid_features_enforced === true;
+  } catch {
+    return false;
+  }
+}
+
 async function stripeRequest(path: string, body?: URLSearchParams, idempotencyKey?: string) {
   if (!STRIPE_SECRET_KEY) throw new Error("Stripe secret key is not configured");
   const response = await fetch("https://api.stripe.com/v1/" + path, {
@@ -281,7 +295,7 @@ Deno.serve(async (request: Request) => {
 
     if (request.method === "GET" && path === "/api/plans") {
       const plans = await getJson("/rest/v1/membership_plans?select=id,name_ar,description_ar,billing_interval,active,display_order,stripe_price_id&active=eq.true&order=display_order.asc");
-      const stripeReady = Boolean(PAYMENTS_ENABLED && STRIPE_SECRET_KEY && STRIPE_WEBHOOK_SECRET && SERVICE_ROLE_KEY);
+      const stripeReady = Boolean(PAYMENTS_ENABLED && await billingGateOpen() && STRIPE_SECRET_KEY && STRIPE_WEBHOOK_SECRET && SERVICE_ROLE_KEY);
       return reply({ plans: plans.map((plan: Record<string, unknown>) => ({
         id: plan.id, name: plan.name_ar, description: plan.description_ar,
         billingInterval: plan.billing_interval,
@@ -351,6 +365,7 @@ Deno.serve(async (request: Request) => {
     if (request.method === "POST" && path === "/api/checkout") {
       if (!PAYMENTS_ENABLED) return reply({ error: "الاشتراكات والدفع مؤجلان حالياً؛ جميع أقسام المنصة متاحة مجاناً." }, 403);
       if (!STRIPE_SECRET_KEY || !STRIPE_WEBHOOK_SECRET || !SERVICE_ROLE_KEY) return reply({ error: "الدفع غير مهيأ بعد؛ يلزم إعداد مفاتيح Stripe وSupabase الآمنة." }, 503);
+      if (!await billingGateOpen()) return reply({ error: "الدفع غير متاح قبل اعتماد وضع الإطلاق التجاري وتفعيل ضوابط الفوترة على الخادم." }, 403);
       const body = await readBoundedText(request, 8_192)
         .then(raw => JSON.parse(raw))
         .catch(() => null);
