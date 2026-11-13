@@ -12,7 +12,7 @@ const externalRequests = [];
 page.on("pageerror", error => pageErrors.push(error.message));
 await page.route("**/*", route => {
   const url = new URL(route.request().url());
-  if (url.hostname === "alooshalshawwa8-wq.github.io") return route.continue();
+  if (["alooshalshawwa8-wq.github.io", "127.0.0.1", "localhost"].includes(url.hostname)) return route.continue();
   externalRequests.push(url.hostname);
   return route.abort();
 });
