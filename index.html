@@ -3048,7 +3048,7 @@ const session={access_token:data.access_token,refresh_token:data.refresh_token||
 try{localStorage.setItem(AUTH_SESSION_KEY,JSON.stringify(session));localStorage.setItem('bawabatsyria_access_token',session.access_token);}catch(e){}
 window.BAWABA_ACCESS_TOKEN=session.access_token;
 }
-function clearMembershipSession(){try{localStorage.removeItem(AUTH_SESSION_KEY);localStorage.removeItem('bawabatsyria_access_token');}catch(e){}window.BAWABA_ACCESS_TOKEN='';}
+function clearMembershipSession(){try{localStorage.removeItem(AUTH_SESSION_KEY);localStorage.removeItem('bawabatsyria_access_token');sessionStorage.removeItem('ofoq_cloud_backup_session_v1');}catch(e){}window.BAWABA_ACCESS_TOKEN='';}
 async function refreshMembershipSession(force=false){
 const saved=readMembershipSession();
 if(!saved||!saved.refresh_token)return membershipToken();
@@ -3885,10 +3885,12 @@ if(typeof oldHome==='function'&&!oldHome.__ofoqFadeWrapped){
  renderResults();
 })();
 </script>
+<script src="./ofoq-data.js" defer></script>
 <script src="./ecommerce-studio.js" defer></script>
 <script src="./career-studio.js" defer></script>
 <script src="./operations-hub.js" defer></script>
 <script src="./ofoq-core.js" defer></script>
 <script src="./ofoq-commerce-cloud.js" defer></script>
 <script src="./ofoq-vault.js" defer></script>
+<script src="./ofoq-workspaces.js" defer></script>
 </body></html>
