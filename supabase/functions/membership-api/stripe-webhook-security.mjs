@@ -45,3 +45,22 @@ export async function verifyStripeSignature(payload, header, secret, nowSeconds 
   const expected = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
   return signatures.some(signature => safeEqual(signature.toLowerCase(), expected));
 }
+
+const SUPPORTED_STRIPE_EVENT_TYPES = new Set([
+  "checkout.session.completed",
+  "checkout.session.async_payment_succeeded",
+  "customer.subscription.created",
+  "customer.subscription.updated",
+  "customer.subscription.deleted",
+  "customer.subscription.paused",
+  "customer.subscription.resumed",
+  "customer.subscription.pending_update_applied",
+  "customer.subscription.pending_update_expired",
+  "invoice.payment_failed",
+  "invoice.paid",
+  "charge.refunded",
+]);
+
+export function isSupportedStripeEventType(eventType) {
+  return typeof eventType === "string" && SUPPORTED_STRIPE_EVENT_TYPES.has(eventType);
+}
