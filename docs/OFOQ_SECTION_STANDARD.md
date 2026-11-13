@@ -1,291 +1,33 @@
-# OFOQ Section Experience Standard
+# أُفُق — معيار تجربة الأقسام
 
-Updated: 2026-11-11
+## الهدف
 
-## Reference experience
-The football section (`sports_radar`) is the reference for a rich section workspace. Its current navigation includes:
-- Home and overview
-- Fixtures, live scores, date selection and league search/standings
-- Competition directory and season archive
-- Major matches and derbies
-- Clubs and national teams
-- Popularity/social following reference
-- Match analysis studio
-- API-Football data explorer
-- Favorites
+يجب أن يقدم كل قسم تجربة واضحة ومفيدة، مع الحفاظ على استقلالية أدواته وتوافقه مع هوية أُفُق.
 
-## Shared experience now deployed
-Every section opened through `openSection` receives a contextual Gemini assistant panel. The panel sends the section's trusted profile key with the request, keeps short conversation context in memory for that open session, and does not store prompts in browser local storage.
+## متطلبات كل قسم
 
-The shared catalogue/explorer layer already provides topic discovery, search, topic filters, image galleries, favorites, a local planner and a short activity/challenge. Section-specific tools remain intact.
+- عنوان ووصف يوضحان الغرض.
+- أدوات تعمل فعلياً، لا مجرد عناصر شكلية.
+- تنقل واضح والعودة إلى الصفحة الرئيسية.
+- بحث مناسب عند الحاجة.
+- دعم الهاتف ولوحة المفاتيح وإمكانية الوصول.
+- معالجة واضحة للأخطاء والمدخلات غير الصالحة.
+- بيان مصدر البيانات وتوقيت تحديثها عندما تكون المعلومات متغيرة.
+- احترام الخصوصية وعدم حفظ البيانات الشخصية محلياً أو سحابياً دون وضوح وموافقة.
 
-## Gemini routing
-The frontend maps section IDs to a fixed set of trusted specialist profiles. The Edge Function accepts only the known profile keys and adds the relevant instruction to the existing system prompt. Unknown IDs fall back to the general profile.
+## المساعدات الذكية
 
-## Cost and safety controls
-- Keep the existing shared daily Gemini reservation limit at 30 requests per UTC day. Do not raise it without explicit approval.
-- Keep existing per-runtime rate limiting and input size/message limits.
-- Each click on the section assistant makes one Gemini request. No automatic refresh or background generation.
-- No Gemini API key is present in frontend code.
-- Do not send API-Football requests as part of Gemini assistant usage.
-- Keep football provider protection, cache and request budgets unchanged.
-- Do not describe assistant output as live data unless the relevant source data is actually supplied.
+يجب أن يكون تشغيل المساعد بناءً على طلب المستخدم، مع إرسال أقل قدر لازم من السياق. تُعامل مدخلات المستخدم كمحتوى غير موثوق، ولا يجوز للمساعد ادعاء تنفيذ إجراءات أو الوصول إلى بيانات غير متاحة له.
 
-## Verification status
-- GitHub `main/index.html` updated with the shared contextual Gemini panel.
-- Supabase Edge Function `site-assistant` deployed as version 17 (ACTIVE).
-- `football-data` was not changed; current observed version 43 (ACTIVE).
-- No Gemini or API-Football request was sent as a functional test, to avoid consuming provider quota.
-- Browser-level end-to-end behavior still needs confirmation on the published GitHub Pages site.
+## التكلفة والموثوقية
 
-## 2026-11-11 — Cosmic glass interface and navigation upgrade
+- يجب وضع حدود استخدام مناسبة للخدمات الخارجية.
+- يجب ألا يؤدي فتح القسم تلقائياً إلى طلبات خارجية غير ضرورية.
+- يجب استخدام التخزين المؤقت حيث يكون مناسباً.
+- يجب إظهار حالات عدم التوفر بوضوح وعدم تقديم بيانات قديمة على أنها مباشرة.
 
-- Added the `ofoq-cosmic-ui-v2` design layer to `index.html`: glass-like panels, cyan/teal luminous accents, refined hero treatment, responsive section cards, focus states, reduced-motion handling, and mobile layout refinements.
-- Added `ofoq-command-center-v2`: a searchable command/navigation dialog built from the existing `sections` collection, with keyboard shortcuts (Ctrl/Cmd+K and /), Escape-to-close, focus handling, quick section opening, reading progress, and a back-to-top control.
-- The command center is navigation-only and does not call Gemini, API-Football, or any external API.
-- Completed the UI Gemini profile routing for the remaining section IDs: news, terms_of_use, accessibility_center, cars, bikes, phones, laptops, and designs. Each maps to an existing backend-approved profile.
-- Preserved the existing section renderers, football module, section explorer, and Gemini endpoint. No backend function, database schema, provider key, daily quota, or API-Football configuration was changed.
-- Commits: `1ca74fc0504194b9aa2086bf696547cafee75319` (visual layer and command center); `5844a7b5f3cca00911664765069587726ac443e4` (remaining Gemini routing and keyboard shortcut refinement).
-- Verification: fetched the updated `main/index.html` after both commits and confirmed the new style/script markers, existing Gemini script, football renderer, and explorer code remain present. Live browser/mobile interaction testing and a real Gemini request have not yet been performed.
+## التحقق
 
+لا يُعد ظهور القسم في الفهرس دليلاً على اكتماله. يجب اختبار الوظائف الأساسية، والمدخلات غير الصحيحة، وحالات فشل الخدمة، وعرض الهاتف، والتنقل.
 
-## 2026-11-11 — Gemini failure/retry context fix
-
-- Audited the contextual Gemini panel's request lifecycle in the current frontend.
-- Fixed a retry-context issue: when a request fails, its unsatisfied user message is removed from the in-memory conversation history if it is still the latest message. A later attempt therefore does not silently resend the failed prompt as part of the next request.
-- Successful conversation turns remain unchanged; the existing 10-message context cap, one-click/one-request behavior, endpoint, specialist routing, and server-side daily reservation limit remain unchanged.
-- No Gemini or API-Football request was sent during this code change.
-- Commit: 281f826723130844a00aab6ad4a0ea4e7b6fb68c.
-- Verification: source change saved to GitHub main; runtime/browser behavior remains untested pending a safe browser test.
-
-
-## 2026-11-11 — Accessible section workspace tabs
-
-- Improved the shared workspace tabs used across section pages with semantic tablist, tab, and tabpanel roles.
-- Added selected-state and panel relationships for assistive technologies, and keyboard navigation using Left/Right arrows plus Home/End.
-- Kept the existing tools, knowledge studio, task checklist, notes, local persistence, and section-specific renderers intact.
-- This is a frontend-only accessibility improvement; no API, provider quota, database, or secrets were changed.
-- Commit: a32ac4700ef0eed839388dd4913db761b57f6e4b.
-- Verification: source saved to GitHub main; browser and screen-reader interaction testing remains pending.
-
-
-## Specialized business and trading knowledge tracks — 2026-11-11
-
-Added first-match specialized knowledge profiles ahead of the broad category profiles in `OFOQ_SECTION_STUDIOS`:
-- `ecommerce_studio`: product presentation, full-cost pricing and contribution margin, order operations, and conversion measurement.
-- `trading_academy`: market structure, technical-analysis literacy, position sizing and risk, and paper-trading journals. Explicitly educational; no buy/sell recommendations.
-- `trader_market`: construction-material catalog units, quantity/waste estimates, landed procurement cost, and quotation terms.
-- `accounting_vip`: bookkeeping separation, pricing and margin, stock movement, and operating reports.
-- Business/startup/freelance/jobs/directory/marketplace sections receive a dedicated customer, revenue-model, acquisition, and operations profile.
-
-Implementation is front-end content only. No API, Supabase, database, provider key, quota, or external request behavior changed. Existing utility modules and tools were not replaced. The specialized profiles use the existing knowledge-studio renderer and local workspace. Validation is source-level only; no live browser, accessibility, or end-to-end tests were run. GitHub Pages deployment is not asserted.
-
-
-## Merchant inventory controls — 2026-11-11
-
-Extended the existing `accounting_vip` local inventory ledger without replacing its pricing calculator or backup format:
-- Added an optional per-item reorder/low-stock threshold (legacy records and version-1 backups without the field remain supported and default to zero).
-- Added low-stock status and a summary listing items at or below their configured threshold.
-- Added per-item stock-in and stock-out controls with positive-integer validation and prevention of negative balances.
-- Added an accounting workspace checklist covering item entry, reorder thresholds, stock movements, and regular backups.
-- Existing JSON backup export/import remains additive; imported items are validated and merged rather than replacing current records.
-
-All inventory data remains in browser localStorage on the current device. No API, Supabase, Gemini, API-Football, provider keys, or quotas were changed. Source-level checks only; no live browser/device test or GitHub Pages deployment verification was performed.
-
-
-## Merchant sales and purchases ledger — 2026-11-11
-
-- Added a local dated transaction ledger to the accounting workspace: sales/purchases, item, customer or supplier, quantity, unit price, payment status, paid amount, and remaining recorded balance.
-- Sales reduce the selected stock item and are blocked when stock is insufficient. Purchases increase stock and update the item's weighted-average unit cost.
-- Added a summary and transaction history. Inventory and transaction data use separate localStorage keys; the existing version-1 inventory backup format remains unchanged.
-- This is a local operating ledger, not a bank reconciliation or complete accounting statement. Data stays on the current browser/device and should be backed up externally.
-- No API, Supabase, Gemini, API-Football, provider keys, or quotas were changed. Source-level implementation only; no live browser/device or end-to-end test, and no GitHub Pages deployment verification.
-
-- Added a separate version-1 JSON export/import for the transaction ledger, with a 2 MB file cap, strict record validation, and duplicate-ID filtering on merge. It does not overwrite existing transactions or alter the inventory backup.
-
-
-## Merchant financial dashboard — 2026-11-11
-
-- Added a month-filtered financial summary for recorded sales and purchases, receipts, supplier payments, customer receivables, supplier payables, inventory cost valuation, and inventory retail-value estimate.
-- New sales records capture the current inventory unit cost as `costAtSale`, allowing an indicative gross-profit calculation for transactions with that snapshot. Legacy transactions without this field are excluded from the known gross-profit figure.
-- The dashboard explicitly notes that it excludes general overhead, taxes, and owner withdrawals; figures are operational estimates, not formal financial statements or bank reconciliation.
-- No external APIs, Supabase, Gemini, API-Football, provider keys, or quotas were changed. Front-end localStorage only; browser/device testing and live Pages deployment remain unverified.
-
-
-## Merchant reports center — 2026-11-11
-
-- Added period-based report generation for an operational profit-and-loss summary, recorded cash movements, and individual customer/supplier transaction statements.
-- Added CSV export with spreadsheet-formula injection mitigation, plus browser print action for the current report.
-- Cash movement reports use recorded paid amounts only and explicitly do not infer an opening cash balance. Party statements are based on exact party-name matches and the selected month. Profit summary distinguishes known cost-at-sale snapshots and does not misclassify all purchases as cost of goods sold.
-- Reports are local projections of the existing transaction ledger; they do not include expenses, taxes, owner withdrawals, opening balances, or external bank reconciliation. No APIs, Supabase, Gemini, API-Football, keys, or quotas changed. No live browser/device test or Pages deployment verification.
-
-
-## Customer and supplier directory — 2026-11-11
-
-- Added locally stored party profiles with role (customer/supplier/both), phone, address, and notes.
-- Added search, party cards, linked transaction totals, receivables/payables indicators, and per-party chronological statement generated from the existing ledger.
-- New and existing transaction parties are discovered automatically; the directory does not duplicate or independently mutate financial balances. Statements explicitly distinguish ledger-derived transaction history from attached invoice files (none are stored).
-- Party profiles use a separate localStorage key and remain on the current browser/device. No cloud sync, API, Supabase, Gemini, API-Football, or quota changes. No live browser/device test or Pages deployment verification.
-
-- Follow-up refinement: added a consolidated outstanding-balance alert for partially/unpaid recorded transactions, clearly noting that the ledger currently has no contractual due-date field.
-
-
-## Invoices, expenses and settlements — 2026-11-11
-
-- Added printable invoice generation from an existing sale/purchase ledger transaction, with stable local invoice numbering and escaped invoice text.
-- Added a local operating-expense register with category, date, total amount, and amount paid. Expenses feed the period P&L and recorded cash-outflow report; the P&L now shows known gross profit less recorded operating expenses as an explicitly estimated operating result, not net profit.
-- Added incremental customer/supplier payment settlement against an existing transaction, validating that payments do not exceed its outstanding balance. Updates the existing ledger record and refreshes summaries/statements.
-- All additions use separate local browser storage for expenses and invoice numbering; no external services, APIs, Supabase, Gemini, API-Football or quotas changed. No browser/device test or Pages deployment verification.
-
-- Reliability refinement: deferred invoice/expense selector initialization until shared currency formatting is ready; recorded each later settlement with its own date and excluded it from the original transaction's cash receipt/payment to prevent period double counting.
-
-
-## Unified merchant backup — 2026-11-11
-
-- Extended the existing JSON backup to version 2, including transactions, customer/supplier profiles, expenses, dated settlement events, and invoice-number mappings.
-- Import remains backward-compatible with version 1 ledger-only backups, validates imported collections, and merges by IDs/names rather than overwriting existing records.
-- Backup file size remains capped at 2 MB. Data remains browser-local and should be downloaded regularly; imports are not a cloud synchronization service.
-
-- Backup import hardening: validate all collections before writes, snapshot affected localStorage keys, attempt rollback if a write fails, and report merged expense/settlement counts. Profit wording now explicitly refers only to known cost-backed gross profit after recorded expenses.
-
-
-## Treasury, assets and obligations manager — 2026-11-11
-
-- Added local multiple-account register (cash, bank, e-wallet, other), opening balances, dated deposits/receipts and withdrawals/payments, and computed account balances.
-- Added an asset register with acquisition cost and manually maintained estimated current value; estimates are not a certified valuation and no depreciation schedule is calculated.
-- Added obligations with creditor, registration date, optional due date, amount, paid amount, outstanding balance, and separately dated settlement events.
-- Added an isolated JSON backup/merge workflow for treasury data, with 2 MB file cap, schema checks, ID-based merge, and attempted localStorage rollback on write failure.
-- Treasury movements are deliberately not auto-posted from the sales ledger to avoid duplicate cash entries. Users should record a cash movement once when reconciling actual receipts/payments. The treasury is browser-local and is not cloud-synced or tested in a live browser.
-
-- Added internal account transfers as paired outflow/inflow movements sharing a transfer ID, so account-level balances move without changing total treasury cash.
-
-- Treasury refinement: dashboard now flags overdue obligations and those due within 30 days. Treasury backup import validates dates, account/obligation references, record IDs, allowed account types, and field bounds before merging.
-
-
-## Account and cash reconciliation — 2026-11-11
-
-- Added a reconciliation workspace for each cash/bank/wallet account with a statement date and externally observed actual balance.
-- The book balance is calculated from the account opening balance plus/minus dated treasury movements through the selected statement date; the difference is actual minus book balance, with an immediate preview.
-- Saved reconciliation snapshots locally with account, date, book balance, actual balance, difference and optional statement reference.
-- Added per-account printable statement output and CSV export, including the dated movements used in the calculation.
-- Upgraded the separate treasury backup format to version 2 to include reconciliation history. Import remains compatible with version 1, validates account references and numeric/date fields, merges by ID, and attempts rollback if local storage writes fail.
-- This is a manual reconciliation tool: it does not connect to banks, fetch statements, automatically create adjustment entries, or change the underlying ledger. Users must compare against a reliable physical cash count or official bank statement. No live-browser or deployment test is claimed.
-
-## OFOQ Trading Academy — 2026-11-11
-
-- Promoted `trading_academy` from its generic risk-size calculator into a dedicated Arabic trading-learning workspace with a cinematic trading hero and accessible tabs.
-- Added a position-sizing/risk calculator with direction-aware stop validation, configurable risk percentage, and a contract multiplier field.
-- Added a reward-to-risk scenario calculator with direction-aware entry, stop, and target validation; clearly explains that the ratio is not a win probability.
-- Added a local paper-trade journal (maximum 200 records), input validation, individual deletion, and JSON export.
-- Added a locally persisted pre-trade discipline checklist.
-- Added educational sections for market structure, risk management, paper testing, and trading psychology. No buy/sell signals, live prices, exchange connections, API calls, or provider keys were introduced.
-- Journal and checklist data remain in the visitor's browser on the current device; export is required for backup or transfer.
-- Verification: source committed to GitHub main. GitHub Pages workflow and browser-level interaction checks are pending.
-
-## OFOQ Gemini mission console — 2026-11-11
-
-- Upgraded the section-aware Gemini panel to a guided mission console available when a visitor opens a section.
-- Added one-click prompt templates for expert explanations, implementation plans, input analysis, checklists, and knowledge quizzes. Selecting a template only fills the prompt; the visitor must explicitly send it.
-- Added a live character counter, Ctrl/Cmd+Enter send shortcut, copy-last-answer control, and plain-text conversation export.
-- Preserved fixed trusted section-profile routing, the existing protected `site-assistant` endpoint, the 10-message in-memory context cap, and the shared daily reservation ceiling of 30 requests across the whole site.
-- Each explicit send remains exactly one Gemini request. No automatic requests, background refreshes, browser-side API keys, new provider integrations, API-Football calls, or quota increases were introduced.
-- Conversation context remains in memory for the open section session only; clearing the conversation removes the visible in-session context. Export is user-initiated.
-- Verification: source changes committed to GitHub main. GitHub Actions syntax validation and Pages deployment are required before calling this release deployed. Browser-level interaction and real Gemini calls remain untested; no provider quota was consumed during implementation.
-
-
-## 2026-11-11 — AI quota source-of-truth and automated contract tests
-
-- Audited the live Supabase `site-assistant` Edge Function (version 17) against the GitHub source. The live function already reserves one shared Gemini request through `public.reserve_ai_provider_request('gemini', 30)` before contacting Google; the RPC is backed by `public.ai_provider_daily_usage` and is executable only by `service_role` and `postgres`.
-- The GitHub copy was stale and omitted the live quota guard and specialist profile routing. Synchronized `supabase/functions/site-assistant/index.ts` from the active deployed version so the repository now represents the live backend. No Edge Function redeployment was needed for this source sync.
-- Verified the quota RPC with an isolated database test: the first reservation at a test limit of 1 succeeded, the second was rejected, and the temporary test row was deleted. No Gemini or API-Football provider request was made.
-- Confirmed `ai_provider_daily_usage` has RLS enabled and no direct grants to `anon` or `authenticated`; its data is accessible to the backend service role only. The quota RPC is not executable by public roles.
-- Added `scripts/validate_ofoq.py`, a dependency-free CI contract suite covering section/priority integrity, Gemini frontend safety, absence of server secrets in browser code, frontend/backend profile alignment, the shared 30/day reservation guard, keyboard-accessible command navigation, and PWA shell metadata.
-- Added the contract suite to both GitHub Pages deployment validation and the portal/membership validation workflow. The new checks will run on the next CI execution.
-- Supabase Security Advisor also reports the existing leaked-password protection setting as disabled, plus informational RLS-without-policy notices on internal tables. These are recorded for a separate Auth/database security review; no unrelated Auth or football configuration was changed.
-- Browser-level interaction testing and a live Gemini request remain intentionally unperformed to avoid spending the shared provider quota.
-
-
-## 2026-11-11 — Career and freelance studios
-
-- Added `career-studio.js`, loaded as a separate module and mounted only when opening `jobs` or `freelance_vip`; existing section content remains available.
-- Jobs workspace: structured CV draft builder with TXT export/copy, role/experience-level interview practice using STAR guidance, and a local job-application tracker with status updates and CSV export.
-- Freelance workspace: project quote calculator from estimated hours, target hourly rate, direct costs, platform/payment fees and revision reserve; client proposal builder; and portfolio case-study builder that prompts users to distinguish real work from demo projects.
-- Application records are stored locally (up to 100 entries) and can be exported by the user. No network requests, AI calls, third-party analytics, or provider quotas are used by this module.
-- Added the script to the PWA offline app shell and advanced the cache version to v26. Both CI workflows now syntax-check the module; the contract suite verifies both career sections, core features, API-free operation and offline-shell inclusion.
-- Automated checks verify source structure only; actual interaction, clipboard permissions and mobile layout still require browser/device testing.
-
-
-## 2026-11-11 — Merchant workspace backup and restore
-
-- Added validated JSON restore for saved e-commerce pricing scenarios, complementing the existing export action.
-- Restore accepts only the expected app/version envelope, limits files to 500 KB, filters malformed or out-of-range values, merges with existing scenarios, and retains the newest 40 entries.
-- Restore is local-only; no merchant data is uploaded or sent to an API.
-- Extended the portal contract test to require the restore workflow and its file-size guard.
-- Bumped the service-worker shell cache to `ofoq-shell-v27` so installed clients refresh the updated module.
-
-
-## 2026-11-11 — Unified operations command hub
-
-- Added `operations-hub.js`, mounted in the Business and Startup Lab sections after their existing section renderers.
-- Provides a local dashboard, project register (up to 100), task tracker (up to 300), and income/expense register (up to 500), with completion/deletion controls and summary totals.
-- Added JSON export/import with a 1 MB file limit, schema/version checks, record-count and value validation, and explicit confirmation before replacing current local data.
-- Added quick navigation to the e-commerce, accounting, jobs, freelance, trading academy and personal-finance workspaces. This is navigation, not an automatic data sync; its dashboard metrics reflect only records entered in the hub.
-- No network requests, Gemini calls, API provider usage, analytics, or server storage are used. Data remains in browser localStorage; users should export backups before clearing browser data or changing devices.
-- Added CI syntax checking and contract assertions; included the module in the offline shell and advanced its cache to `ofoq-shell-v28`.
-
-
-## 2026-11-11 — Opt-in private cloud backup vault
-
-- Added a dedicated `public.user_workspace_backups` table for user-owned, append-only JSON snapshots. The table has RLS policies for owner-only SELECT, INSERT and DELETE; anonymous access and UPDATE are revoked.
-- The Operations Hub now offers explicit email/password sign-in or account creation, session refresh, backup listing, manual snapshot creation, restore and deletion. No data is uploaded on page load or login; a signed-in user must click **Create cloud backup now**.
-- Snapshots include the Operations Hub records and dated linked-source snapshots. Restore writes a local recovery point and archives linked-source snapshots separately; it never overwrites the source tools' localStorage keys.
-- Browser sessions are held in sessionStorage and can be ended with sign-out. The browser uses only the project's public publishable key; no service-role key or AI/provider key is shipped to the client.
-- Cloud snapshots are stored as JSON in the database and are protected by Supabase RLS, but are not end-to-end encrypted by the browser. Do not upload secrets or data you do not want stored in the cloud.
-- This is manual backup/restore, not continuous cross-device synchronization. No Gemini or API-Football requests are used.
-- Migration: `20261111160644_user_workspace_backup_vault.sql`. CI checks the frontend contract and migration security markers; the service-worker cache is advanced to v29.
-
-- Reliability refinement: failed local writes now roll back the in-memory Operations Hub state to the last persisted version; failed recovery-point creation also prevents the attempted write. The privacy center explains manual cloud backup, RLS ownership and the absence of browser-side end-to-end encryption.
-- Advanced the service-worker cache to v30 so installed clients fetch the updated Operations Hub and privacy disclosure.
-
-- Free-tier guardrail: a database trigger keeps only the latest 20 cloud snapshots per user. The trigger runs as SECURITY INVOKER and deletes only rows visible to the authenticated owner through RLS. A transactional smoke test inserted 21 temporary snapshots and confirmed exactly 20 remained before rollback.
-- Retention migration: `20261111161225_bound_workspace_backup_retention.sql`; the PWA cache is v31.
-
-
-## 2026-11-11 — Merchant catalogue and order desk
-
-- E-commerce Studio now includes a local product catalogue (up to 500 products) with SKU, category, unit cost, selling price and manually entered stock quantity.
-- Added a manual order register (up to 1,000 orders) with unique order numbers, product snapshot, quantity, total and editable lifecycle status (new, processing, shipped, delivered, cancelled).
-- Order entry deliberately does not deduct stock or imply payment confirmation. Product deletion is blocked while a non-cancelled order references it. These are merchant-entered local records, not a live storefront, payment gateway, or marketplace integration.
-- Operations Hub reads product and order summaries, includes them in local and optional cloud backup snapshots, and keeps the source records read-only.
-- Browser regression suite now creates a temporary product and order, then checks the linked dashboard. PWA cache advanced to v32.
-
-- Merchant safety refinement: catalogue records can be edited; non-cancelled orders reserve the entered stock quantity for validation, and an order that would exceed the recorded available stock is rejected. Cancelled orders release that reservation. Stock is still not auto-decremented, preserving manual reconciliation with the accounting inventory ledger. PWA cache advanced to v33.
-
-- Cloud restore validation now checks optional product and order snapshots (record shapes, statuses and 500/1,000 row limits) before archiving them. The backup panel explicitly lists these merchant records; PWA cache advanced to v34.
-
-- Operations Hub overview now surfaces merchant product count, order count and the total value of non-cancelled locally recorded orders, clearly distinguished from confirmed payments. PWA cache advanced to v36.
-
-- Stock reservation lifecycle is explicit: new, processing and shipped orders reserve quantities; delivered or cancelled orders release reservations. After delivery, the merchant manually reconciles the catalogue quantity with the accounting inventory source. PWA cache advanced to v37.
-
-- Added a validated JSON import path for merchant catalogue/order backups (1.8 MB maximum, 500 products, 1,000 orders, unique product IDs/order numbers, non-negative prices and stock, valid order statuses). It asks before replacing current records and attempts to roll back the product write if saving orders fails. Browser smoke coverage now exercises export payload recovery and replacement; PWA cache advanced to v38.
-
-
-## 2026-11-11 — OFOQ NEXUS navigation upgrade
-
-- The command center now searches all 78 catalogue entries locally and supports four views: all sections, featured sections, favorites, and recently visited sections.
-- Favorites and recent views read from `window.OFOQ_CORE`; the search remains local and does not call Gemini or any third-party API.
-- Browser smoke coverage now checks a known-section search result, Escape from both inside and outside the dialog, and favorites/recent result filtering.
-- The offline shell cache was advanced to `ofoq-shell-v40` so returning users can receive the updated navigation after the service worker refreshes.
-- This is a shared navigation milestone, not a claim that all 78 section-specific workflows are complete. The section-by-section functional verification remains in progress.
-
-
-## Expanded acceptance coverage — 2026-11-11
-
-The browser smoke suite now opens each catalogue entry and asserts:
-- Correct section title and non-empty section content.
-- The shared workspace is mounted with exactly three tabs (tools, execution plan, notes).
-- Each of the three tabs can be activated and reports `aria-selected=true`.
-- The section-aware helper panel is present.
-- The NEXUS search can find a known section; Escape closes the dialog even when focus is outside it; favorites and recent filters return the expected local sections.
-
-The suite blocks requests to external hosts, so routine UI regression coverage does not consume external AI or sports-data quotas. These are automated acceptance checks; the full live run result still needs to be confirmed from GitHub Actions after the latest commits.
+التفاصيل التقنية الداخلية وإعدادات المزودين وحدود الحصص لا تُنشر في هذا المعيار العام.
