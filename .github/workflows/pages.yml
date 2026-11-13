@@ -55,6 +55,7 @@ jobs:
           test -f service-worker.js
           test -f ofoq-core.js
           test -f ofoq-commerce-cloud.js
+          test -f ofoq-vault.js
           python3 - <<'PY'
           import json, re
           from html.parser import HTMLParser
@@ -169,6 +170,7 @@ jobs:
           node --check service-worker.js
           node --check ofoq-core.js
           node --check ofoq-commerce-cloud.js
+          node --check ofoq-vault.js
           node --check tests/browser-smoke.mjs
           node --check tests/mobile-smoke.mjs
       - name: Check e-commerce studio JavaScript
@@ -199,6 +201,7 @@ jobs:
           test -f dist/service-worker.js
           test -f dist/ofoq-core.js
           test -f dist/ofoq-commerce-cloud.js
+          test -f dist/ofoq-vault.js
           test ! -e dist/docs
           test ! -e dist/tests
           test ! -e dist/scripts
