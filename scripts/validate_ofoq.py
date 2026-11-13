@@ -69,7 +69,7 @@ for token in (
     'supabaseFetch("/auth/v1/user", token)',
     'metadata.role === "OWNER" && metadata.owner === true && metadata.owner_access === "lifetime"',
     'request.method === "POST" && path === "/api/stripe/webhook"',
-    'verifyStripeSignature(payload, request.headers.get("Stripe-Signature") ?? "")',
+    'verifyStripeSignature(payload, request.headers.get("Stripe-Signature") ?? "", STRIPE_WEBHOOK_SECRET)',
     'Math.abs(Date.now() / 1000 - timestamp) > 300',
     'readBoundedText(request, 262_144)',
     'readBoundedText(request, 8_192)',
