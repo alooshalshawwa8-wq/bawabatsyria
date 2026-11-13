@@ -54,10 +54,22 @@ The latest commit's combined status endpoint returned no status entries. The com
 
 ## 5. Deployment state
 
-Canonical Pages URL embedded in the source:
+Canonical Pages URL:
 `https://alooshalshawwa8-wq.github.io/bawabatsyria/`
 
-The source and workflow indicate a GitHub Pages deployment pipeline, but a live HTTP/browser verification could not be completed in this session. Web fetch returned a cache miss and the execution environment could not resolve external hosts. Treat live availability, current deployed SHA, and runtime smoke tests as **unverified** until checked from a working browser/network session.
+Verified successful deployment run:
+- Workflow: Deploy static site to GitHub Pages, run #515.
+- Run ID: `43427370696`.
+- Deployed source SHA: `57264a8b0c7c8b3df223011407f177aef617e7b3`.
+- Result: **success**, completed 2026-11-13T12:43:45Z.
+- Job steps confirmed successful: WebP generation, site/SEO/JavaScript validation, OFOQ portal contract tests, Pages artifact upload, deployment, Playwright browser smoke tests (including mobile), Lighthouse audit, and Lighthouse budget enforcement.
+- Run: https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/43427370696
+- Lighthouse artifact: `ofoq-lighthouse-reports`, artifact ID `14038172668`, retained and downloadable at inspection time.
+- Lighthouse category scores: Performance **90**, Accessibility **100**, Best Practices **100**, SEO **100**.
+- Lighthouse lab metrics: FCP 1.8 s, LCP 2.9 s, Speed Index 2.1 s, Total Blocking Time 210 ms, CLS 0, Interactive 3.0 s.
+- The deployed browser smoke suite completed successfully against the Pages URL, checking the 78-section portal and mobile viewport. This is runtime evidence from CI, not a guarantee for every device/network.
+
+The latest documentation-only commit is `cc89f5e99a82c45914d95f3fc30e423ad3be2088`. Its three push-triggered workflows (Pages deploy #516, static validation #33, membership/portal validation #536) were **queued** at the last status check; their final outcomes and the deployment of that exact SHA are not yet verified. The web fetcher could not independently load the Pages URL, so no separate external HTTP check is claimed.
 
 ## 6. Supabase state (read-only inspection)
 
