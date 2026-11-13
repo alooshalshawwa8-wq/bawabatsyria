@@ -3064,6 +3064,18 @@ if(!navigator.onLine)return saved.access_token||'';
 return saved.access_token&&Number(saved.expires_at)>Date.now()?saved.access_token:'';
 }
 }
+function consumeAuthCallback(){
+const hash=new URLSearchParams(window.location.hash.replace(/^#/,''));
+const accessToken=hash.get('access_token'),refreshToken=hash.get('refresh_token'),type=hash.get('type'),error=hash.get('error_description');
+if(error){const status=document.getElementById('membershipAuthStatus');if(status)status.textContent='تعذر تأكيد البريد: '+decodeURIComponent(error.replace(/\\+/g,' '));return;}
+if(accessToken){
+saveMembershipSession({access_token:accessToken,refresh_token:refreshToken||'',expires_in:Number(hash.get('expires_in'))||3600});
+history.replaceState(null,document.title,window.location.pathname+window.location.search);
+const status=document.getElementById('membershipAuthStatus');
+if(status)status.textContent=type==='signup'?'تم تأكيد بريدك الإلكتروني وتفعيل جلسة حسابك بنجاح.':'تم إكمال التحقق بنجاح.';
+}
+}
+consumeAuthCallback();
 async function membershipAuth(mode){
 const email=document.getElementById('membershipEmail').value.trim(),password=document.getElementById('membershipPassword').value;
 const status=document.getElementById('membershipAuthStatus');
@@ -3071,7 +3083,8 @@ if(!authUrl||!authAnonKey){status.textContent='إعداد تسجيل الدخو�
 if(!email||password.length<8){status.textContent='أدخل بريداً إلكترونياً صحيحاً وكلمة مرور من 8 أحرف على الأقل.';return;}
 status.textContent='جارٍ التواصل مع خدمة الحسابات…';
 try{
-const endpoint=mode==='signup'?'/auth/v1/signup':'/auth/v1/token?grant_type=password';
+const redirectTo=window.location.origin+window.location.pathname;
+const endpoint=mode==='signup'?('/auth/v1/signup?redirect_to='+encodeURIComponent(redirectTo)):'/auth/v1/token?grant_type=password';
 const response=await fetch(authUrl+endpoint,{method:'POST',headers:{'content-type':'application/json',apikey:authAnonKey},body:JSON.stringify({email,password})});
 const data=await response.json();
 if(!response.ok)throw new Error(data.msg||data.message||data.error_description||data.error||'تعذر إتمام الطلب');
@@ -3089,7 +3102,8 @@ const status=document.getElementById('membershipAuthStatus');
 if(!email||!/^\\S+@\\S+\\.\\S+$/.test(email)){status.textContent='أدخل بريدك الإلكتروني أولاً، ثم اضغط «نسيت كلمة المرور؟».';return;}
 status.textContent='جارٍ إرسال رابط استعادة كلمة المرور…';
 try{
-const response=await fetch(authUrl+'/auth/v1/recover',{method:'POST',headers:{'content-type':'application/json',apikey:authAnonKey},body:JSON.stringify({email})});
+const redirectTo=window.location.origin+window.location.pathname;
+const response=await fetch(authUrl+'/auth/v1/recover?redirect_to='+encodeURIComponent(redirectTo),{method:'POST',headers:{'content-type':'application/json',apikey:authAnonKey},body:JSON.stringify({email})});
 if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.msg||data.message||data.error_description||'تعذر إرسال رابط الاستعادة.');}
 status.textContent='إذا كان البريد مسجلاً، فستصلك رسالة لاستعادة كلمة المرور. افحص الوارد والرسائل غير المرغوب فيها.';
 }catch(error){status.textContent=error.message||'تعذر إرسال رابط الاستعادة حالياً.';}
