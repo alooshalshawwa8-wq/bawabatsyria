@@ -259,7 +259,7 @@ require("./ofoq-core.js" in worker and cache_version, "OFOQ core missing from of
 pages_workflow = (ROOT / ".github/workflows/pages.yml").read_text(encoding="utf-8")
 for token in (
     "Exclude repository-only and internal files from public Pages artifact",
-    "rm -rf .git .github docs tests scripts supabase backend",
+    "rm -rf .github docs tests scripts supabase backend",
     "rm -f ./*.md ./*.py ./*.mjs ./*.sql",
     "test ! -e docs",
     "test ! -e supabase",
