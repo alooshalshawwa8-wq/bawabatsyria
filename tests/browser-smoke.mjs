@@ -8,11 +8,17 @@ const context = await browser.newContext({ serviceWorkers: "block", viewport: { 
 const page = await context.newPage();
 const pageErrors = [];
 const externalRequests = [];
+const mockedAuthRequests = [];
 
 page.on("pageerror", error => pageErrors.push(error.message));
-await page.route("**/*", route => {
+await page.route("**/*", async route => {
   const url = new URL(route.request().url());
   if (["alooshalshawwa8-wq.github.io", "127.0.0.1", "localhost"].includes(url.hostname)) return route.continue();
+  if (url.hostname === "elzquyehghuxhswogsch.supabase.co" && route.request().method() === "POST" &&
+      ["/auth/v1/resend", "/auth/v1/recover"].includes(url.pathname)) {
+    mockedAuthRequests.push({ path: url.pathname, body: route.request().postData() || "" });
+    return route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+  }
   externalRequests.push(url.hostname);
   return route.abort();
 });
@@ -32,6 +38,19 @@ try {
   await vault.waitFor({ state: "visible", timeout: 5000 });
   if (!(await vault.innerText()).includes("نسخة شاملة لمساحات العمل")) throw new Error("Full-site personal vault was not mounted");
   if (!(await vault.innerText()).includes("النسخ لا تشمل كلمات المرور")) throw new Error("Full-site vault privacy notice missing");
+
+  await page.locator("#membershipBtn").click();
+  await page.locator("#membershipEmail").fill("ofoq-smoke@example.com");
+  await page.locator("#membershipResend").click();
+  await page.locator("#membershipAuthStatus").getByText(/إذا كان الحساب بحاجة إلى تأكيد/).waitFor({ state: "visible", timeout: 5000 });
+  await page.locator("#membershipRecover").click();
+  await page.locator("#membershipAuthStatus").getByText(/إذا كان البريد مسجلاً/).waitFor({ state: "visible", timeout: 5000 });
+  if (!mockedAuthRequests.some(item => item.path === "/auth/v1/resend" && item.body.includes("ofoq-smoke@example.com"))) {
+    throw new Error("Email confirmation resend did not reach the mocked Supabase Auth endpoint");
+  }
+  if (!mockedAuthRequests.some(item => item.path === "/auth/v1/recover" && item.body.includes("ofoq-smoke@example.com"))) {
+    throw new Error("Password recovery did not reach the mocked Supabase Auth endpoint");
+  }
 
   await page.evaluate(async () => {
     const section = window.BAWABA_SECTIONS.find(item => item.id === "social_media_hub");
