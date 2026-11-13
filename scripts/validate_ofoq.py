@@ -394,6 +394,16 @@ require("Archived products cannot receive new orders" in archive_guard_sql and "
 owner_keys_sql = (ROOT / "supabase/migrations/20261113135325_ofoq_store_composite_owner_primary_keys.sql").read_text(encoding="utf-8")
 require("primary key (user_id, id)" in owner_keys_sql and "foreign key (user_id, product_id)" in owner_keys_sql, "merchant primary and foreign keys must be account-scoped")
 
+# Full-site, allowlisted user backup vault.
+vault = (ROOT / "ofoq-vault.js").read_text(encoding="utf-8")
+require("./ofoq-vault.js" in html and "./ofoq-vault.js" in worker, "full-site vault must be loaded and cached")
+for token in ("user_workspace_backups", "backup_type: \"all_local\"", "ofoq-full-local-workspace", "ofoq-notes-", "ofoq_nibras_chat", "bawabatsyria_access_token", "MAX_BYTES", "localStorage.removeItem"):
+    if token in ("ofoq_nibras_chat", "bawabatsyria_access_token"):
+        require(token not in vault, "vault must exclude assistant history and authentication tokens")
+    else:
+        require(token in vault, "full-site vault contract missing: " + token)
+require("ofoq:personal-space-restored" in core, "personal navigation must refresh after vault restore")
+
 # PWA and shell integrity.
 require((ROOT / "manifest.json").is_file(), "manifest missing")
 require((ROOT / "service-worker.js").is_file(), "service worker missing")
