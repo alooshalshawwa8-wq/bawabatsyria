@@ -28,6 +28,8 @@ jobs:
         run: node --input-type=module --check < backend/worker.js
       - name: Run membership API security contract tests
         run: node tests/membership-api-contract.mjs
+      - name: Run Stripe webhook security runtime tests
+        run: node tests/stripe-webhook-security.mjs
       - name: Check portal inline JavaScript
         run: |
           python3 - <<'PY'
