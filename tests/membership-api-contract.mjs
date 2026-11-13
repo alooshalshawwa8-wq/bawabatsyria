@@ -25,6 +25,13 @@ assert.match(page, /Date\.parse\(x\.current_period_end\|\|''\)>Date\.now\(\)/);
 assert.match(page, /membershipApi\+"\/api\/billing-portal"/);
 assert.match(page, /body:"\{\}"/);
 assert.match(page, /data\.portalUrl\.startsWith\("https:\/\/billing\.stripe\.com\/"\)/);
+
+assert.match(source, /const eventId = typeof event\.id === "string" \? event\.id : ""/);
+assert.match(source, /\^evt_\[A-Za-z0-9\]\+\$/);
+assert.match(source, /Invalid Stripe event envelope/);
+assert.match(source, /Number\.isSafeInteger\(created\)/);
+assert.match(source, /!eventObject \|\| typeof eventObject !== "object" \|\| Array\.isArray\(eventObject\)/);
+
 assert.doesNotMatch(page, /customerId\s*:/);
 
 console.log("Membership billing portal security contract checks passed.");
