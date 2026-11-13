@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { validateStripeEventEnvelope, verifyStripeSignature } from "./stripe-webhook-security.mjs";
+import { isSupportedStripeEventType, validateStripeEventEnvelope, verifyStripeSignature } from "./stripe-webhook-security.mjs";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const PUBLISHABLE_KEYS = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}");
@@ -261,6 +261,7 @@ async function processStripeWebhook(request: Request) {
   const eventType = validatedEvent.eventType;
   const created = validatedEvent.created;
   const data = validatedEvent.data as Record<string, unknown>;
+  if (!isSupportedStripeEventType(eventType)) return reply({ received: true, ignored: true });
   if (eventType === "checkout.session.completed" || eventType === "checkout.session.async_payment_succeeded") {
     if (data.mode === "subscription" && data.subscription) {
       const metadata = (data.metadata ?? {}) as Record<string, unknown>;
