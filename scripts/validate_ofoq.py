@@ -8,6 +8,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 html = (ROOT / "index.html").read_text(encoding="utf-8")
 assistant = (ROOT / "supabase/functions/site-assistant/index.ts").read_text(encoding="utf-8")
+membership = (ROOT / "supabase/functions/membership-api/index.ts").read_text(encoding="utf-8")
 worker = (ROOT / "service-worker.js").read_text(encoding="utf-8")
 core = (ROOT / "ofoq-core.js").read_text(encoding="utf-8")
 ecommerce = (ROOT / "ecommerce-studio.js").read_text(encoding="utf-8")
@@ -54,6 +55,27 @@ command = re.search(r'<script id="ofoq-command-center-v2">([\s\S]*?)</script>', 
 require(command, "command center script missing")
 for token in ('aria-modal', "role','dialog", "Escape", "ctrlKey", "metaKey", "focusables"):
     require(token in command.group(1), "command center accessibility contract missing: " + token)
+
+# Membership API security and monetization guardrails.
+for token in (
+    'Deno.env.get("PAYMENTS_ENABLED") === "true"',
+    'if (!PAYMENTS_ENABLED) return reply(',
+    'async function authenticatedUser(request: Request)',
+    'supabaseFetch("/auth/v1/user", token)',
+    'metadata.role === "OWNER" && metadata.owner === true && metadata.owner_access === "lifetime"',
+    'request.method === "POST" && path === "/api/stripe/webhook"',
+    'verifyStripeSignature(payload, request.headers.get("Stripe-Signature") ?? "")',
+    'Math.abs(Date.now() / 1000 - timestamp) > 300',
+    'readBoundedText(request, 262_144)',
+    'readBoundedText(request, 8_192)',
+    'Number.isSafeInteger(delta)',
+    'on_conflict=idempotency_key',
+    'checkout.stripe.com/',
+):
+    require(token in membership, "membership API security/monetization guard missing: " + token)
+require("SUPABASE_SERVICE_ROLE_KEY" not in html and "STRIPE_SECRET_KEY" not in html, "membership provider secrets must not enter browser HTML")
+require('Access-Control-Allow-Origin": "https://alooshalshawwa8-wq.github.io"' in membership, "membership API exact-origin CORS contract missing")
+require("No explicit request-rate limiter" not in membership, "rate-limit audit notes must remain documentation-only, not production source")
 
 # Frontend section assistant must be explicit-send only and must not expose secrets.
 gemini = re.search(r'<script id="ofoq-section-gemini-v2">([\s\S]*?)</script>', html)
