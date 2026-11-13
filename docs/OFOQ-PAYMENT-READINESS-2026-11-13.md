@@ -68,3 +68,5 @@ The payment foundation is partially implemented, but production collection is no
 - The GitHub branch remains ahead of `main` and has no commits behind it.
 - A completed GitHub Actions run for the new commit was not available through the current workflow-run query at the time of this audit. Therefore, the new test is committed and wired into CI, but its execution result is not claimed here.
 - The function has not been deployed to production. The live deployed version remains unchanged.
+
+- A direct read-only inspection of Supabase Storage found no buckets and no object policies. Therefore, payment-proof upload and private proof review cannot be considered implemented; a dedicated private bucket, strict owner/user policies, size/MIME limits, and short-lived signed access must be designed before manual transfers can be enabled.
