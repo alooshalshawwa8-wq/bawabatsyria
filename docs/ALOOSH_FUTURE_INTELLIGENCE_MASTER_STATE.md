@@ -117,10 +117,10 @@ For all 10, the current table-grant query showed grants only to `postgres` and `
 ### Function and view exposure
 
 - `reserve_ai_provider_request(text,integer)` remains SECURITY DEFINER; EXECUTE is restricted to `service_role` (confirmed in the earlier audit).
-- `post_journal_entry(uuid)` is SECURITY INVOKER and EXECUTE is granted to `authenticated`.
+- `post_journal_entry(uuid)` is SECURITY INVOKER and EXECUTE is granted to `authenticated`. Its body explicitly requires `auth.uid()`, locks only that user's draft entry, validates at least two balanced positive-debit lines, and posts only that same user's draft.
 - `football_rate_limit_hit(text,integer,integer)` is SECURITY INVOKER and is used by the football Edge Function.
-- `trim_user_workspace_backup_history()` is a SECURITY INVOKER trigger function, but catalog ACL inspection shows EXECUTE grants inherited/available to `anon` and `authenticated`. Trigger functions cannot be invoked as ordinary RPC functions; nevertheless, the unnecessary API-role EXECUTE grants should be reviewed and, if confirmed safe against existing trigger dependencies, revoked through a reviewed migration. No privilege changes were made.
-- The `points_balances` view has SELECT granted to `authenticated`; verify its owner/definition and security-invoker behavior as part of the view audit.
+- `trim_user_workspace_backup_history()` is SECURITY INVOKER and is attached only as a BEFORE INSERT trigger on `user_workspace_backups`; its body serializes per-user retention and trims that user's history to the newest 19 prior rows before the new row is inserted. Catalog ACL inspection shows EXECUTE grants available to `anon` and `authenticated`; PostgreSQL trigger functions cannot be invoked as ordinary RPC functions. Treat this as an ACL cleanup candidate, not evidence of a working public RPC; no privilege changes were made.
+- The `points_balances` view is owned by `postgres`, has `security_invoker=true`, and aggregates `points_ledger` by `user_id`. SELECT is granted to `authenticated`; security-invoker behavior means the underlying table's owner-scoped RLS applies.
 
 ### Edge Function route review (source inspection, not penetration testing)
 
