@@ -193,6 +193,7 @@
     ].join('');
     document.head.appendChild(style);
   }
+  window.addEventListener("ofoq:personal-space-restored", () => { readState(); render(); });
   readState();
   injectStyles();
   mountPersonalSpace();
