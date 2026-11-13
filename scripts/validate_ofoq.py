@@ -357,6 +357,20 @@ for public_doc in public_docs:
         ):
             require(forbidden not in public_text, "public documentation contains internal operational detail: " + public_doc.name + " / " + forbidden)
 
+# Personal workspace continuity in local/cloud operations backups.
+for token in (
+    "const PERSONAL_SPACE_KEY=\"ofoq_personal_space_v1\"",
+    "const personalSpaceSnapshot=()=>",
+    "const validPersonalSpaceSnapshot=p=>",
+    "const applyPersonalSpaceSnapshot=p=>",
+    "personalSpace:personalSpaceSnapshot()",
+    "payload.personalSpace",
+    "raw.personalSpace",
+    "applyPersonalSpaceSnapshot(payload.personalSpace)",
+    "applyPersonalSpaceSnapshot(raw.personalSpace)",
+):
+    require(token in operations, "personal workspace backup/restore contract missing: " + token)
+
 # PWA and shell integrity.
 require((ROOT / "manifest.json").is_file(), "manifest missing")
 require((ROOT / "service-worker.js").is_file(), "service worker missing")
