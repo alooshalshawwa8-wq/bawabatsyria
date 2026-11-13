@@ -173,6 +173,10 @@ try {
   await merchant.getByRole("button", { name: "إضافة طلب" }).click();
   await merchant.getByText(/الكمية تتجاوز المتاح/).waitFor({ state: "visible" });
   await merchant.getByLabel("حالة الطلب OFOQ-BROWSER-001").selectOption("delivered");
+  const activeOrderRow = merchant.locator(".ofoq-ecom-saved-row").filter({ hasText: "OFOQ-BROWSER-001" });
+  await activeOrderRow.getByRole("button", { name: "حذف" }).click();
+  if (await activeOrderRow.count() !== 1) throw new Error("Active merchant order was deleted without cancellation");
+  await merchant.getByText(/ألغِ الطلب أولاً/).waitFor({ state: "visible" });
   await merchant.locator("#ofoq-ecom-order-no").fill("OFOQ-BROWSER-003");
   await merchant.locator("#ofoq-ecom-order-qty").fill("6");
   await merchant.getByRole("button", { name: "إضافة طلب" }).click();
@@ -194,6 +198,12 @@ try {
   await merchant.locator(".ofoq-ecom-saved-row").filter({ hasText: "OFOQ TEMP Product" }).waitFor({ state: "detached" });
   const archivedTemp = await page.evaluate(() => JSON.parse(localStorage.getItem("ofoq_ecommerce_products_v1") || "[]").some(row => row.name === "OFOQ TEMP Product" && row.archived === true));
   if (!archivedTemp) throw new Error("Product archive did not preserve a reversible local record");
+  await merchant.locator("#ofoq-ecom-catalog-name").fill("OFOQ Post Archive Product");
+  await merchant.locator("#ofoq-ecom-catalog-price").fill("4");
+  await merchant.locator("#ofoq-ecom-catalog-stock").fill("2");
+  await merchant.getByRole("button", { name: "إضافة منتج" }).click();
+  const archivedPreservedAfterAdd = await page.evaluate(() => JSON.parse(localStorage.getItem("ofoq_ecommerce_products_v1") || "[]").some(row => row.name === "OFOQ TEMP Product" && row.archived === true));
+  if (!archivedPreservedAfterAdd) throw new Error("Adding a new product discarded an archived product record");
   page.once("dialog", dialog => dialog.accept());
   await merchant.locator("#ofoq-ecom-import-file").setInputFiles({
     name: "ofoq-commerce-backup.json",
