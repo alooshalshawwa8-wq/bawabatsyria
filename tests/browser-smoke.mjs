@@ -368,7 +368,25 @@ try {
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => window.scrollTo(0, 0));
-  const widthCheck = await page.evaluate(() => ({ viewport: window.innerWidth, document: document.documentElement.scrollWidth }));
+  const widthCheck = await page.evaluate(() => {
+    const viewport = window.innerWidth;
+    const offenders = [...document.querySelectorAll("body *")].map(el => {
+      const rect = el.getBoundingClientRect();
+      const style = getComputedStyle(el);
+      return {
+        tag: el.tagName.toLowerCase(),
+        id: el.id || "",
+        className: typeof el.className === "string" ? el.className.slice(0, 100) : "",
+        right: Math.round(rect.right * 10) / 10,
+        left: Math.round(rect.left * 10) / 10,
+        width: Math.round(rect.width * 10) / 10,
+        position: style.position,
+        overflow: style.overflowX
+      };
+    }).filter(item => item.width > 0 && (item.right > viewport + 2 || item.left < -2))
+      .sort((a, b) => b.right - a.right).slice(0, 12);
+    return { viewport, document: document.documentElement.scrollWidth, offenders };
+  });
   if (widthCheck.document > widthCheck.viewport + 2) throw new Error("Horizontal overflow on mobile: " + JSON.stringify(widthCheck));
 
   if (pageErrors.length) throw new Error("Uncaught browser errors: " + pageErrors.join(" | "));
