@@ -60,6 +60,12 @@ try {
     window.consumeAuthCallback();
   });
   await page.locator("#membershipNewPasswordWrap").waitFor({ state: "visible", timeout: 5000 });
+  await page.locator("#membershipNewPassword").fill("short");
+  await page.locator("#membershipSetNewPassword").click();
+  await page.locator("#membershipAuthStatus").getByText(/يجب ألا تقل عن 8 أحرف/).waitFor({ state: "visible", timeout: 5000 });
+  if (mockedAuthRequests.some(item => item.path === "/auth/v1/user" && item.method === "PUT")) {
+    throw new Error("Short recovery password was sent to Supabase Auth");
+  }
   await page.locator("#membershipNewPassword").fill("OfoqSmokePassword2026!");
   await page.locator("#membershipSetNewPassword").click();
   await page.locator("#membershipAuthStatus").getByText("تم تحديث كلمة المرور بنجاح").waitFor({ state: "visible", timeout: 5000 });
@@ -67,6 +73,10 @@ try {
   if (!passwordUpdate || !passwordUpdate.authorization.includes("ofoq-smoke-access") || !passwordUpdate.body.includes("OfoqSmokePassword2026!")) {
     throw new Error("Password recovery did not submit the new password with the recovery access token");
   }
+  if (await page.locator("#membershipNewPasswordWrap").isVisible() || await page.locator("#membershipSetNewPassword").isVisible()) {
+    throw new Error("Password recovery controls remained visible after a successful update");
+  }
+  if (await page.locator("#membershipNewPassword").inputValue()) throw new Error("New password field was not cleared after success");
 
   await page.evaluate(async () => {
     const section = window.BAWABA_SECTIONS.find(item => item.id === "social_media_hub");
