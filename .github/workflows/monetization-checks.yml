@@ -66,3 +66,16 @@ jobs:
         run: node --check operations-hub.js
       - name: Run OFOQ portal contract tests
         run: python3 scripts/validate_ofoq.py
+      - name: Install Playwright browser test dependencies
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Run browser smoke tests against branch preview
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/ofoq-preview.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8765/ >/dev/null; then break; fi
+            sleep 1
+          done
+          OFOQ_BASE_URL=http://127.0.0.1:8765/ node tests/browser-smoke.mjs
+          OFOQ_BASE_URL=http://127.0.0.1:8765/ node tests/mobile-smoke.mjs
