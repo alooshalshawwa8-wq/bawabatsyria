@@ -8,6 +8,7 @@
 
   const PRODUCT_KEY = "ofoq_ecommerce_products_v1";
   const ORDER_KEY = "ofoq_ecommerce_orders_v1";
+  const ORDER_DELETE_KEY = "ofoq_ecommerce_deleted_orders_v1";
   const SESSION_KEY = "ofoq_cloud_backup_session_v1";
   const MAX_PRODUCTS = 500;
   const MAX_ORDERS = 1000;
@@ -172,15 +173,42 @@
       }
       syncButton.disabled = loginButton.disabled = true;
       syncButton.textContent = "جارٍ المزامنة…";
-      let pushedProducts = 0, pushedOrders = 0, updatedOrders = 0, conflicts = 0;
+      let pushedProducts = 0, pushedOrders = 0, updatedOrders = 0, deletedOrders = 0, conflicts = 0;
       const errors = [];
       try {
         let cloud = await getCloud();
         const localProducts = readArray(PRODUCT_KEY).filter(validProduct).slice(-MAX_PRODUCTS);
         const localOrders = readArray(ORDER_KEY).filter(validOrder).slice(-MAX_ORDERS);
+        const pendingDeletes = [...new Set(readArray(ORDER_DELETE_KEY).filter(id => typeof id === "string" && id.length > 0))];
         const cloudProducts = new Map(cloud.products.map(row => [row.id, row]));
         const cloudOrders = new Map(cloud.orders.map(row => [row.id, row]));
         const cloudOrderNumbers = new Set(cloud.orders.map(row => String(row.order_no).toLowerCase()));
+
+        const pendingAfter = [];
+        for (const id of pendingDeletes) {
+          const remote = cloud.orders.find(row => row.id === id);
+          try {
+            if (remote && remote.status !== "cancelled") {
+              await api("ofoq_store_orders?id=eq." + encodeURIComponent(id), {
+                method: "PATCH", headers: { Prefer: "return=minimal" },
+                body: JSON.stringify({ status: "cancelled" })
+              });
+            }
+            if (remote) {
+              await api("ofoq_store_orders?id=eq." + encodeURIComponent(id), {
+                method: "DELETE", headers: { Prefer: "return=minimal" }
+              });
+              deletedOrders++;
+            }
+          } catch (error) {
+            pendingAfter.push(id);
+            errors.push("حذف الطلب " + id + ": " + error.message);
+          }
+        }
+        if (!writeArray(ORDER_DELETE_KEY, pendingAfter)) {
+          pendingAfter.forEach(id => errors.push("تعذر حفظ حالة حذف الطلب " + id + " محلياً."));
+        }
+        cloud = await getCloud();
 
         for (const row of localProducts) {
           const existing = cloudProducts.get(row.id);
@@ -260,7 +288,7 @@
         }
         window.dispatchEvent(new CustomEvent("ofoq:commerce-synced"));
         const summary = "اكتملت دورة المزامنة.\nالمنتجات المرفوعة/المحدثة: " + pushedProducts +
-          "\nالطلبات الجديدة: " + pushedOrders + "\nحالات الطلبات المحدثة: " + updatedOrders +
+          "\nالطلبات الجديدة: " + pushedOrders + "\nحالات الطلبات المحدثة: " + updatedOrders + "\nالطلبات الملغاة المحذوفة: " + deletedOrders +
           "\nسجلات تعارض/تحتاج مراجعة: " + conflicts +
           "\nالسجلات السحابية المدمجة: " + cloud.products.length + " منتج و" + cloud.orders.length + " طلب.";
         setStatus(errors.length ? summary + "\n\nتنبيهات:\n• " + errors.slice(0, 8).join("\n• ") : summary);
