@@ -116,6 +116,22 @@ try {
     if (!workspaceText.trim()) throw new Error("Empty workspace for " + section.id);
   }
 
+  // Verify user-authored trading journal content is rendered as text, never executable HTML.
+  await page.evaluate(async () => {
+    const section = window.BAWABA_SECTIONS.find(item => item.id === "trading_academy");
+    if (!section) throw new Error("Trading academy section is missing");
+    await window.openSection(section);
+  });
+  const xssProbe = '<img src=x onerror="window.__ofoqXss=1">';
+  await page.locator("#taAsset").fill("BTC/USD");
+  await page.locator("#taDirection").selectOption({ label: "Long" });
+  await page.locator("#taNotes").fill(xssProbe);
+  await page.locator("#taSaveTrade").click();
+  await page.locator("#taJournalList").getByText(xssProbe).waitFor({ state: "visible", timeout: 5000 });
+  if (await page.locator("#taJournalList img").count()) throw new Error("Trading journal rendered user input as an HTML image element");
+  if (await page.evaluate(() => window.__ofoqXss === 1)) throw new Error("Trading journal user input executed as script");
+  await page.locator("#taJournalList").getByRole("button", { name: "حذف السجل" }).click();
+
   const commandDialog = page.locator("#ofoq-command-overlay");
   await page.keyboard.press("Control+k");
   await commandDialog.waitFor({ state: "visible", timeout: 5000 });
