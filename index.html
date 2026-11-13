@@ -142,7 +142,7 @@ header{background:#081727eF;border-bottom:1px solid #31536a;box-shadow:0 8px 35p
 .welcome-kicker{color:#a4f3e7}
 .welcome-enter{border-color:#a4f3e7;background:linear-gradient(135deg,#168f91,#8af0df);color:#06272c}
 .welcome-skip{color:#d1e6ef}
-#membershipBtn,#membershipPanel{display:none!important}
+/* حسابات المستخدمين متاحة من الشريط العلوي؛ تُعرض لوحة الحساب عند فتحها. */
 .ofoq-footer{margin-top:40px;padding:28px 18px;border-top:1px solid #31576b;background:#081827;color:#b8cbd8;text-align:center;line-height:1.9}
 .ofoq-footer>strong{color:#a4f3e7;font-size:19px}
 .ofoq-footer p{max-width:850px;margin:8px auto;font-size:13px}
@@ -544,7 +544,7 @@ main{position:relative}
 
 <body>
 <section id="bawaba-welcome" role="dialog" aria-modal="true" aria-label="الافتتاحية السينمائية ثم صورة المؤسس"><div class="welcome-photo-sequence" aria-hidden="true"><picture><source type="image/webp" srcset="./assets/file_00000000dce882129102a05013969410-480.webp 480w, ./assets/file_00000000dce882129102a05013969410-828.webp 828w, ./assets/file_00000000dce882129102a05013969410-1400.webp 1400w" sizes="100vw"><img src="./assets/file_00000000dce882129102a05013969410.png" alt="الصورة الترحيبية الأولى" fetchpriority="high" decoding="async"></picture><picture><source type="image/webp" srcset="./assets/file_000000008668821282987c991b233d13-480.webp 480w, ./assets/file_000000008668821282987c991b233d13-828.webp 828w, ./assets/file_000000008668821282987c991b233d13-1400.webp 1400w" sizes="100vw"><img src="./assets/file_000000008668821282987c991b233d13.png" alt="الصورة الترحيبية الثانية" fetchpriority="low" decoding="async"></picture></div><div class="welcome-stars"></div><div class="welcome-founder-overlay"><strong>❤️Aloosh alshawwa ❤️</strong><span>مؤسس وصاحب البوابة — أهلاً بكم في عالم المعرفة والإبداع</span></div><div class="welcome-content"><button class="welcome-skip" id="bawaba-welcome-skip" type="button">تخطي المقدمة</button></div></section>
-<header><div class="brand"><div class="mark">✦</div><div><strong>أُفُق | OFOQ</strong><small>الموسوعة والخدمات الرقمية</small></div></div><div style="display:flex;gap:8px;align-items:center"><button class="btn secondary" id="membershipBtn">العضوية والمحفظة</button><button class="btn secondary" id="homeBtn" type="button" aria-label="العودة إلى الواجهة الرئيسية">الرئيسية</button></div></header>
+<header><div class="brand"><div class="mark">✦</div><div><strong>أُفُق | OFOQ</strong><small>الموسوعة والخدمات الرقمية</small></div></div><div style="display:flex;gap:8px;align-items:center"><button class="btn secondary" id="membershipBtn" type="button" aria-label="تسجيل الدخول أو إنشاء حساب جديد">دخول / إنشاء حساب</button><button class="btn secondary" id="homeBtn" type="button" aria-label="العودة إلى الواجهة الرئيسية">الرئيسية</button></div></header>
 <section class="ofoq-founder-top" aria-label="مؤسس بوابة أفق">
   <div class="ofoq-founder-avatar" aria-hidden="true">✦</div>
   <div class="ofoq-founder-copy">
