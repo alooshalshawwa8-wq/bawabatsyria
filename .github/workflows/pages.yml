@@ -177,7 +177,7 @@ jobs:
         run: python3 scripts/validate_ofoq.py
       - name: Exclude repository-only and internal files from public Pages artifact
         run: |
-          rm -rf .git .github docs tests scripts supabase backend
+          rm -rf .github docs tests scripts supabase backend
           rm -f ./*.md ./*.py ./*.mjs ./*.sql
           test -f index.html
           test -f manifest.json
