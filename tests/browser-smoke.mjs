@@ -14,9 +14,10 @@ page.on("pageerror", error => pageErrors.push(error.message));
 await page.route("**/*", async route => {
   const url = new URL(route.request().url());
   if (["alooshalshawwa8-wq.github.io", "127.0.0.1", "localhost"].includes(url.hostname)) return route.continue();
-  if (url.hostname === "elzquyehghuxhswogsch.supabase.co" && route.request().method() === "POST" &&
-      ["/auth/v1/resend", "/auth/v1/recover"].includes(url.pathname)) {
-    mockedAuthRequests.push({ path: url.pathname, body: route.request().postData() || "" });
+  if (url.hostname === "elzquyehghuxhswogsch.supabase.co" &&
+      ((route.request().method() === "POST" && ["/auth/v1/resend", "/auth/v1/recover"].includes(url.pathname)) ||
+       (route.request().method() === "PUT" && url.pathname === "/auth/v1/user"))) {
+    mockedAuthRequests.push({ path: url.pathname, method: route.request().method(), body: route.request().postData() || "", authorization: route.request().headers()["authorization"] || "" });
     return route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
   }
   externalRequests.push(url.hostname);
@@ -50,6 +51,18 @@ try {
   }
   if (!mockedAuthRequests.some(item => item.path === "/auth/v1/recover" && item.body.includes("ofoq-smoke@example.com"))) {
     throw new Error("Password recovery did not reach the mocked Supabase Auth endpoint");
+  }
+
+  // Simulate Supabase's recovery callback and prove that the user can complete
+  // the password reset through the authenticated Auth user endpoint.
+  await page.goto(baseUrl + "#access_token=ofoq-smoke-access&refresh_token=ofoq-smoke-refresh&expires_in=3600&type=recovery", { waitUntil: "domcontentloaded" });
+  await page.locator("#membershipNewPasswordWrap").waitFor({ state: "visible", timeout: 5000 });
+  await page.locator("#membershipNewPassword").fill("OfoqSmokePassword2026!");
+  await page.locator("#membershipSetNewPassword").click();
+  await page.locator("#membershipAuthStatus").getByText("تم تحديث كلمة المرور بنجاح").waitFor({ state: "visible", timeout: 5000 });
+  const passwordUpdate = mockedAuthRequests.find(item => item.path === "/auth/v1/user" && item.method === "PUT");
+  if (!passwordUpdate || !passwordUpdate.authorization.includes("ofoq-smoke-access") || !passwordUpdate.body.includes("OfoqSmokePassword2026!")) {
+    throw new Error("Password recovery did not submit the new password with the recovery access token");
   }
 
   await page.evaluate(async () => {
