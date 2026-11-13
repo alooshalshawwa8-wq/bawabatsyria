@@ -14,7 +14,7 @@ The approved display name is **❤️Aloosh alshawwa ❤️**.
 ## 2. Repository identity and caution
 
 - Active project repository: `alooshalshawwa8-wq/bawabatsyria` (public, default branch `main`).
-- A similarly named repository `alooshalshawwa8-wq/bawabatsyria` also exists. Do not confuse the two repositories.
+- A similarly named repository `alooshalshawwa8-wq/bawabatsuria` also exists. Do not confuse the two repositories.
 - The connected GitHub account has admin/push access to the active repository.
 
 ## 3. Latest verified source state
