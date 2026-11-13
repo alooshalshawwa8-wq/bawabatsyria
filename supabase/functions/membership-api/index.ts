@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { validateStripeEventEnvelope, verifyStripeSignature } from "./stripe-webhook-security.mjs";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const PUBLISHABLE_KEYS = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}");
@@ -139,25 +140,6 @@ async function stripeRequest(path: string, body?: URLSearchParams, idempotencyKe
   return data;
 }
 
-function safeEqual(a: string, b: string) {
-  if (a.length !== b.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < a.length; i++) mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return mismatch === 0;
-}
-
-async function verifyStripeSignature(payload: string, header: string) {
-  if (!STRIPE_WEBHOOK_SECRET) return false;
-  const parts = header.split(",").map(part => part.trim().split("="));
-  const timestamp = Number(parts.find(part => part[0] === "t")?.[1] ?? 0);
-  const signatures = parts.filter(part => part[0] === "v1").map(part => part[1] ?? "");
-  if (!timestamp || Math.abs(Date.now() / 1000 - timestamp) > 300 || !signatures.length) return false;
-  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(STRIPE_WEBHOOK_SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(timestamp + "." + payload));
-  const expected = Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, "0")).join("");
-  return signatures.some(signature => safeEqual(signature, expected));
-}
-
 function planEntitlements(planId: string) {
   if (planId === "pro_monthly") return ["pro_access"];
   if (planId === "vip_monthly") return ["pro_access", "vip_access"];
@@ -270,23 +252,15 @@ async function processStripeWebhook(request: Request) {
   } catch {
     return reply({ error: "Stripe webhook payload is too large or invalid." }, 413);
   }
-  if (!(await verifyStripeSignature(payload, request.headers.get("Stripe-Signature") ?? ""))) return reply({ error: "Invalid Stripe signature" }, 400);
+  if (!(await verifyStripeSignature(payload, request.headers.get("Stripe-Signature") ?? "", STRIPE_WEBHOOK_SECRET))) return reply({ error: "Invalid Stripe signature" }, 400);
   let event: Record<string, unknown>;
   try { event = JSON.parse(payload); } catch { return reply({ error: "Invalid webhook payload" }, 400); }
-  const eventId = typeof event.id === "string" ? event.id : "";
-  const eventType = typeof event.type === "string" ? event.type : "";
-  const created = Number(event.created);
-  const eventData = event.data && typeof event.data === "object" && !Array.isArray(event.data)
-    ? event.data as Record<string, unknown>
-    : null;
-  const eventObject = eventData?.object;
-  if (!/^evt_[A-Za-z0-9]+$/.test(eventId) ||
-      !/^[a-z][a-z0-9_.]{2,120}$/.test(eventType) ||
-      !Number.isSafeInteger(created) || created <= 0 ||
-      !eventObject || typeof eventObject !== "object" || Array.isArray(eventObject)) {
-    return reply({ error: "Invalid Stripe event envelope" }, 400);
-  }
-  const data = eventObject as Record<string, unknown>;
+  const validatedEvent = validateStripeEventEnvelope(event);
+  if (!validatedEvent) return reply({ error: "Invalid Stripe event envelope" }, 400);
+  const eventId = validatedEvent.eventId;
+  const eventType = validatedEvent.eventType;
+  const created = validatedEvent.created;
+  const data = validatedEvent.data as Record<string, unknown>;
   if (eventType === "checkout.session.completed" || eventType === "checkout.session.async_payment_succeeded") {
     if (data.mode === "subscription" && data.subscription) {
       const metadata = (data.metadata ?? {}) as Record<string, unknown>;
