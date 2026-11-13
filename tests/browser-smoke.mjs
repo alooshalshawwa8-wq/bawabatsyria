@@ -142,6 +142,8 @@ try {
   });
   const merchant = page.locator(".ofoq-ecom-studio");
   await merchant.waitFor({ state: "visible", timeout: 10000 });
+  await merchant.locator(".ofoq-commerce-cloud").waitFor({ state: "visible", timeout: 5000 });
+  if (!(await merchant.locator(".ofoq-commerce-cloud").innerText()).includes("مزامنة يدوية آمنة")) throw new Error("Commerce cloud bridge did not explain authenticated manual sync");
   await merchant.locator("#ofoq-ecom-cost").fill("10");
   await merchant.locator("#ofoq-ecom-price").fill("25");
   await merchant.locator("#ofoq-ecom-target").fill("20");
@@ -188,6 +190,10 @@ try {
   await merchant.locator("#ofoq-ecom-catalog-stock").fill("1");
   await merchant.getByRole("button", { name: "إضافة منتج" }).click();
   await merchant.locator(".ofoq-ecom-saved-row").filter({ hasText: "OFOQ TEMP Product" }).waitFor({ state: "visible" });
+  await merchant.locator(".ofoq-ecom-saved-row").filter({ hasText: "OFOQ TEMP Product" }).getByRole("button", { name: "أرشفة" }).click();
+  await merchant.locator(".ofoq-ecom-saved-row").filter({ hasText: "OFOQ TEMP Product" }).waitFor({ state: "detached" });
+  const archivedTemp = await page.evaluate(() => JSON.parse(localStorage.getItem("ofoq_ecommerce_products_v1") || "[]").some(row => row.name === "OFOQ TEMP Product" && row.archived === true));
+  if (!archivedTemp) throw new Error("Product archive did not preserve a reversible local record");
   page.once("dialog", dialog => dialog.accept());
   await merchant.locator("#ofoq-ecom-import-file").setInputFiles({
     name: "ofoq-commerce-backup.json",
