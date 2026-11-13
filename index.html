@@ -576,6 +576,7 @@ main{position:relative}
 <div class="notice" id="membershipStatus" role="status">يتم التحقق من إعداد خدمة العضوية…</div>
 <div class="grid" id="membershipPlans" style="margin-top:16px"></div>
 <div class="notice" id="membershipWallet" style="margin-top:16px">المحفظة وسجل النقاط يظهران بعد تسجيل الدخول وربط حسابك بالخدمة.</div>
+ <div class="panel-actions" id="membershipBillingActions" hidden style="margin-top:10px"><button class="btn secondary" id="membershipManageBilling" type="button">إدارة الاشتراك والفوترة</button></div>
 <div class="notice" id="ownerAdminTools" hidden style="margin-top:16px">
   <strong>أدوات مالك المنصة — إدارة النقاط</strong>
   <div class="calc">
@@ -3155,6 +3156,7 @@ function openMembership(){document.body.classList.remove('section-mode');panel.c
 async function loadMembership(){
 await refreshMembershipSession();
 membershipPlans.replaceChildren();
+document.getElementById("membershipBillingActions").hidden=true;
 ownerAdminTools.hidden=true;
 if(!membershipApi){membershipStatus.textContent='واجهة العضوية جاهزة، لكن خادم العضوية لم يُنشر أو يُربط بعد. لن نعرض دفعاً وهمياً أو نفعّل VIP قبل ربط الخادم.';membershipPlans.append(membershipNode('div','الاحترافية · VIP · الأعمال — الأسعار ومعالجة الدفع تُحمّل من الخادم بعد تهيئته.','empty'));return;}
 membershipStatus.textContent='جارٍ الاتصال بخدمة العضوية…';
@@ -3180,9 +3182,22 @@ if(!membershipToken()){membershipWallet.textContent='لم يتم ربط جلسة
 const meResponse=await fetch(membershipApi+'/api/me',{headers:{authorization:'Bearer '+membershipToken(),accept:'application/json'}});
 if(!meResponse.ok)throw new Error('تعذر التحقق من حسابك');
 const me=await meResponse.json();
-const ownerEntitlement=(me.entitlements||[]).some(x=>x.entitlement_key==='owner_access'&&x.active===true);const vipEntitlement=(me.entitlements||[]).some(x=>x.entitlement_key==='vip_access'&&x.active===true);const isPlatformOwner=(me.owner===true||me.role==='OWNER'||ownerEntitlement);if(isPlatformOwner){ownerAdminTools.hidden=false;membershipStatus.textContent='✦ تم تفعيل حساب مالك المنصة بنجاح — OWNER / SUPER ADMIN — عضوية مجانية مدى الحياة تشمل VIP والاحترافية والأعمال وجميع الميزات. لا تحتاج إلى شراء اشتراك.';membershipWallet.textContent='✦ مالك المنصة · OWNER / SUPER ADMIN · وصول مجاني دائم مفعّل. الصلاحيات: '+(me.entitlements||[]).filter(x=>x.active).map(x=>x.entitlement_key).join('، ')+' · رصيد النقاط: '+Number(me.points||0).toLocaleString('ar')+' نقطة.';}else{membershipWallet.textContent='رصيد النقاط: '+Number(me.points||0).toLocaleString('ar')+' نقطة · الصلاحيات: '+(me.entitlements||[]).filter(x=>x.active).map(x=>x.entitlement_key).join('، ')+' · الاشتراكات: '+(me.subscriptions||[]).map(x=>x.plan_id+' ('+x.status+')').join('، ');}
+const currentStripeSubscription=(me.subscriptions||[]).find(x=>x.provider==='stripe'&&['active','trialing','past_due','canceled'].includes(x.status)&&Date.parse(x.current_period_end||'')>Date.now());if(currentStripeSubscription)document.getElementById('membershipBillingActions').hidden=false;const ownerEntitlement=(me.entitlements||[]).some(x=>x.entitlement_key==='owner_access'&&x.active===true);const vipEntitlement=(me.entitlements||[]).some(x=>x.entitlement_key==='vip_access'&&x.active===true);const isPlatformOwner=(me.owner===true||me.role==='OWNER'||ownerEntitlement);if(isPlatformOwner){ownerAdminTools.hidden=false;membershipStatus.textContent='✦ تم تفعيل حساب مالك المنصة بنجاح — OWNER / SUPER ADMIN — عضوية مجانية مدى الحياة تشمل VIP والاحترافية والأعمال وجميع الميزات. لا تحتاج إلى شراء اشتراك.';membershipWallet.textContent='✦ مالك المنصة · OWNER / SUPER ADMIN · وصول مجاني دائم مفعّل. الصلاحيات: '+(me.entitlements||[]).filter(x=>x.active).map(x=>x.entitlement_key).join('، ')+' · رصيد النقاط: '+Number(me.points||0).toLocaleString('ar')+' نقطة.';}else{membershipWallet.textContent='رصيد النقاط: '+Number(me.points||0).toLocaleString('ar')+' نقطة · الصلاحيات: '+(me.entitlements||[]).filter(x=>x.active).map(x=>x.entitlement_key).join('، ')+' · الاشتراكات: '+(me.subscriptions||[]).map(x=>x.plan_id+' ('+x.status+')').join('، ');}
 }catch(error){membershipStatus.textContent='خدمة العضوية غير متاحة حالياً. تحقق من إعداد الخادم ومفاتيح المصادقة والدفع.';}
 }
+async function openMembershipBillingPortal(){
+const token=await refreshMembershipSession();
+if(!membershipApi||!token)return;
+const button=document.getElementById("membershipManageBilling");
+button.disabled=true;membershipStatus.textContent="جارٍ فتح بوابة إدارة الاشتراك الآمنة…";
+try{
+const response=await fetch(membershipApi+"/api/billing-portal",{method:"POST",headers:{authorization:"Bearer "+token,"content-type":"application/json"},body:"{}"});
+const data=await response.json();if(!response.ok||!data.portalUrl)throw new Error(data.error||"تعذر فتح بوابة إدارة الاشتراك");
+if(!data.portalUrl.startsWith("https://billing.stripe.com/"))throw new Error("رابط إدارة الفوترة غير صالح.");
+location.href=data.portalUrl;
+}catch(error){membershipStatus.textContent=error.message||"تعذر فتح بوابة إدارة الاشتراك.";}finally{button.disabled=false;}
+}
+document.getElementById("membershipManageBilling").addEventListener("click",openMembershipBillingPortal);
 async function startMembershipCheckout(planId){
 const token=await refreshMembershipSession();
 if(!membershipApi||!token)return;
