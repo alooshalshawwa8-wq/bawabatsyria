@@ -30,7 +30,7 @@ export async function verifyStripeSignature(payload, header, secret, nowSeconds 
   const fields = header.split(",").map(part => part.trim().split("="));
   const timestampValues = fields.filter(([key]) => key === "t").map(([, value]) => value ?? "");
   const timestampText = timestampValues[0] ?? "";
-  if (!/^\\d{1,12}$/.test(timestampText) || timestampValues.length !== 1) return false;
+  if (!/^\d{1,12}$/.test(timestampText) || timestampValues.length !== 1) return false;
   const timestamp = Number(timestampText);
   if (!Number.isSafeInteger(timestamp) || timestamp <= 0 || Math.abs(nowSeconds - timestamp) > 300) return false;
   const signatures = fields.filter(([key]) => key === "v1").map(([, value]) => value ?? "").filter(value => SIGNATURE_PATTERN.test(value));
