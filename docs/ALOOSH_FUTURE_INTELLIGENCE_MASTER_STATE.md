@@ -64,3 +64,14 @@
 ## الخصوصية
 
 هذا الملف مخصص للمعلومات العامة الآمنة فقط. لا يحتوي على أسرار أو مفاتيح خدمات أو بيانات مستخدمين أو إعدادات تشغيل حساسة.
+
+
+## Personal workspace continuity — 2026-11-13
+
+- Favorites and recently visited section IDs (ofoq_personal_space_v1) are now included in local and optional cloud Operations Hub backups.
+- Only known section IDs are captured when the catalog is available; snapshots enforce limits of 78 favorites and 12 recent visits, reject duplicates and malformed values.
+- Restore validates the optional personal-space payload and attempts to roll back the Operations Hub data and personal-space key if either write fails.
+- Existing backup files without the optional personal-space field remain compatible.
+- This is manual backup/restore, not live or automatic cross-device synchronization. Favorites and visit history reach the cloud only when the user explicitly creates an optional cloud backup.
+- Static contract checks now protect this integration from regressions.
+- Source change: operations-hub.js, commit e36a3c8d4f16bb274360c679f98849b4da5116d4.
