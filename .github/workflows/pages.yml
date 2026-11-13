@@ -212,10 +212,14 @@ jobs:
           test ! -e dist/scripts
           test ! -e dist/supabase
           test ! -e dist/backend
-          if find dist -type f -name '.env*' -print -quit | grep -q . || find dist -type f -name '.dev.vars*' -print -quit | grep -q . || find dist -type f -name '*.pem' -print -quit | grep -q . || find dist -type f -name '*.key' -print -quit | grep -q . || find dist -type f -name '*.p12' -print -quit | grep -q . || find dist -type f -name '*.pfx' -print -quit | grep -q . || find dist -type f -name '*.sqlite*' -print -quit | grep -q . || find dist -type f -name '*.db' -print -quit | grep -q .; then
-            echo 'Potential secret or database file found in public artifact.'
-            exit 1
-          fi
+          test -z "$(find dist -type f -name '.env*' -print -quit)"
+          test -z "$(find dist -type f -name '.dev.vars*' -print -quit)"
+          test -z "$(find dist -type f -name '*.pem' -print -quit)"
+          test -z "$(find dist -type f -name '*.key' -print -quit)"
+          test -z "$(find dist -type f -name '*.p12' -print -quit)"
+          test -z "$(find dist -type f -name '*.pfx' -print -quit)"
+          test -z "$(find dist -type f -name '*.sqlite*' -print -quit)"
+          test -z "$(find dist -type f -name '*.db' -print -quit)"
           test -f tests/browser-smoke.mjs
           test -f tests/mobile-smoke.mjs
           test -f scripts/validate_lighthouse.mjs
