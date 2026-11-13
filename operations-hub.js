@@ -46,6 +46,22 @@ const commerceOrderValue=s.commerceOrders.filter(x=>x.status!=="cancelled").redu
 return {sales,purchases,expenses,units,commerceUnits,commerceOrderValue};
 };
 
+
+const PERSONAL_SPACE_KEY="ofoq_personal_space_v1";
+const validPersonalSpaceSnapshot=p=>{
+ if(!p||typeof p!=="object"||Array.isArray(p)||!Array.isArray(p.favorites)||!Array.isArray(p.recent)||p.favorites.length>78||p.recent.length>12)return false;
+ const validIds=new Set((Array.isArray(window.BAWABA_SECTIONS)?window.BAWABA_SECTIONS:[]).map(x=>x&&x.id).filter(x=>typeof x==="string"));
+ const check=(items,max)=>items.length<=max&&items.every(x=>typeof x==="string"&&x.length>0&&x.length<=100&&(!validIds.size||validIds.has(x)))&&new Set(items).size===items.length;
+ return check(p.favorites,78)&&check(p.recent,12);
+};
+const personalSpaceSnapshot=()=>{
+ try{const raw=JSON.parse(localStorage.getItem(PERSONAL_SPACE_KEY)||"{}");const validIds=new Set((Array.isArray(window.BAWABA_SECTIONS)?window.BAWABA_SECTIONS:[]).map(x=>x&&x.id).filter(x=>typeof x==="string"));const clean=(items,max)=>Array.isArray(items)?[...new Set(items.filter(x=>typeof x==="string"&&x.length>0&&x.length<=100&&(!validIds.size||validIds.has(x)))].slice(0,max):[];return {version:1,favorites:clean(raw&&raw.favorites,78),recent:clean(raw&&raw.recent,12)};}catch(_){return {version:1,favorites:[],recent:[]};}
+};
+const applyPersonalSpaceSnapshot=p=>{
+ if(!p)return true;if(!validPersonalSpaceSnapshot(p))return false;
+ try{localStorage.setItem(PERSONAL_SPACE_KEY,JSON.stringify({version:1,favorites:p.favorites,recent:p.recent,updatedAt:new Date().toISOString()}));return true;}catch(_){return false;}
+};
+
 const el=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n;};
 const btn=(txt,fn,cls="oph-btn")=>{const b=el("button",cls,txt);b.type="button";b.addEventListener("click",fn);return b;};
 const empty=()=>({version:1,projects:[],tasks:[],transactions:[]});
@@ -135,9 +151,9 @@ const rows=[
 rows.forEach(([title,detail])=>{const r=el("article","oph-item");r.append(el("div","",""),el("small","",detail));r.firstChild.append(el("strong","",title));linkedList.append(r);});
 };
 linked.append(linkedSummary,linkedList);actions(linked,btn("تحديث البيانات الآن",()=>{render();renderLinked();status.textContent="تم تحديث لوحة القيادة ومصادرها دون تعديل السجلات الأصلية.";}));
-const backup=pane("backup");backup.append(el("h3","","نسخ البيانات واستعادتها"),el("p","oph-note","تتضمن النسخة بيانات مركز القيادة ولقطة مؤرخة من المخزون والمبيعات والفواتير والمصروفات والتحصيلات والعملاء وطلبات العمل وكتالوج المنتجات والطلبات المحلية. اللقطة أرشيف مستقل ولا تستبدل بيانات الأدوات الأصلية عند الاستيراد."));
+const backup=pane("backup");backup.append(el("h3","","نسخ البيانات واستعادتها"),el("p","oph-note","تتضمن النسخة بيانات مركز القيادة ولقطة مؤرخة من المخزون والمبيعات والفواتير والمصروفات والتحصيلات والعملاء وطلبات العمل وكتالوج المنتجات والطلبات المحلية، إضافة إلى مفضلاتك وآخر الأقسام التي زرتها. اللقطة أرشيف مستقل ولا تستبدل بيانات الأدوات الأصلية عند الاستيراد."));
 const importFile=el("input","");importFile.type="file";importFile.accept=".json,application/json";importFile.hidden=true;
-actions(backup,btn("تنزيل نسخة JSON",()=>{const blob=new Blob([JSON.stringify({app:"ofoq-operations-hub",version:2,exportedAt:new Date().toISOString(),data,linkedSources:sourceSnapshot()},null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=el("a");a.href=url;a.download="ofoq-complete-operations-backup.json";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);status.textContent="تم تجهيز النسخة الاحتياطية.";}),btn("استيراد نسخة JSON",()=>importFile.click()));
+actions(backup,btn("تنزيل نسخة JSON",()=>{const blob=new Blob([JSON.stringify({app:"ofoq-operations-hub",version:2,exportedAt:new Date().toISOString(),data,linkedSources:sourceSnapshot(),personalSpace:personalSpaceSnapshot()},null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=el("a");a.href=url;a.download="ofoq-complete-operations-backup.json";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);status.textContent="تم تجهيز النسخة الاحتياطية.";}),btn("استيراد نسخة JSON",()=>importFile.click()));
 backup.append(importFile);
 
 const cloudPanel=el("section","oph-cloud-panel");
@@ -181,7 +197,7 @@ const cloudRequest=async(path,options={},retry=true)=>{
  return result;
 };
 const setCloudStatus=message=>{cloudStatus.textContent=message;};
-const backupPayload=()=>({app:"ofoq-operations-hub",version:2,exportedAt:new Date().toISOString(),data:clean(data),linkedSources:sourceSnapshot()});
+const backupPayload=()=>({app:"ofoq-operations-hub",version:2,exportedAt:new Date().toISOString(),data:clean(data),linkedSources:sourceSnapshot(),personalSpace:personalSpaceSnapshot()});
 const validCloudBackup=p=>{
  const d=p&&p.data;
  if(!p||p.app!=="ofoq-operations-hub"||![1,2].includes(p.version)||!d||!Array.isArray(d.projects)||!Array.isArray(d.tasks)||!Array.isArray(d.transactions))return false;
@@ -189,6 +205,7 @@ const validCloudBackup=p=>{
  if(!d.projects.every(x=>x&&typeof x.name==="string"&&x.name.length<=100&&["active","paused","done"].includes(x.status)))return false;
  if(!d.tasks.every(x=>x&&typeof x.title==="string"&&x.title.length<=160&&["open","done"].includes(x.status)))return false;
  if(!d.transactions.every(x=>x&&["income","expense"].includes(x.kind)&&Number.isFinite(x.amount)&&x.amount>0&&x.amount<=1e12&&typeof x.category==="string"))return false;
+ if(p.personalSpace&&!validPersonalSpaceSnapshot(p.personalSpace))return false;
  const ls=p.linkedSources;
  return !ls||(Array.isArray(ls.stock)&&Array.isArray(ls.trade)&&Array.isArray(ls.expenses)&&Array.isArray(ls.settlements)&&ls.stock.length<=10000&&ls.trade.length<=20000&&ls.expenses.length<=20000&&ls.settlements.length<=20000&&(!ls.commerceProducts||(Array.isArray(ls.commerceProducts)&&ls.commerceProducts.length<=500&&ls.commerceProducts.every(x=>x&&typeof x.id==="string"&&typeof x.name==="string"&&Number.isFinite(Number(x.price))&&Number(x.price)>=0&&Number.isFinite(Number(x.stock))&&Number(x.stock)>=0)))&&(!ls.commerceOrders||(Array.isArray(ls.commerceOrders)&&ls.commerceOrders.length<=1000&&ls.commerceOrders.every(x=>x&&typeof x.id==="string"&&typeof x.orderNo==="string"&&Number.isFinite(Number(x.total))&&Number(x.total)>=0&&Number.isInteger(Number(x.qty))&&Number(x.qty)>0&&["new","processing","shipped","delivered","cancelled"].includes(x.status)))));
 };
@@ -205,8 +222,8 @@ const loadCloudBackups=async()=>{
     const payload=Array.isArray(found)&&found[0]&&found[0].payload;
     if(!validCloudBackup(payload))throw new Error("النسخة غير صالحة أو لا تتوافق مع إصدار مركز القيادة.");
     if(payload.version===2&&payload.linkedSources){try{localStorage.setItem(ARCHIVE_KEY,JSON.stringify({archivedAt:new Date().toISOString(),linkedSources:payload.linkedSources}));}catch(_){throw new Error("تعذر حفظ أرشيف المصادر؛ لم تُستبدل بيانات مركز القيادة.");}}
-    data=clean(payload.data);if(!persist())throw new Error("تعذر حفظ الاستعادة محلياً؛ تحقق من المساحة المتاحة.");
-    setCloudStatus("تمت الاستعادة بنجاح. بقيت بيانات الأدوات الأصلية دون تعديل.");
+    const previousData=data,previousPersonal=localStorage.getItem(PERSONAL_SPACE_KEY);data=clean(payload.data);if(!persist()){data=previousData;throw new Error("تعذر حفظ الاستعادة محلياً؛ تحقق من المساحة المتاحة.");}if(payload.personalSpace&&!applyPersonalSpaceSnapshot(payload.personalSpace)){data=previousData;persist();try{if(previousPersonal===null)localStorage.removeItem(PERSONAL_SPACE_KEY);else localStorage.setItem(PERSONAL_SPACE_KEY,previousPersonal);}catch(_){}throw new Error("تعذر استعادة المفضلات والزيارات؛ أُعيدت بيانات مركز القيادة السابقة.");}
+    setCloudStatus("تمت الاستعادة بنجاح، بما فيها المفضلات وآخر الزيارات. بقيت بيانات الأدوات الأصلية دون تعديل.");
    }catch(e){setCloudStatus("تعذرت الاستعادة: "+(e.message||"خطأ غير معروف."));}
   }),btn("حذف",async()=>{
    if(!confirm("حذف هذه النسخة السحابية نهائياً؟"))return;
@@ -257,7 +274,7 @@ const signOutCloud=async()=>{
 actions(cloudPanel,btn("تسجيل الدخول",signInCloud),btn("إنشاء حساب",signUpCloud),btn("إنشاء نسخة سحابية الآن",createCloudBackup),btn("تحديث قائمة النسخ",async()=>{try{await loadCloudBackups();setCloudStatus("تم تحديث قائمة النسخ.");}catch(e){setCloudStatus(e.message);}}),btn("تسجيل الخروج",signOutCloud,"oph-btn oph-danger"));
 cloudPanel.append(cloudUser,cloudList,cloudStatus,el("p","oph-note","الحماية: RLS تقصر القراءة والإنشاء والحذف على صاحب الحساب. لا توجد صلاحية تعديل النسخة بعد إنشائها. النسخ محفوظة في قاعدة البيانات السحابية ولا تُشفّر تشفيراً طرفياً من المتصفح؛ لا ترفع كلمات مرور أو أسراراً أو بيانات لا تريد تخزينها سحابياً."));
 backup.append(cloudPanel);updateCloudState();
-importFile.addEventListener("change",async()=>{const file=importFile.files&&importFile.files[0];if(!file)return;try{if(file.size>1024*1024)throw new Error("الملف يتجاوز 1 ميغابايت.");const raw=JSON.parse(await file.text()),d=raw&&raw.data;if(!raw||raw.app!=="ofoq-operations-hub"||![1,2].includes(raw.version)||!d||!Array.isArray(d.projects)||!Array.isArray(d.tasks)||!Array.isArray(d.transactions))throw new Error("صيغة النسخة غير متوافقة.");if(d.projects.length>100||d.tasks.length>300||d.transactions.length>500)throw new Error("تجاوزت النسخة حدود السجلات.");if(!d.projects.every(x=>x&&typeof x.name==="string"&&x.name.length<=100&&["active","paused","done"].includes(x.status)))throw new Error("بيانات المشاريع غير صالحة.");if(!d.tasks.every(x=>x&&typeof x.title==="string"&&x.title.length<=160&&["open","done"].includes(x.status)))throw new Error("بيانات المهام غير صالحة.");if(!d.transactions.every(x=>x&&["income","expense"].includes(x.kind)&&Number.isFinite(x.amount)&&x.amount>0&&x.amount<=1e12&&typeof x.category==="string"))throw new Error("بيانات الدفتر المالي غير صالحة.");if(!confirm("سيستبدل الاستيراد بيانات مركز القيادة الحالية. هل تريد المتابعة؟"))return;if(raw.version===2&&raw.linkedSources){const ls=raw.linkedSources;if(!ls||typeof ls!=="object"||!Array.isArray(ls.stock)||!Array.isArray(ls.trade)||!Array.isArray(ls.expenses)||!Array.isArray(ls.settlements)||ls.stock.length>10000||ls.trade.length>20000||ls.expenses.length>20000||ls.settlements.length>20000)throw new Error("لقطة المصادر المرتبطة غير صالحة أو تجاوزت الحدود.");try{localStorage.setItem(ARCHIVE_KEY,JSON.stringify({archivedAt:new Date().toISOString(),linkedSources:ls}));}catch(_){throw new Error("تعذر حفظ أرشيف المصادر؛ لم يتم استبدال بيانات مركز القيادة.");}}data=clean(d);if(!persist())throw new Error("لم تتم الاستعادة لأن الحفظ الآمن لم يكتمل.");status.textContent=raw.version===2?"تمت استعادة مركز القيادة وحفظ لقطة المصادر في أرشيف منفصل دون المساس بالأدوات الأصلية.":"تمت استعادة بيانات مركز القيادة.";}catch(e){status.textContent="تعذر الاستيراد: "+(e.message||"ملف غير صالح.");}finally{importFile.value="";}});
+importFile.addEventListener("change",async()=>{const file=importFile.files&&importFile.files[0];if(!file)return;try{if(file.size>1024*1024)throw new Error("الملف يتجاوز 1 ميغابايت.");const raw=JSON.parse(await file.text()),d=raw&&raw.data;if(!raw||raw.app!=="ofoq-operations-hub"||![1,2].includes(raw.version)||!d||!Array.isArray(d.projects)||!Array.isArray(d.tasks)||!Array.isArray(d.transactions))throw new Error("صيغة النسخة غير متوافقة.");if(raw.personalSpace&&!validPersonalSpaceSnapshot(raw.personalSpace))throw new Error("بيانات المفضلات والزيارات في النسخة غير صالحة.");if(d.projects.length>100||d.tasks.length>300||d.transactions.length>500)throw new Error("تجاوزت النسخة حدود السجلات.");if(!d.projects.every(x=>x&&typeof x.name==="string"&&x.name.length<=100&&["active","paused","done"].includes(x.status)))throw new Error("بيانات المشاريع غير صالحة.");if(!d.tasks.every(x=>x&&typeof x.title==="string"&&x.title.length<=160&&["open","done"].includes(x.status)))throw new Error("بيانات المهام غير صالحة.");if(!d.transactions.every(x=>x&&["income","expense"].includes(x.kind)&&Number.isFinite(x.amount)&&x.amount>0&&x.amount<=1e12&&typeof x.category==="string"))throw new Error("بيانات الدفتر المالي غير صالحة.");if(!confirm("سيستبدل الاستيراد بيانات مركز القيادة الحالية. هل تريد المتابعة؟"))return;if(raw.version===2&&raw.linkedSources){const ls=raw.linkedSources;if(!ls||typeof ls!=="object"||!Array.isArray(ls.stock)||!Array.isArray(ls.trade)||!Array.isArray(ls.expenses)||!Array.isArray(ls.settlements)||ls.stock.length>10000||ls.trade.length>20000||ls.expenses.length>20000||ls.settlements.length>20000)throw new Error("لقطة المصادر المرتبطة غير صالحة أو تجاوزت الحدود.");try{localStorage.setItem(ARCHIVE_KEY,JSON.stringify({archivedAt:new Date().toISOString(),linkedSources:ls}));}catch(_){throw new Error("تعذر حفظ أرشيف المصادر؛ لم يتم استبدال بيانات مركز القيادة.");}}const previousData=data,previousPersonal=localStorage.getItem(PERSONAL_SPACE_KEY);data=clean(d);if(!persist()){data=previousData;throw new Error("لم تتم الاستعادة لأن الحفظ الآمن لم يكتمل.");}if(raw.personalSpace&&!applyPersonalSpaceSnapshot(raw.personalSpace)){data=previousData;persist();try{if(previousPersonal===null)localStorage.removeItem(PERSONAL_SPACE_KEY);else localStorage.setItem(PERSONAL_SPACE_KEY,previousPersonal);}catch(_){}throw new Error("تعذرت استعادة المفضلات والزيارات؛ أُعيدت بيانات مركز القيادة السابقة.");}status.textContent=raw.version===2?"تمت استعادة مركز القيادة وحفظ لقطة المصادر في أرشيف منفصل دون المساس بالأدوات الأصلية.":"تمت استعادة بيانات مركز القيادة.";}catch(e){status.textContent="تعذر الاستيراد: "+(e.message||"ملف غير صالح.");}finally{importFile.value="";}});
 root.append(style,head,metrics,tabs,panes,status);host.append(root);render();renderLinked();activate("overview");
 }
 const wrapped=async function(sec){await prior(sec);if(sec&&(sec.id==="business"||sec.id==="startup_lab"))mount(sec);};
