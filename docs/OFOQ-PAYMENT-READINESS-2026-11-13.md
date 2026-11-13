@@ -85,3 +85,24 @@ The payment foundation is partially implemented, but production collection is no
 2. Design the local-payment state machine and private proof Storage policies in an isolated migration/test branch before any production schema change.
 3. Implement admin review with immutable audit events and atomic entitlement activation only after owner approval and verified receipt.
 4. Run end-to-end tests in an isolated Supabase branch and provider test mode. Do not deploy or enable real billing as part of this work.
+
+## Additional Stripe webhook integrity review
+
+A deeper read-only schema and source review identified the following important distinctions:
+
+- Stripe signature verification is present: HMAC-SHA256 over the timestamp and raw payload, with a five-minute tolerance and constant-time comparison of equal-length signatures.
+- The webhook body is bounded to 256 KiB.
+- Subscription upserts are protected by a unique `provider_subscription_id`; entitlement upserts use the `(user_id, entitlement_key)` primary key; revenue records use a unique `provider_event_id`. These constraints help make repeated writes converge.
+- However, `ofoq_revenue_events` is not a complete webhook receipt ledger: events that only synchronize subscription state do not receive a durable event receipt. The current handler can therefore repeat provider fetches and processing on delivery retries.
+- Subscription persistence and entitlement changes currently occur through multiple separate REST calls, not one database transaction. A partial failure can leave the subscription row updated while entitlement reconciliation is incomplete until a later retry.
+- The handler previously accepted a signed JSON object without strictly validating the Stripe event envelope. A strict envelope validation was added on the development branch: event ID format, event type format, positive safe-integer creation timestamp, and non-array object payload are now required before event dispatch.
+- The contract test now asserts these envelope guards. This is source-contract coverage, not a cryptographic runtime test or a provider test-mode run.
+
+## Webhook hardening still required before billing activation
+
+1. Add a dedicated `stripe_webhook_events` receipt table with unique provider event ID, event type, Stripe creation timestamp, processing state, attempt count, received/processed timestamps, and a bounded error code. Do not store full payment payloads or secrets.
+2. Atomically claim each event before processing; return success for already-completed events, and safely resume failed/in-progress events under a bounded retry/lease strategy.
+3. Move subscription row synchronization, entitlement reconciliation, and event completion into a narrowly privileged transactional database function (or equivalent durable outbox design), so they commit together.
+4. Preserve Stripe's latest-resource fetch strategy for subscription lifecycle events to reduce out-of-order event regressions, and test it explicitly.
+5. Add mocked integration tests for valid/invalid signatures, stale timestamps, duplicate deliveries, malformed envelopes, provider API failures, partial database failures, and retry recovery.
+6. Keep all billing gates closed and do not deploy this branch implementation to production until these controls and isolated end-to-end tests pass.
