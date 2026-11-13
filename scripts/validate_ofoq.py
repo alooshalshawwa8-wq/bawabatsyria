@@ -250,6 +250,7 @@ require("ofoq_ecommerce_products_v1" in operations and "ofoq_ecommerce_orders_v1
 require("ofoq-ecom-import-file" in ecommerce and "استيراد نسخة الكتالوج والطلبات" in ecommerce, "merchant backup import and restore control missing")
 require("commerceBackup" in (ROOT / "tests/browser-smoke.mjs").read_text(encoding="utf-8"), "browser suite must exercise merchant backup restore")
 require("reserved+qty>productRow.stock" in ecommerce and "button(\"تعديل\"" in ecommerce, "merchant stock reservation and product editing checks missing")
+require("لا يمكن إعادة تفعيل الطلب" in ecommerce and "archived!==true" in ecommerce and "button(\"أرشفة\"" in ecommerce, "merchant order reactivation and reversible archive guards missing")
 require('x.status!=="cancelled"' in ecommerce and "بعد التسليم حدّث المخزون يدوياً" in ecommerce, "all non-cancelled orders, including delivered orders, must remain allocated until manual stock reconciliation")
 require("commerceProducts" in operations and "commerceOrders" in operations, "merchant records missing from unified backup snapshot")
 require("ls.commerceProducts.length<=500" in operations and "ls.commerceOrders.length<=1000" in operations, "cloud backup must validate merchant snapshot bounds and records")
@@ -382,8 +383,8 @@ for token in (
 
 # Cloud merchant tables and ownership/inventory invariants.
 commerce_sql = (ROOT / "supabase/migrations/20261113134758_ofoq_store_cloud_catalog_and_orders.sql").read_text(encoding="utf-8")
-archive_sql = (ROOT / "supabase/migrations/20261113135211_ofoq_store_product_archiving.sql").read_text(encoding="utf-8")
-archive_guard_sql = (ROOT / "supabase/migrations/20261113135900_ofoq_store_archived_product_order_guard.sql").read_text(encoding="utf-8")
+archive_sql = (ROOT / "supabase/migrations/20261113134838_ofoq_store_product_archiving.sql").read_text(encoding="utf-8")
+archive_guard_sql = (ROOT / "supabase/migrations/20261113134941_ofoq_store_archived_product_order_guard.sql").read_text(encoding="utf-8")
 for token in ("enable row level security", "to authenticated", "auth.uid()", "grant select, insert, update, delete", "ofoq_store_orders_integrity", "Insufficient available stock", "on delete restrict", "revoke all on function"):
     require(token in commerce_sql, "commerce database security contract missing: " + token)
 require("add column archived boolean not null default false" in archive_sql, "commerce product archiving migration missing")
