@@ -53,6 +53,15 @@ try {
     throw new Error("Password recovery did not reach the mocked Supabase Auth endpoint");
   }
 
+  // Error descriptions are already decoded by URLSearchParams. A literal percent
+  // must not trigger a second decodeURIComponent exception or remain in the URL.
+  await page.evaluate(() => {
+    window.location.hash = "error=access_denied&error_description=invalid%25token";
+    window.consumeAuthCallback();
+  });
+  await page.locator("#membershipAuthStatus").getByText(/invalid%token/).waitFor({ state: "visible", timeout: 5000 });
+  if (await page.evaluate(() => window.location.hash)) throw new Error("Auth error callback fragment was not cleared");
+
   // Simulate Supabase's recovery callback and prove that the user can complete
   // the password reset through the authenticated Auth user endpoint.
   await page.evaluate(() => {
