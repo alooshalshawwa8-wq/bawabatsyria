@@ -15,6 +15,10 @@ ecommerce = (ROOT / "ecommerce-studio.js").read_text(encoding="utf-8")
 career = (ROOT / "career-studio.js").read_text(encoding="utf-8")
 operations = (ROOT / "operations-hub.js").read_text(encoding="utf-8")
 commerce_cloud = (ROOT / "ofoq-commerce-cloud.js").read_text(encoding="utf-8")
+ofoq_data = (ROOT / "ofoq-data.js").read_text(encoding="utf-8")
+workspaces = (ROOT / "ofoq-workspaces.js").read_text(encoding="utf-8")
+workspace_extensions = (ROOT / "ofoq-workspace-extensions.js").read_text(encoding="utf-8")
+
 manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
 
 def require(condition, message):
@@ -209,6 +213,23 @@ for token in ("ofoq_cloud_backup_session_v1", "ofoq_store_products", "ofoq_store
     require(token in commerce_cloud or token in html, "commerce cloud contract missing: " + token)
 require("service_role" not in commerce_cloud and "SUPABASE_SERVICE_ROLE_KEY" not in commerce_cloud, "browser commerce bridge must not contain privileged server credentials")
 require("fetch(" in commerce_cloud and "Authorization" in commerce_cloud, "commerce cloud bridge must use authenticated API requests")
+
+# Cross-module business analytics: record only successful, owner-scoped actions and never send customer/order payloads.
+for token in (
+    'section_open|tool_run|lead_created|order_created|career_application_created',
+    'body:{user_id:u.id,event_name:event,section_id:section,session_id:sid()}',
+    'catch(_){return false}',
+):
+    require(token in ofoq_data, "privacy-safe analytics contract missing: " + token)
+order_insert = commerce_cloud.find('await api("ofoq_store_orders"')
+order_track = commerce_cloud.find('track("order_created", "ecommerce_studio")')
+require(order_insert >= 0 and order_track > order_insert, "order analytics must run only after the cloud order insert")
+require('pushedOrders++;' in commerce_cloud[order_insert:order_track], "order analytics must follow confirmed cloud insert success")
+require('await D.track("lead_created","business")' in workspaces, "CRM lead creation must be measured after persistence")
+require('await D.track("career_application_created",section)' in workspaces, "career application creation must be measured after persistence")
+for forbidden in ("product_name:", "order_no:", "email:", "phone:", "notes:"):
+    require(forbidden not in ofoq_data, "analytics payload must not include customer/order content: " + forbidden)
+
 
 # Utility modules can persist generated results into each section note record.
 require("حفظ النتيجة في ملاحظاتي" in html and "ofoq-notes-'+sec.id" in html, "utility result save-to-notes action missing")
