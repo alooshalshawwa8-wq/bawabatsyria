@@ -122,6 +122,7 @@ try {
     if (!section) throw new Error("Trading academy section is missing");
     await window.openSection(section);
   });
+  await page.locator('[data-ta-tab="journal"]').click();
   const xssProbe = '<img src=x onerror="window.__ofoqXss=1">';
   await page.locator("#taAsset").fill("BTC/USD");
   await page.locator("#taDirection").selectOption({ label: "Long" });
