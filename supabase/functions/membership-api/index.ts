@@ -506,6 +506,36 @@ Deno.serve(async (request: Request) => {
       return reply({ checkoutUrl: session.url, sessionId: session.id });
     }
 
+    if (request.method === "POST" && path === "/api/billing-portal") {
+      if (!PAYMENTS_ENABLED) return reply({ error: "إدارة الاشتراكات المدفوعة غير متاحة حالياً." }, 403);
+      if (!STRIPE_SECRET_KEY || !STRIPE_WEBHOOK_SECRET || !SERVICE_ROLE_KEY) return reply({ error: "إدارة الفوترة غير مهيأة بعد." }, 503);
+      if (!await billingGateOpen()) return reply({ error: "إدارة الفوترة غير متاحة قبل اعتماد وضع الإطلاق التجاري." }, 403);
+      const token = request.headers.get("Authorization")!.slice(7);
+      const subscriptions = await getJson(
+        "/rest/v1/subscriptions?select=provider,provider_customer_id,status,current_period_end&user_id=eq." +
+          encodeURIComponent(user.id) +
+          "&provider=eq.stripe&status=in.(active,trialing,past_due,canceled)&order=updated_at.desc&limit=10",
+        token,
+      );
+      const current = subscriptions.find((item: Record<string, unknown>) =>
+        typeof item.provider_customer_id === "string" &&
+        /^cus_[A-Za-z0-9]+$/.test(item.provider_customer_id) &&
+        typeof item.current_period_end === "string" &&
+        Date.parse(item.current_period_end) > Date.now()
+      );
+      if (!current) return reply({ error: "لا يوجد اشتراك Stripe ساري مرتبط بهذا الحساب." }, 404);
+      const siteUrl = SITE_URL.endsWith("/") ? SITE_URL.slice(0, -1) : SITE_URL;
+      if (!siteUrl.startsWith("https://")) return reply({ error: "عنوان الموقع الآمن غير مضبوط." }, 503);
+      const form = new URLSearchParams();
+      form.set("customer", String(current.provider_customer_id));
+      form.set("return_url", siteUrl + "/?membership=managed");
+      const session = await stripeRequest("billing_portal/sessions", form);
+      if (typeof session.url !== "string" || !session.url.startsWith("https://billing.stripe.com/")) {
+        return reply({ error: "تعذر إنشاء رابط إدارة فوترة آمن." }, 502);
+      }
+      return reply({ portalUrl: session.url });
+    }
+
     return reply({ error: "Not found" }, 404);
   } catch (error) {
     console.error("membership-api", error);
