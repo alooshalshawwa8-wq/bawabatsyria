@@ -255,6 +255,32 @@ for token in ("ofoq_personal_space_v1", "getFavorites", "getRecent", "toggleFavo
 require("fetch(" not in core and "XMLHttpRequest" not in core, "OFOQ personal space must remain local-only")
 require("./ofoq-core.js" in worker and cache_version, "OFOQ core missing from offline shell or cache version is invalid")
 
+# Public/private boundary: the Pages artifact must not publish repository-only internals.
+pages_workflow = (ROOT / ".github/workflows/pages.yml").read_text(encoding="utf-8")
+for token in (
+    "Exclude repository-only and internal files from public Pages artifact",
+    "rm -rf .git .github docs tests scripts supabase backend",
+    "rm -f ./*.md ./*.py ./*.mjs ./*.sql",
+    "test ! -e docs",
+    "test ! -e supabase",
+    "test ! -e backend",
+    "path: .",
+):
+    require(token in pages_workflow, "public Pages artifact boundary missing: " + token)
+
+# Public documentation must not expose project-specific operational identifiers.
+public_docs = (
+    ROOT / "docs/ALOOSH_FUTURE_INTELLIGENCE_MASTER_STATE.md",
+    ROOT / "GEMINI_ASSISTANT_SETUP.md",
+    ROOT / "MONETIZATION_SETUP.md",
+    ROOT / "PAYMENT_SETUP_SYRIA.md",
+)
+for public_doc in public_docs:
+    if public_doc.is_file():
+        public_text = public_doc.read_text(encoding="utf-8")
+        for forbidden in ("elzquyehghuxhswogsch", "SUPABASE_SERVICE_ROLE_KEY", "STRIPE_SECRET_KEY", "GEMINI_API_KEY"):
+            require(forbidden not in public_text, "public documentation contains operational secret identifier: " + public_doc.name)
+
 # PWA and shell integrity.
 require((ROOT / "manifest.json").is_file(), "manifest missing")
 require((ROOT / "service-worker.js").is_file(), "service worker missing")
