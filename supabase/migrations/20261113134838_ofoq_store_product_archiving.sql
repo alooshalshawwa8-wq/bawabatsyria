@@ -1,0 +1,1 @@
+alter table public.ofoq_store_products add column archived boolean not null default false; create index ofoq_store_products_user_active_idx on public.ofoq_store_products(user_id, archived, updated_at desc);
