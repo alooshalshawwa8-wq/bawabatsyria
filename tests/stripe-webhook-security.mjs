@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { validateStripeEventEnvelope, verifyStripeSignature } from "../supabase/functions/membership-api/stripe-webhook-security.mjs";
+import { isSupportedStripeEventType, validateStripeEventEnvelope, verifyStripeSignature } from "../supabase/functions/membership-api/stripe-webhook-security.mjs";
 
 const now = 1_800_000_000;
 const secret = "whsec_test_secret_only";
@@ -39,5 +39,27 @@ for (const invalid of [
   { ...valid, data: { object: [] } },
   { ...valid, data: { object: null } },
 ]) assert.equal(validateStripeEventEnvelope(invalid), null);
+
+for (const supported of [
+  "checkout.session.completed",
+  "checkout.session.async_payment_succeeded",
+  "customer.subscription.created",
+  "customer.subscription.updated",
+  "customer.subscription.deleted",
+  "customer.subscription.paused",
+  "customer.subscription.resumed",
+  "customer.subscription.pending_update_applied",
+  "customer.subscription.pending_update_expired",
+  "invoice.payment_failed",
+  "invoice.paid",
+  "charge.refunded",
+]) assert.equal(isSupportedStripeEventType(supported), true);
+for (const ignored of [
+  "customer.subscription.unknown",
+  "invoice.created",
+  "checkout.session.async_payment_failed",
+  "",
+  null,
+]) assert.equal(isSupportedStripeEventType(ignored), false);
 
 console.log("Stripe webhook signature and event-envelope runtime tests passed.");
