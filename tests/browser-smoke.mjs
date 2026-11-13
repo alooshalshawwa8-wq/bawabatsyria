@@ -33,6 +33,21 @@ try {
   if (!(await vault.innerText()).includes("نسخة شاملة لمساحات العمل")) throw new Error("Full-site personal vault was not mounted");
   if (!(await vault.innerText()).includes("النسخ لا تشمل كلمات المرور")) throw new Error("Full-site vault privacy notice missing");
 
+  await page.evaluate(async () => {
+    const section = window.BAWABA_SECTIONS.find(item => item.id === "social_media_hub");
+    await window.openSection(section);
+  });
+  await page.locator("#util_brand").fill("OFOQ Smoke Brand");
+  await page.locator("#util_platforms").fill("Instagram");
+  await page.locator("#util_goal").fill("زيادة الطلبات");
+  await page.locator("#util_offer").fill("خدمة رقمية تجريبية");
+  await page.locator("#specialTool").getByRole("button", { name: "أنشئ النتيجة" }).click();
+  const utilityOutput = page.locator("#specialTool textarea[readonly]").first();
+  if (!(await utilityOutput.inputValue()).includes("خطة محتوى أولية")) throw new Error("Utility module did not generate a usable content plan");
+  await page.locator("#specialTool").getByRole("button", { name: "حفظ النتيجة في ملاحظاتي" }).click();
+  const savedUtilityNote = await page.evaluate(() => JSON.parse(localStorage.getItem("ofoq-notes-social_media_hub") || "{}").notes || "");
+  if (!savedUtilityNote.includes("خطة محتوى أولية") || !savedUtilityNote.includes("OFOQ Smoke Brand")) throw new Error("Utility output was not saved to the section notes");
+
   for (const section of sections) {
     await page.evaluate(async id => {
       const target = window.BAWABA_SECTIONS.find(item => item.id === id);
