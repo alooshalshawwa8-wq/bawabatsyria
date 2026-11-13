@@ -419,7 +419,7 @@ Deno.serve(async (request: Request) => {
         getJson("/rest/v1/profiles?select=id,display_name,avatar_url,locale&id=eq." + filter + "&limit=1", token),
         getJson("/rest/v1/entitlements?select=entitlement_key,active,source,expires_at,updated_at&user_id=eq." + filter, token),
         getAllRows("/rest/v1/points_ledger?select=delta&user_id=eq." + filter + "&order=created_at.asc", token),
-        getJson("/rest/v1/subscriptions?select=plan_id,status,current_period_end,cancel_at_period_end&user_id=eq." + filter + "&order=updated_at.desc", token),
+        getJson("/rest/v1/subscriptions?select=plan_id,provider,status,current_period_end,cancel_at_period_end&user_id=eq." + filter + "&order=updated_at.desc", token),
       ]);
       const points = ledger.reduce((sum: number, entry: { delta?: number }) => sum + Number(entry.delta ?? 0), 0);
       return reply({
