@@ -28,6 +28,10 @@ try {
 
   const sections = await page.evaluate(() => window.BAWABA_SECTIONS.map(section => ({ id: section.id, title: section.title })));
   if (sections.length !== 78) throw new Error("Expected 78 sections; found " + sections.length);
+  const vault = page.locator(".ofoq-personal-vault");
+  await vault.waitFor({ state: "visible", timeout: 5000 });
+  if (!(await vault.innerText()).includes("نسخة شاملة لمساحات العمل")) throw new Error("Full-site personal vault was not mounted");
+  if (!(await vault.innerText()).includes("النسخ لا تشمل كلمات المرور")) throw new Error("Full-site vault privacy notice missing");
 
   for (const section of sections) {
     await page.evaluate(async id => {
