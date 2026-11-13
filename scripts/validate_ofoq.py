@@ -14,6 +14,7 @@ core = (ROOT / "ofoq-core.js").read_text(encoding="utf-8")
 ecommerce = (ROOT / "ecommerce-studio.js").read_text(encoding="utf-8")
 career = (ROOT / "career-studio.js").read_text(encoding="utf-8")
 operations = (ROOT / "operations-hub.js").read_text(encoding="utf-8")
+commerce_cloud = (ROOT / "ofoq-commerce-cloud.js").read_text(encoding="utf-8")
 manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
 
 def require(condition, message):
@@ -201,6 +202,14 @@ for token in ("ofoq-ecom-studio", "calculatePrice", "ROAS", "ofoq_ecommerce_scen
 require("fetch(" not in ecommerce and "XMLHttpRequest" not in ecommerce and "site-assistant" not in ecommerce, "e-commerce studio must remain local-first and API-free")
 require("./ecommerce-studio.js" in worker, "e-commerce studio missing from offline app shell")
 
+# Authenticated commerce cloud bridge: manual sync only, owner-scoped by RLS.
+require("./ofoq-commerce-cloud.js" in html, "commerce cloud bridge not loaded by the portal")
+require("./ofoq-commerce-cloud.js" in worker and "ofoq-commerce-cloud.js" in worker, "commerce cloud bridge missing from offline app shell")
+for token in ("ofoq_cloud_backup_session_v1", "ofoq_store_products", "ofoq_store_orders", "Mزامنة الآن", "ofoq:commerce-synced", "Archived products cannot receive new orders"):
+    require(token in commerce_cloud or token in html, "commerce cloud contract missing: " + token)
+require("service_role" not in commerce_cloud and "SUPABASE_SERVICE_ROLE_KEY" not in commerce_cloud, "browser commerce bridge must not contain privileged server credentials")
+require("fetch(" in commerce_cloud and "Authorization" in commerce_cloud, "commerce cloud bridge must use authenticated API requests")
+
 # Career and freelance studios are isolated, local-first workspaces with tested contracts.
 require("career-studio.js" in html, "career studio script not loaded by the portal")
 for token in ("jobs", "freelance_vip", "ofc-studio", "ofoq_career_applications_v1", "STAR", "portfolio", "proposal"):
@@ -370,6 +379,15 @@ for token in (
     "applyPersonalSpaceSnapshot(raw.personalSpace)",
 ):
     require(token in operations, "personal workspace backup/restore contract missing: " + token)
+
+# Cloud merchant tables and ownership/inventory invariants.
+commerce_sql = (ROOT / "supabase/migrations/20261113134758_ofoq_store_cloud_catalog_and_orders.sql").read_text(encoding="utf-8")
+archive_sql = (ROOT / "supabase/migrations/20261113135211_ofoq_store_product_archiving.sql").read_text(encoding="utf-8")
+archive_guard_sql = (ROOT / "supabase/migrations/20261113135900_ofoq_store_archived_product_order_guard.sql").read_text(encoding="utf-8")
+for token in ("enable row level security", "to authenticated", "auth.uid()", "grant select, insert, update, delete", "ofoq_store_orders_integrity", "Insufficient available stock", "on delete restrict", "revoke all on function"):
+    require(token in commerce_sql, "commerce database security contract missing: " + token)
+require("add column archived boolean not null default false" in archive_sql, "commerce product archiving migration missing")
+require("Archived products cannot receive new orders" in archive_guard_sql and "A product with active orders cannot be archived" in archive_guard_sql, "archived product order guard missing")
 
 # PWA and shell integrity.
 require((ROOT / "manifest.json").is_file(), "manifest missing")
