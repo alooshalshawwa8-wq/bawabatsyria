@@ -28,6 +28,7 @@ jobs:
           node --check operations-hub.js
           node --check ofoq-core.js
           node --check ofoq-commerce-cloud.js
+          node --check ofoq-vault.js
       - name: Set up Deno
         uses: denoland/setup-deno@v2
         with:
