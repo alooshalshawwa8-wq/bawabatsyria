@@ -569,8 +569,9 @@ main{position:relative}
 <div class="calc">
 <label>البريد الإلكتروني<input id="membershipEmail" type="email" autocomplete="email" placeholder="name@example.com"></label>
 <label>كلمة المرور<input id="membershipPassword" type="password" autocomplete="current-password" minlength="8" placeholder="8 أحرف على الأقل"></label>
+<label id="membershipNewPasswordWrap" hidden>كلمة المرور الجديدة<input id="membershipNewPassword" type="password" autocomplete="new-password" minlength="8" placeholder="8 أحرف على الأقل"></label>
 </div>
-<div class="panel-actions"><button class="btn" id="membershipLogin" type="button">تسجيل الدخول</button><button class="btn secondary" id="membershipSignup" type="button">إنشاء حساب جديد</button><button class="btn secondary" id="membershipRecover" type="button">نسيت كلمة المرور؟</button><button class="btn secondary" id="membershipResend" type="button">إعادة إرسال رسالة التأكيد</button><button class="btn secondary" id="membershipLogout" type="button">تسجيل الخروج</button></div>
+<div class="panel-actions"><button class="btn" id="membershipLogin" type="button">تسجيل الدخول</button><button class="btn secondary" id="membershipSignup" type="button">إنشاء حساب جديد</button><button class="btn secondary" id="membershipRecover" type="button">نسيت كلمة المرور؟</button><button class="btn secondary" id="membershipSetNewPassword" type="button" hidden>حفظ كلمة المرور الجديدة</button><button class="btn secondary" id="membershipResend" type="button">إعادة إرسال رسالة التأكيد</button><button class="btn secondary" id="membershipLogout" type="button">تسجيل الخروج</button></div>
 <div class="notice" id="membershipAuthStatus" role="status">يمكنك التصفح دون حساب. لإنشاء حساب شخصي أدخل بريدك وكلمة مرورك ثم اختر «إنشاء حساب جديد».</div>
 <div class="notice" id="membershipStatus" role="status">يتم التحقق من إعداد خدمة العضوية…</div>
 <div class="grid" id="membershipPlans" style="margin-top:16px"></div>
@@ -3072,7 +3073,15 @@ if(accessToken){
 saveMembershipSession({access_token:accessToken,refresh_token:refreshToken||'',expires_in:Number(hash.get('expires_in'))||3600});
 history.replaceState(null,document.title,window.location.pathname+window.location.search);
 const status=document.getElementById('membershipAuthStatus');
-if(status)status.textContent=type==='signup'?'تم تأكيد بريدك الإلكتروني وتفعيل جلسة حسابك بنجاح.':'تم إكمال التحقق بنجاح.';
+if(type==='recovery'){
+const wrap=document.getElementById('membershipNewPasswordWrap');
+const button=document.getElementById('membershipSetNewPassword');
+if(wrap)wrap.hidden=false;
+if(button)button.hidden=false;
+const field=document.getElementById('membershipNewPassword');
+if(field)field.focus();
+if(status)status.textContent='تم التحقق من رابط الاستعادة. أدخل كلمة مرور جديدة ثم احفظها.';
+}else if(status)status.textContent=type==='signup'?'تم تأكيد بريدك الإلكتروني وتفعيل جلسة حسابك بنجاح.':'تم إكمال التحقق بنجاح.';
 }
 }
 consumeAuthCallback();
@@ -3095,6 +3104,7 @@ else status.textContent='تم إرسال طلب إنشاء الحساب. افح�
 document.getElementById('membershipLogin').addEventListener('click',()=>membershipAuth('login'));
 document.getElementById('membershipSignup').addEventListener('click',()=>membershipAuth('signup'));
 document.getElementById('membershipRecover').addEventListener('click',recoverMembershipPassword);
+document.getElementById('membershipSetNewPassword').addEventListener('click',updateRecoveredPassword);
 document.getElementById('membershipResend').addEventListener('click',resendMembershipConfirmation);
 async function resendMembershipConfirmation(){
 const email=document.getElementById('membershipEmail').value.trim();
@@ -3109,6 +3119,24 @@ status.textContent='إذا كان الحساب بحاجة إلى تأكيد، ف
 }catch(error){status.textContent=error.message||'تعذر إعادة إرسال رسالة التأكيد حالياً.';}
 }
 document.getElementById('membershipLogout').addEventListener('click',()=>{clearMembershipSession();membershipAuthStatusReset();loadMembership();});
+async function updateRecoveredPassword(){
+const password=document.getElementById('membershipNewPassword').value;
+const status=document.getElementById('membershipAuthStatus');
+const token=await refreshMembershipSession();
+if(!token){status.textContent='انتهت جلسة الاستعادة. اطلب رابط استعادة جديداً من بريدك.';return;}
+if(password.length<8){status.textContent='كلمة المرور الجديدة يجب ألا تقل عن 8 أحرف.';return;}
+const button=document.getElementById('membershipSetNewPassword');
+button.disabled=true;status.textContent='جارٍ تحديث كلمة المرور…';
+try{
+const response=await fetch(authUrl+'/auth/v1/user',{method:'PUT',headers:{'content-type':'application/json',apikey:authAnonKey,authorization:'Bearer '+token},body:JSON.stringify({password})});
+const data=await response.json().catch(()=>({}));
+if(!response.ok)throw new Error(data.msg||data.message||data.error_description||'تعذر تحديث كلمة المرور.');
+document.getElementById('membershipNewPassword').value='';
+document.getElementById('membershipNewPasswordWrap').hidden=true;
+button.hidden=true;status.textContent='تم تحديث كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.';
+}catch(error){status.textContent=error.message||'تعذر تحديث كلمة المرور حالياً.';}
+finally{button.disabled=false;}
+}
 async function recoverMembershipPassword(){
 const email=document.getElementById('membershipEmail').value.trim();
 const status=document.getElementById('membershipAuthStatus');
