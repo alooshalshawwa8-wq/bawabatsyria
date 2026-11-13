@@ -2,7 +2,7 @@
 
 ## Scope
 
-Read-only inspection of the production Supabase project and the active GitHub development branch. No payment settings, secrets, prices, database rows, Auth configuration, or deployed functions were changed.
+Read-only inspection of the production Supabase project and the active GitHub development branch. No payment settings, secrets, prices, database rows, Auth configuration, Storage buckets, or deployed functions were changed.
 
 ## Verified production state
 
@@ -15,7 +15,9 @@ Read-only inspection of the production Supabase project and the active GitHub de
 - `subscriptions`: zero rows.
 - `platform_launch_config`: `launch_mode=trial`, `billing_enabled=false`, `paid_features_enforced=false`.
 - Payment-related tables have RLS enabled. Payment-method writes are owner-policy protected; payment orders are readable by their owner or platform owner; subscriptions are owner-readable.
-- The database schema contains manual-payment order fields and Stripe subscription mapping fields.
+- `payment_orders` has no authenticated user INSERT policy, and the deployed Edge Function has no user-facing manual-payment order submission or owner review/approval route. The current RLS policy set therefore does not constitute a usable local-payment workflow.
+- Supabase Storage has zero buckets and no object policies. No payment proof upload or private review storage currently exists.
+- The schema already contains manual-payment order fields and Stripe subscription mapping fields.
 
 ## Verified implementation in membership-api v23
 
@@ -24,8 +26,8 @@ Read-only inspection of the production Supabase project and the active GitHub de
 - Stripe webhook signature verification checks the timestamp and HMAC with a five-minute tolerance.
 - Webhook handlers synchronize subscription states and entitlements and record verified revenue events.
 - The checkout path refuses a new checkout when the account already has a current subscription.
-- No self-service Stripe Billing Portal route is present.
-- No user-facing manual-payment order submission or owner review/approval route is present in this Edge Function.
+- No self-service Stripe Billing Portal route is present in the deployed v23 function.
+- No user-facing manual-payment order submission or owner review/approval route is present in the deployed v23 function.
 
 ## Readiness conclusion
 
@@ -41,6 +43,12 @@ The payment foundation is partially implemented, but production collection is no
 6. Add runtime contract tests for checkout gating, duplicate/replayed webhooks, invalid signatures, subscription lifecycle, refunds, cancellation, and manual-order authorization.
 7. Run end-to-end tests using provider test mode and isolated test accounts; do not use real charges.
 8. Only after legal/provider readiness and all tests pass, review a separate production activation plan. Keep `PAYMENTS_ENABLED` and the database billing gate disabled until explicit owner approval.
+
+## Security review notes
+
+- Supabase Security Advisor reports 11 tables with RLS enabled but no policies. A separate privilege check confirmed that both `anon` and `authenticated` have no table-level SELECT/INSERT/UPDATE privileges on those 11 tables. This is currently a closed-access posture, not evidence of public exposure. Keep it that way unless a documented server-side or client-side access requirement is established.
+- Security Advisor also reports that Auth leaked-password protection is disabled. This is a recommended account-security improvement to schedule in Supabase Auth settings; it was not changed during this read-only review.
+- Performance Advisor lists unused indexes, including several on empty payment tables. No index was removed: the tables have no operational history, and dropping indexes without workload evidence would be premature.
 
 ## Safety boundaries
 
@@ -64,9 +72,16 @@ The payment foundation is partially implemented, but production collection is no
 ## Verification status after the follow-up
 
 - The updated API, account UI, test file, and CI workflow were fetched again from the development branch and inspected.
-- Static source checks confirmed the route, both billing gates, user-scoped subscription lookup, server-derived customer ID, HTTPS URL validation, UI wiring, and CI test step.
-- The GitHub branch remains ahead of `main` and has no commits behind it.
-- A completed GitHub Actions run for the new commit was not available through the current workflow-run query at the time of this audit. Therefore, the new test is committed and wired into CI, but its execution result is not claimed here.
-- The function has not been deployed to production. The live deployed version remains unchanged.
+- GitHub Actions run [#724](https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/43489243417) completed successfully for commit `0f23a57a0fa3cc2d80943cf108fa96759f94ebb7`.
+- The successful run explicitly passed the membership API security contract test, inline portal JavaScript syntax check, D1 schema validation, OFOQ portal contract tests, and browser/mobile smoke tests.
+- The static validation workflow also completed successfully for the same commit.
+- These are branch CI and source/browser smoke results; they do not prove live Supabase Edge Function runtime behavior or payment-provider test-mode success.
+- The function has not been deployed to production. The live deployed version remains unchanged (v23).
+- Stripe and local payments remain disabled; no prices, secrets, methods, orders, subscriptions, or real transactions were created.
 
-- A direct read-only inspection of Supabase Storage found no buckets and no object policies. Therefore, payment-proof upload and private proof review cannot be considered implemented; a dedicated private bucket, strict owner/user policies, size/MIME limits, and short-lived signed access must be designed before manual transfers can be enabled.
+## Next safe engineering steps
+
+1. Add dedicated automated tests for the deployed Stripe webhook contract and billing-portal route using mocked provider responses, including replay/idempotency, invalid signatures, customer ownership, missing customer, expired periods, and unsafe URLs.
+2. Design the local-payment state machine and private proof Storage policies in an isolated migration/test branch before any production schema change.
+3. Implement admin review with immutable audit events and atomic entitlement activation only after owner approval and verified receipt.
+4. Run end-to-end tests in an isolated Supabase branch and provider test mode. Do not deploy or enable real billing as part of this work.
