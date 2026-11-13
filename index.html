@@ -3099,7 +3099,7 @@ document.getElementById('membershipResend').addEventListener('click',resendMembe
 async function resendMembershipConfirmation(){
 const email=document.getElementById('membershipEmail').value.trim();
 const status=document.getElementById('membershipAuthStatus');
-if(!email||! /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){status.textContent='أدخل البريد الإلكتروني الذي أنشأت به الحساب أولاً.';return;}
+if(!email||! /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){status.textContent='أدخل البريد الإلكتروني الذي أنشأت به الحساب أولاً.';return;}
 status.textContent='جارٍ إرسال رسالة تأكيد جديدة…';
 try{
 const redirectTo=window.location.origin+window.location.pathname;
@@ -3112,7 +3112,7 @@ document.getElementById('membershipLogout').addEventListener('click',()=>{clearM
 async function recoverMembershipPassword(){
 const email=document.getElementById('membershipEmail').value.trim();
 const status=document.getElementById('membershipAuthStatus');
-if(!email||!/^\\S+@\\S+\\.\\S+$/.test(email)){status.textContent='أدخل بريدك الإلكتروني أولاً، ثم اضغط «نسيت كلمة المرور؟».';return;}
+if(!email||!/^\S+@\S+\.\S+$/.test(email)){status.textContent='أدخل بريدك الإلكتروني أولاً، ثم اضغط «نسيت كلمة المرور؟».';return;}
 status.textContent='جارٍ إرسال رابط استعادة كلمة المرور…';
 try{
 const redirectTo=window.location.origin+window.location.pathname;
