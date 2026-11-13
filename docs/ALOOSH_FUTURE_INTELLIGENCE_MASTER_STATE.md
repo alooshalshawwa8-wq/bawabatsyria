@@ -19,7 +19,7 @@ The approved display name is **❤️Aloosh alshawwa ❤️**.
 
 ## 3. Latest verified source state
 
-Latest commit observed on `main`:
+Latest application commit observed on `main` before creating this state record:
 - SHA: `9f09e8279255cdca5b597d794019042d20b41b0c`
 - Message: `ci: validate mobile smoke test syntax before deployment`
 - Timestamp: `2026-11-12T19:55:38Z`
@@ -37,6 +37,12 @@ The current workflow `.github/workflows/pages.yml` contains:
 - Lighthouse performance/accessibility/best-practices/SEO audit and budget enforcement.
 
 The latest commit's combined status endpoint returned no status entries. The commit-specific workflow-runs endpoint also returned no runs (that endpoint only surfaces PR-triggered runs). Therefore CI success for this commit is **not verified** by the available evidence.
+
+## 3A. Master-state record commits
+
+- Initial state record commit: `34e0ee4cf9a91787a07d8adcc1b26e63833275a0`.
+- Follow-up correction commit (repository-name disambiguation): `50dc1da824df6aaa1f2a94602a506ea8a1ca6653`.
+- The current master-state document is stored at this path and must be refreshed after each material verified change.
 
 ## 4. Application scope and coverage
 
