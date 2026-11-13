@@ -55,7 +55,7 @@ const validPersonalSpaceSnapshot=p=>{
  return check(p.favorites,78)&&check(p.recent,12);
 };
 const personalSpaceSnapshot=()=>{
- try{const raw=JSON.parse(localStorage.getItem(PERSONAL_SPACE_KEY)||"{}");const validIds=new Set((Array.isArray(window.BAWABA_SECTIONS)?window.BAWABA_SECTIONS:[]).map(x=>x&&x.id).filter(x=>typeof x==="string"));const clean=(items,max)=>Array.isArray(items)?[...new Set(items.filter(x=>typeof x==="string"&&x.length>0&&x.length<=100&&(!validIds.size||validIds.has(x)))].slice(0,max):[];return {version:1,favorites:clean(raw&&raw.favorites,78),recent:clean(raw&&raw.recent,12)};}catch(_){return {version:1,favorites:[],recent:[]};}
+ try{const raw=JSON.parse(localStorage.getItem(PERSONAL_SPACE_KEY)||"{}");const validIds=new Set((Array.isArray(window.BAWABA_SECTIONS)?window.BAWABA_SECTIONS:[]).map(x=>x&&x.id).filter(x=>typeof x==="string"));const clean=(items,max)=>Array.isArray(items)?[...new Set(items.filter(x=>typeof x==="string"&&x.length>0&&x.length<=100&&(!validIds.size||validIds.has(x))))].slice(0,max):[];return {version:1,favorites:clean(raw&&raw.favorites,78),recent:clean(raw&&raw.recent,12)};}catch(_){return {version:1,favorites:[],recent:[]};}
 };
 const applyPersonalSpaceSnapshot=p=>{
  if(!p)return true;if(!validPersonalSpaceSnapshot(p))return false;
