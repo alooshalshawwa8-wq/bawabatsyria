@@ -29,7 +29,7 @@ assert.match(page, /data\.portalUrl\.startsWith\("https:\/\/billing\.stripe\.com
 assert.match(source, /validateStripeEventEnvelope\(event\)/);
 assert.match(source, /verifyStripeSignature\(payload,/);
 assert.match(source, /Invalid Stripe event envelope/);
-assert.match(source, /Number\.isSafeInteger\(created\)/);
+assert.match(await readFile(new URL("../supabase/functions/membership-api/stripe-webhook-security.mjs", import.meta.url), "utf8"), /Number\.isSafeInteger\(created\)/);
 assert.match(await readFile(new URL("../supabase/functions/membership-api/stripe-webhook-security.mjs", import.meta.url), "utf8"), /!data\.object \|\| typeof data\.object !== "object" \|\| Array\.isArray\(data\.object\)/);
 
 assert.doesNotMatch(page, /customerId\s*:/);
