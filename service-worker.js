@@ -5,7 +5,7 @@
  * Cache only same-origin app-shell assets; never cache API/auth responses.
  */
 const CACHE_PREFIX = "ofoq-shell-";
-const CACHE_NAME = CACHE_PREFIX + "v53";
+const CACHE_NAME = CACHE_PREFIX + "v54";
 const APP_FILES = [
   "./",
   "./index.html",
