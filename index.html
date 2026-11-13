@@ -1816,8 +1816,10 @@ tool.appendChild(form);
 const button=document.createElement('button');button.className='btn';button.style.marginTop='12px';button.textContent='أنشئ النتيجة';tool.appendChild(button);
 const output=document.createElement('textarea');output.rows=9;output.readOnly=true;output.placeholder='ستظهر النتيجة هنا بعد إدخال البيانات.';output.style.cssText='display:block;width:100%;margin-top:12px;background:#0b1527;border:1px solid var(--line);border-radius:9px;padding:12px;color:white;line-height:1.8;';tool.appendChild(output);
 const copy=document.createElement('button');copy.className='btn secondary';copy.style.marginTop='9px';copy.textContent='نسخ النتيجة';copy.disabled=true;tool.appendChild(copy);
-button.onclick=()=>{const values={};cfg.fields.forEach(([id])=>values[id]=document.getElementById('util_'+id).value.trim());output.value=cfg.run(values);copy.disabled=!output.value;};
+const save=document.createElement('button');save.className='btn secondary';save.style.marginTop='9px';save.style.marginRight='7px';save.textContent='حفظ النتيجة في ملاحظاتي';save.disabled=true;tool.appendChild(save);
+button.onclick=()=>{const values={};cfg.fields.forEach(([id])=>values[id]=document.getElementById('util_'+id).value.trim());output.value=cfg.run(values);copy.disabled=!output.value;save.disabled=!output.value.trim();save.textContent='حفظ النتيجة في ملاحظاتي';};
 copy.onclick=async()=>{try{await navigator.clipboard.writeText(output.value);copy.textContent='تم النسخ';}catch(e){output.focus();output.select();copy.textContent='انسخ النص المحدد';}};
+save.onclick=()=>{if(!output.value.trim())return;const key='ofoq-notes-'+sec.id;try{let saved=JSON.parse(localStorage.getItem(key)||'{}');if(!saved||typeof saved!=='object'||Array.isArray(saved))saved={};const entry='\\n\\n---\\n'+cfg.title+' · '+new Date().toLocaleString('ar')+'\\n'+output.value;saved.notes=((typeof saved.notes==='string'?saved.notes:'')+entry).slice(-20000);saved.goal=typeof saved.goal==='string'?saved.goal:'';saved.updatedAt=new Date().toISOString();localStorage.setItem(key,JSON.stringify(saved));save.textContent='تم حفظ النتيجة في ملاحظاتي';save.disabled=true;}catch(e){save.textContent='تعذر الحفظ؛ انسخ النتيجة';}};
 return true;
 }
 
