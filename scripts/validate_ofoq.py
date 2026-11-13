@@ -227,8 +227,9 @@ require(order_insert >= 0 and order_track > order_insert, "order analytics must 
 require('pushedOrders++;' in commerce_cloud[order_insert:order_track], "order analytics must follow confirmed cloud insert success")
 require('await D.track("lead_created","business")' in workspaces, "CRM lead creation must be measured after persistence")
 require('await D.track("career_application_created",section)' in workspaces, "career application creation must be measured after persistence")
-for forbidden in ("product_name:", "order_no:", "email:", "phone:", "notes:"):
-    require(forbidden not in ofoq_data, "analytics payload must not include customer/order content: " + forbidden)
+analytics_fn = ofoq_data[ofoq_data.find("async function track"):ofoq_data.find("async function edge")]
+require('body:{user_id:u.id,event_name:event,section_id:section,session_id:sid()}' in analytics_fn,
+        "analytics must send only owner ID, event, section and opaque session ID")
 
 
 # Utility modules can persist generated results into each section note record.
