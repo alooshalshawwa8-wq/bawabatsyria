@@ -279,10 +279,27 @@ async function processStripeWebhook(request: Request) {
     if (data.mode === "subscription" && data.subscription) {
       const metadata = (data.metadata ?? {}) as Record<string, unknown>;
       await syncStripeSubscription(String(data.subscription), String(data.client_reference_id ?? metadata.user_id ?? ""), String(metadata.plan_id ?? ""));
+    } else if (data.mode === "payment" && data.payment_status === "paid") {
+      await recordRevenueEvent({
+        eventId: String(event.id ?? ""), userId: String(data.client_reference_id ?? ""),
+        eventType: "payment_succeeded", amount: Number(data.amount_total ?? 0),
+        currency: String(data.currency ?? "USD"), occurredAt: Number(event.created ?? Math.floor(Date.now() / 1000)),
+      });
     }
   } else if (eventType.startsWith("customer.subscription.")) {
     const metadata = (data.metadata ?? {}) as Record<string, unknown>;
-    await syncStripeSubscription(String(data.id ?? ""), String(metadata.user_id ?? ""), String(metadata.plan_id ?? ""));
+    const subscriptionId = String(data.id ?? "");
+    await syncStripeSubscription(subscriptionId, String(metadata.user_id ?? ""), String(metadata.plan_id ?? ""));
+    if (eventType === "customer.subscription.deleted") {
+      const userId = String(metadata.user_id ?? "") || await resolveSubscriptionOwner(subscriptionId);
+      const firstItem = ((data.items as Record<string, unknown> | undefined)?.data as Record<string, unknown>[] | undefined)?.[0];
+      const price = firstItem?.price as Record<string, unknown> | undefined;
+      await recordRevenueEvent({
+        eventId: String(event.id ?? ""), userId, eventType: "subscription_canceled",
+        amount: 0, currency: String(price?.currency ?? "USD"),
+        occurredAt: Number(event.created ?? Math.floor(Date.now() / 1000)),
+      });
+    }
   } else if (eventType === "invoice.payment_failed") {
     const parent = (data.parent ?? {}) as Record<string, unknown>;
     const details = (parent.subscription_details ?? {}) as Record<string, unknown>;
@@ -316,18 +333,7 @@ async function processStripeWebhook(request: Request) {
       amount: Number(data.amount_refunded ?? 0), currency: String(data.currency ?? "USD"),
       occurredAt: Number(event.created ?? Math.floor(Date.now() / 1000)),
     });
-  } else if (eventType === "customer.subscription.deleted") {
-    const metadata = (data.metadata ?? {}) as Record<string, unknown>;
-    const subscriptionId = String(data.id ?? "");
-    const userId = String(metadata.user_id ?? "") || await resolveSubscriptionOwner(subscriptionId);
-    const firstItem = ((data.items as Record<string, unknown> | undefined)?.data as Record<string, unknown>[] | undefined)?.[0];
-    const price = firstItem?.price as Record<string, unknown> | undefined;
-    await recordRevenueEvent({
-      eventId: String(event.id ?? ""), userId, eventType: "subscription_canceled",
-      amount: 0, currency: String(price?.currency ?? "USD"),
-      occurredAt: Number(event.created ?? Math.floor(Date.now() / 1000)),
-    });
-  }
+
   return reply({ received: true });
 }
 
