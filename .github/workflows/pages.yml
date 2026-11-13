@@ -175,21 +175,39 @@ jobs:
         run: node --check career-studio.js
       - name: Run OFOQ portal contract tests
         run: python3 scripts/validate_ofoq.py
-      - name: Exclude repository-only and internal files from public Pages artifact
+      - name: Assemble public-only Pages artifact without mutating test workspace
         run: |
-          rm -rf .github docs tests scripts supabase backend
-          rm -f ./*.md ./*.py ./*.mjs ./*.sql
-          test -f index.html
-          test -f manifest.json
-          test -f service-worker.js
-          test -f ofoq-core.js
-          test ! -e docs
-          test ! -e supabase
-          test ! -e backend
+          mkdir -p dist
+          rsync -a \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='docs/' \
+            --exclude='tests/' \
+            --exclude='scripts/' \
+            --exclude='supabase/' \
+            --exclude='backend/' \
+            --exclude='dist/' \
+            --exclude='*.md' \
+            --exclude='*.py' \
+            --exclude='*.mjs' \
+            --exclude='*.sql' \
+            ./ dist/
+          test -f dist/index.html
+          test -f dist/manifest.json
+          test -f dist/service-worker.js
+          test -f dist/ofoq-core.js
+          test ! -e dist/docs
+          test ! -e dist/tests
+          test ! -e dist/scripts
+          test ! -e dist/supabase
+          test ! -e dist/backend
+          test -f tests/browser-smoke.mjs
+          test -f tests/mobile-smoke.mjs
+          test -f scripts/validate_lighthouse.mjs
       - name: Upload site
         uses: actions/upload-pages-artifact@v4
         with:
-          path: .
+          path: dist
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
