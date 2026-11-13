@@ -27,13 +27,18 @@ export function validateStripeEventEnvelope(event) {
 
 export async function verifyStripeSignature(payload, header, secret, nowSeconds = Math.floor(Date.now() / 1000)) {
   if (!secret || typeof payload !== "string" || typeof header !== "string") return false;
-  const fields = header.split(",").map(part => part.trim().split("="));
-  const timestampValues = fields.filter(([key]) => key === "t").map(([, value]) => value ?? "");
+  if (!Number.isSafeInteger(nowSeconds) || nowSeconds <= 0) return false;
+  const fields = header.split(",").map(part => {
+    const match = /^([a-zA-Z0-9_]+)=([^=]+)$/.exec(part.trim());
+    return match ? [match[1], match[2]] : null;
+  });
+  if (fields.some(field => field === null)) return false;
+  const timestampValues = fields.filter(field => field[0] === "t").map(field => field[1]);
   const timestampText = timestampValues[0] ?? "";
   if (!/^\d{1,12}$/.test(timestampText) || timestampValues.length !== 1) return false;
   const timestamp = Number(timestampText);
   if (!Number.isSafeInteger(timestamp) || timestamp <= 0 || Math.abs(nowSeconds - timestamp) > 300) return false;
-  const signatures = fields.filter(([key]) => key === "v1").map(([, value]) => value ?? "").filter(value => SIGNATURE_PATTERN.test(value));
+  const signatures = fields.filter(field => field[0] === "v1").map(field => field[1]).filter(value => SIGNATURE_PATTERN.test(value));
   if (!signatures.length) return false;
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(timestamp + "." + payload));
