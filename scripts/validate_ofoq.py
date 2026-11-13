@@ -210,6 +210,10 @@ for token in ("ofoq_cloud_backup_session_v1", "ofoq_store_products", "ofoq_store
 require("service_role" not in commerce_cloud and "SUPABASE_SERVICE_ROLE_KEY" not in commerce_cloud, "browser commerce bridge must not contain privileged server credentials")
 require("fetch(" in commerce_cloud and "Authorization" in commerce_cloud, "commerce cloud bridge must use authenticated API requests")
 
+# Utility modules can persist generated results into each section note record.
+require("حفظ النتيجة في ملاحظاتي" in html and "ofoq-notes-'+sec.id" in html, "utility result save-to-notes action missing")
+require("utilityOutput" in (ROOT / "tests/browser-smoke.mjs").read_text(encoding="utf-8"), "browser suite must verify utility result persistence")
+
 # Career and freelance studios are isolated, local-first workspaces with tested contracts.
 require("career-studio.js" in html, "career studio script not loaded by the portal")
 for token in ("jobs", "freelance_vip", "ofc-studio", "ofoq_career_applications_v1", "STAR", "portfolio", "proposal"):
