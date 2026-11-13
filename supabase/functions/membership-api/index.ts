@@ -267,9 +267,9 @@ async function processStripeWebhook(request: Request) {
       await syncStripeSubscription(String(data.subscription), String(data.client_reference_id ?? metadata.user_id ?? ""), String(metadata.plan_id ?? ""));
     } else if (data.mode === "payment" && data.payment_status === "paid") {
       await recordRevenueEvent({
-        eventId: String(event.id ?? ""), userId: String(data.client_reference_id ?? ""),
+        eventId: eventId, userId: String(data.client_reference_id ?? ""),
         eventType: "payment_succeeded", amount: Number(data.amount_total ?? 0),
-        currency: String(data.currency ?? "USD"), occurredAt: Number(event.created ?? Math.floor(Date.now() / 1000)),
+        currency: String(data.currency ?? "USD"), occurredAt: created,
       });
     }
   } else if (eventType.startsWith("customer.subscription.")) {
@@ -281,9 +281,9 @@ async function processStripeWebhook(request: Request) {
       const firstItem = ((data.items as Record<string, unknown> | undefined)?.data as Record<string, unknown>[] | undefined)?.[0];
       const price = firstItem?.price as Record<string, unknown> | undefined;
       await recordRevenueEvent({
-        eventId: String(event.id ?? ""), userId, eventType: "subscription_canceled",
+        eventId: eventId, userId, eventType: "subscription_canceled",
         amount: 0, currency: String(price?.currency ?? "USD"),
-        occurredAt: Number(event.created ?? Math.floor(Date.now() / 1000)),
+        occurredAt: created,
       });
     }
   } else if (eventType === "invoice.payment_failed") {
@@ -301,9 +301,9 @@ async function processStripeWebhook(request: Request) {
     const userId = String(metadata.user_id ?? "") || await resolveSubscriptionOwner(subscriptionId);
     const billingReason = String(data.billing_reason ?? "");
     await recordRevenueEvent({
-      eventId: String(event.id ?? ""), userId, eventType: billingReason === "subscription_create" ? "subscription_started" : "subscription_renewed",
+      eventId: eventId, userId, eventType: billingReason === "subscription_create" ? "subscription_started" : "subscription_renewed",
       amount: Number(data.amount_paid ?? 0), currency: String(data.currency ?? "USD"),
-      occurredAt: Number(event.created ?? Math.floor(Date.now() / 1000)),
+      occurredAt: created,
     });
   } else if (eventType === "charge.refunded") {
     const customerId = String(data.customer ?? "");
@@ -315,9 +315,9 @@ async function processStripeWebhook(request: Request) {
       userId = typeof owners?.[0]?.user_id === "string" ? owners[0].user_id : undefined;
     }
     await recordRevenueEvent({
-      eventId: String(event.id ?? ""), userId, eventType: "refund_succeeded",
+      eventId: eventId, userId, eventType: "refund_succeeded",
       amount: Number(data.amount_refunded ?? 0), currency: String(data.currency ?? "USD"),
-      occurredAt: Number(event.created ?? Math.floor(Date.now() / 1000)),
+      occurredAt: created,
     });
   }
 
