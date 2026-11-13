@@ -333,6 +333,7 @@ async function processStripeWebhook(request: Request) {
       amount: Number(data.amount_refunded ?? 0), currency: String(data.currency ?? "USD"),
       occurredAt: Number(event.created ?? Math.floor(Date.now() / 1000)),
     });
+  }
 
   return reply({ received: true });
 }
