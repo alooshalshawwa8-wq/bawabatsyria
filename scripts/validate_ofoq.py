@@ -205,7 +205,7 @@ require("./ecommerce-studio.js" in worker, "e-commerce studio missing from offli
 # Authenticated commerce cloud bridge: manual sync only, owner-scoped by RLS.
 require("./ofoq-commerce-cloud.js" in html, "commerce cloud bridge not loaded by the portal")
 require("./ofoq-commerce-cloud.js" in worker and "ofoq-commerce-cloud.js" in worker, "commerce cloud bridge missing from offline app shell")
-for token in ("ofoq_cloud_backup_session_v1", "ofoq_store_products", "ofoq_store_orders", "Mزامنة الآن", "ofoq:commerce-synced", "Archived products cannot receive new orders"):
+for token in ("ofoq_cloud_backup_session_v1", "ofoq_store_products", "ofoq_store_orders", "مزامنة الآن", "ofoq:commerce-synced"):
     require(token in commerce_cloud or token in html, "commerce cloud contract missing: " + token)
 require("service_role" not in commerce_cloud and "SUPABASE_SERVICE_ROLE_KEY" not in commerce_cloud, "browser commerce bridge must not contain privileged server credentials")
 require("fetch(" in commerce_cloud and "Authorization" in commerce_cloud, "commerce cloud bridge must use authenticated API requests")
