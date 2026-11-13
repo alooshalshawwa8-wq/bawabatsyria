@@ -273,8 +273,20 @@ async function processStripeWebhook(request: Request) {
   if (!(await verifyStripeSignature(payload, request.headers.get("Stripe-Signature") ?? ""))) return reply({ error: "Invalid Stripe signature" }, 400);
   let event: Record<string, unknown>;
   try { event = JSON.parse(payload); } catch { return reply({ error: "Invalid webhook payload" }, 400); }
-  const data = (event.data as Record<string, unknown>)?.object as Record<string, unknown> ?? {};
-  const eventType = String(event.type ?? "");
+  const eventId = typeof event.id === "string" ? event.id : "";
+  const eventType = typeof event.type === "string" ? event.type : "";
+  const created = Number(event.created);
+  const eventData = event.data && typeof event.data === "object" && !Array.isArray(event.data)
+    ? event.data as Record<string, unknown>
+    : null;
+  const eventObject = eventData?.object;
+  if (!/^evt_[A-Za-z0-9]+$/.test(eventId) ||
+      !/^[a-z][a-z0-9_.]{2,120}$/.test(eventType) ||
+      !Number.isSafeInteger(created) || created <= 0 ||
+      !eventObject || typeof eventObject !== "object" || Array.isArray(eventObject)) {
+    return reply({ error: "Invalid Stripe event envelope" }, 400);
+  }
+  const data = eventObject as Record<string, unknown>;
   if (eventType === "checkout.session.completed" || eventType === "checkout.session.async_payment_succeeded") {
     if (data.mode === "subscription" && data.subscription) {
       const metadata = (data.metadata ?? {}) as Record<string, unknown>;
