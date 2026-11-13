@@ -27,6 +27,7 @@ jobs:
           node --check career-studio.js
           node --check operations-hub.js
           node --check ofoq-core.js
+          node --check ofoq-commerce-cloud.js
       - name: Set up Deno
         uses: denoland/setup-deno@v2
         with:
