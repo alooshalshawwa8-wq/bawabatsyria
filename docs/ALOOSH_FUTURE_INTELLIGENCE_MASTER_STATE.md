@@ -104,3 +104,7 @@
 - static validation وDeno type-check وportal contract tests: success.
 - تقرير Lighthouse محفوظ كـworkflow artifact لمدة الاحتفاظ المحددة في GitHub Actions.
 - هذه النتائج تثبت جودة الواجهة ومسارات الاختبار، ولا تثبت بعد أن جميع قوالب الأقسام أصبحت خدمات تجارية متصلة أو أن الإيرادات مفعلة.
+
+- تم توسيع القيمة العملية لأدوات `utilityModules` الـ70: كل مخرج مولّد يمكن حفظه صراحةً في ملاحظات القسم `ofoq-notes-<section_id>`، وبالتالي يدخل ضمن خزنة النسخ الشاملة. اختبار المتصفح تحقق من التوليد والحفظ لقسم `social_media_hub`.
+- أحدث نشر بعد هذه الإضافة: commit `6760ebc213a811ec6c5922dac0a4d8ed9b1c12ca`، Pages run `43438687208` success، static validation run `43438687023` success، واختبارات الأقسام الـ78 والهاتف success.
+- أحدث Lighthouse: Performance 91/100، Accessibility 100/100، Best Practices 100/100، SEO 100/100؛ LCP 3.0s، TBT 180ms، CLS 0، حجم النقل 612 KiB. اجتازت حدود الجودة. كانت جولة سابقة على commit `4b951d83` قد سجلت Performance 95/100؛ نعتمد 91 كأحدث قياس.
