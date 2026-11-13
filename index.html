@@ -3068,7 +3068,7 @@ return saved.access_token&&Number(saved.expires_at)>Date.now()?saved.access_toke
 function consumeAuthCallback(){
 const hash=new URLSearchParams(window.location.hash.replace(/^#/,''));
 const accessToken=hash.get('access_token'),refreshToken=hash.get('refresh_token'),type=hash.get('type'),error=hash.get('error_description');
-if(error){history.replaceState(null,document.title,window.location.pathname+window.location.search);const status=document.getElementById('membershipAuthStatus');if(status)status.textContent='تعذر تأكيد البريد: '+error;return;}}
+if(error){history.replaceState(null,document.title,window.location.pathname+window.location.search);const status=document.getElementById('membershipAuthStatus');if(status)status.textContent='تعذر تأكيد البريد: '+error;return;}
 if(accessToken){
 saveMembershipSession({access_token:accessToken,refresh_token:refreshToken||'',expires_in:Number(hash.get('expires_in'))||3600});
 history.replaceState(null,document.title,window.location.pathname+window.location.search);
