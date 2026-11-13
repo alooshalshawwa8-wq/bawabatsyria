@@ -268,6 +268,10 @@
             });
             pushedOrders++;
             remoteNumbers.add(normalizedNo);
+            // Record only after the owner-scoped cloud insert succeeds; no order contents or PII enter analytics.
+            if (window.OFOQData && typeof window.OFOQData.track === "function") {
+              await window.OFOQData.track("order_created", "ecommerce_studio");
+            }
           } catch (error) { errors.push("الطلب " + row.orderNo + ": " + error.message); }
         }
 
