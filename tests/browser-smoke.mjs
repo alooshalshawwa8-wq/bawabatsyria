@@ -1,4 +1,5 @@
 import { chromium } from "playwright";
+import { readFile } from "node:fs/promises";
 
 const baseUrl = process.env.OFOQ_BASE_URL || "https://alooshalshawwa8-wq.github.io/bawabatsyria/";
 const failures = [];
@@ -100,6 +101,8 @@ try {
   if (!favoriteVisibleBeforeScroll) throw new Error("Current-section favorite action is hidden before scrolling: " + JSON.stringify(favoriteState));
   await favoriteCurrent.scrollIntoViewIfNeeded({ timeout: 10000 });
   const lastVisitedTitle = (await page.locator("#detailTitle").innerText()).trim();
+  const lastVisitedId = await favoriteCurrent.getAttribute("data-section-id");
+  if (!lastVisitedId) throw new Error("Current favorite action has no section ID");
   await favoriteCurrent.click({ timeout: 10000 });
   if (await favoriteCurrent.getAttribute("aria-pressed") !== "true") throw new Error("Favorite toggle did not activate");
   await page.keyboard.press("Control+k");
@@ -301,6 +304,15 @@ try {
   await hub.getByRole("button", { name: "تنزيل نسخة JSON" }).click();
   const download = await downloadPromise;
   if (download.suggestedFilename() !== "ofoq-complete-operations-backup.json") throw new Error("Unexpected backup filename");
+  const backupPath = await download.path();
+  if (!backupPath) throw new Error("Operations backup download did not produce a readable file");
+  const backupJson = JSON.parse(await readFile(backupPath, "utf8"));
+  if (!backupJson.personalSpace || !backupJson.personalSpace.favorites.includes(lastVisitedId)) {
+    throw new Error("Operations backup did not preserve the saved favorite");
+  }
+  if (!backupJson.personalSpace.recent.includes(lastVisitedId)) {
+    throw new Error("Operations backup did not preserve recent section visits");
+  }
 
   await hub.getByRole("button", { name: "إنشاء نسخة سحابية الآن" }).click();
   await hub.locator(".oph-cloud-panel .oph-status").getByText(/سجّل الدخول أولاً/).waitFor({ state: "visible" });
