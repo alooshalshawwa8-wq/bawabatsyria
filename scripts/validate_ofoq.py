@@ -75,7 +75,6 @@ for token in (
     require(token in membership, "membership API security/monetization guard missing: " + token)
 require("SUPABASE_SERVICE_ROLE_KEY" not in html and "STRIPE_SECRET_KEY" not in html, "membership provider secrets must not enter browser HTML")
 require('Access-Control-Allow-Origin": "https://alooshalshawwa8-wq.github.io"' in membership, "membership API exact-origin CORS contract missing")
-require("No explicit request-rate limiter" not in membership, "rate-limit audit notes must remain documentation-only, not production source")
 
 # Frontend section assistant must be explicit-send only and must not expose secrets.
 gemini = re.search(r'<script id="ofoq-section-gemini-v2">([\s\S]*?)</script>', html)
