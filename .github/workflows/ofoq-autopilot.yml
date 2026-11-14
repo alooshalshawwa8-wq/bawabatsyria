@@ -1,0 +1,55 @@
+name: OFOQ autonomous health patrol
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */12 * * *"
+  push:
+    branches:
+      - ofoq/ofoq-001-execution
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ofoq-health-patrol-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  read-only-audit:
+    name: Read-only application and security checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out development branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Syntax-check local application scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in service-worker.js ecommerce-studio.js career-studio.js operations-hub.js ofoq-core.js ofoq-commerce-cloud.js ofoq-vault.js scripts/ofoq-autopilot-audit.mjs; do
+            node --check "$file"
+          done
+
+      - name: Run Edge Function security contract tests
+        run: node tests/edge-function-security-contract.mjs
+
+      - name: Run read-only OFOQ health audit
+        run: node scripts/ofoq-autopilot-audit.mjs
+
+      - name: Preserve audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ofoq-health-report-${{ github.run_number }}
+          path: |
+            ofoq-autopilot-report.md
+            ofoq-autopilot-report.json
+          if-no-files-found: warn
+          retention-days: 14
