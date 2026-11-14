@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { isSupportedStripeEventType, validateStripeEventEnvelope, verifyStripeSignature } from "./stripe-webhook-security.mjs";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const PUBLISHABLE_KEYS = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}");
@@ -139,25 +140,6 @@ async function stripeRequest(path: string, body?: URLSearchParams, idempotencyKe
   return data;
 }
 
-function safeEqual(a: string, b: string) {
-  if (a.length !== b.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < a.length; i++) mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return mismatch === 0;
-}
-
-async function verifyStripeSignature(payload: string, header: string) {
-  if (!STRIPE_WEBHOOK_SECRET) return false;
-  const parts = header.split(",").map(part => part.trim().split("="));
-  const timestamp = Number(parts.find(part => part[0] === "t")?.[1] ?? 0);
-  const signatures = parts.filter(part => part[0] === "v1").map(part => part[1] ?? "");
-  if (!timestamp || Math.abs(Date.now() / 1000 - timestamp) > 300 || !signatures.length) return false;
-  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(STRIPE_WEBHOOK_SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(timestamp + "." + payload));
-  const expected = Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, "0")).join("");
-  return signatures.some(signature => safeEqual(signature, expected));
-}
-
 function planEntitlements(planId: string) {
   if (planId === "pro_monthly") return ["pro_access"];
   if (planId === "vip_monthly") return ["pro_access", "vip_access"];
@@ -270,20 +252,25 @@ async function processStripeWebhook(request: Request) {
   } catch {
     return reply({ error: "Stripe webhook payload is too large or invalid." }, 413);
   }
-  if (!(await verifyStripeSignature(payload, request.headers.get("Stripe-Signature") ?? ""))) return reply({ error: "Invalid Stripe signature" }, 400);
+  if (!(await verifyStripeSignature(payload, request.headers.get("Stripe-Signature") ?? "", STRIPE_WEBHOOK_SECRET))) return reply({ error: "Invalid Stripe signature" }, 400);
   let event: Record<string, unknown>;
   try { event = JSON.parse(payload); } catch { return reply({ error: "Invalid webhook payload" }, 400); }
-  const data = (event.data as Record<string, unknown>)?.object as Record<string, unknown> ?? {};
-  const eventType = String(event.type ?? "");
+  const validatedEvent = validateStripeEventEnvelope(event);
+  if (!validatedEvent) return reply({ error: "Invalid Stripe event envelope" }, 400);
+  const eventId = validatedEvent.eventId;
+  const eventType = validatedEvent.eventType;
+  const created = validatedEvent.created;
+  const data = validatedEvent.data as Record<string, unknown>;
+  if (!isSupportedStripeEventType(eventType)) return reply({ received: true, ignored: true });
   if (eventType === "checkout.session.completed" || eventType === "checkout.session.async_payment_succeeded") {
     if (data.mode === "subscription" && data.subscription) {
       const metadata = (data.metadata ?? {}) as Record<string, unknown>;
       await syncStripeSubscription(String(data.subscription), String(data.client_reference_id ?? metadata.user_id ?? ""), String(metadata.plan_id ?? ""));
     } else if (data.mode === "payment" && data.payment_status === "paid") {
       await recordRevenueEvent({
-        eventId: String(event.id ?? ""), userId: String(data.client_reference_id ?? ""),
+        eventId: eventId, userId: String(data.client_reference_id ?? ""),
         eventType: "payment_succeeded", amount: Number(data.amount_total ?? 0),
-        currency: String(data.currency ?? "USD"), occurredAt: Number(event.created ?? Math.floor(Date.now() / 1000)),
+        currency: String(data.currency ?? "USD"), occurredAt: created,
       });
     }
   } else if (eventType.startsWith("customer.subscription.")) {
@@ -295,9 +282,9 @@ async function processStripeWebhook(request: Request) {
       const firstItem = ((data.items as Record<string, unknown> | undefined)?.data as Record<string, unknown>[] | undefined)?.[0];
       const price = firstItem?.price as Record<string, unknown> | undefined;
       await recordRevenueEvent({
-        eventId: String(event.id ?? ""), userId, eventType: "subscription_canceled",
+        eventId: eventId, userId, eventType: "subscription_canceled",
         amount: 0, currency: String(price?.currency ?? "USD"),
-        occurredAt: Number(event.created ?? Math.floor(Date.now() / 1000)),
+        occurredAt: created,
       });
     }
   } else if (eventType === "invoice.payment_failed") {
@@ -315,9 +302,9 @@ async function processStripeWebhook(request: Request) {
     const userId = String(metadata.user_id ?? "") || await resolveSubscriptionOwner(subscriptionId);
     const billingReason = String(data.billing_reason ?? "");
     await recordRevenueEvent({
-      eventId: String(event.id ?? ""), userId, eventType: billingReason === "subscription_create" ? "subscription_started" : "subscription_renewed",
+      eventId: eventId, userId, eventType: billingReason === "subscription_create" ? "subscription_started" : "subscription_renewed",
       amount: Number(data.amount_paid ?? 0), currency: String(data.currency ?? "USD"),
-      occurredAt: Number(event.created ?? Math.floor(Date.now() / 1000)),
+      occurredAt: created,
     });
   } else if (eventType === "charge.refunded") {
     const customerId = String(data.customer ?? "");
@@ -329,9 +316,9 @@ async function processStripeWebhook(request: Request) {
       userId = typeof owners?.[0]?.user_id === "string" ? owners[0].user_id : undefined;
     }
     await recordRevenueEvent({
-      eventId: String(event.id ?? ""), userId, eventType: "refund_succeeded",
+      eventId: eventId, userId, eventType: "refund_succeeded",
       amount: Number(data.amount_refunded ?? 0), currency: String(data.currency ?? "USD"),
-      occurredAt: Number(event.created ?? Math.floor(Date.now() / 1000)),
+      occurredAt: created,
     });
   }
 
@@ -419,7 +406,7 @@ Deno.serve(async (request: Request) => {
         getJson("/rest/v1/profiles?select=id,display_name,avatar_url,locale&id=eq." + filter + "&limit=1", token),
         getJson("/rest/v1/entitlements?select=entitlement_key,active,source,expires_at,updated_at&user_id=eq." + filter, token),
         getAllRows("/rest/v1/points_ledger?select=delta&user_id=eq." + filter + "&order=created_at.asc", token),
-        getJson("/rest/v1/subscriptions?select=plan_id,status,current_period_end,cancel_at_period_end&user_id=eq." + filter + "&order=updated_at.desc", token),
+        getJson("/rest/v1/subscriptions?select=plan_id,provider,status,current_period_end,cancel_at_period_end&user_id=eq." + filter + "&order=updated_at.desc", token),
       ]);
       const points = ledger.reduce((sum: number, entry: { delta?: number }) => sum + Number(entry.delta ?? 0), 0);
       return reply({
@@ -504,6 +491,36 @@ Deno.serve(async (request: Request) => {
       const session = await stripeRequest("checkout/sessions", form, "checkout-" + user.id + "-" + planId + "-" + Math.floor(Date.now() / 300000));
       if (typeof session.url !== "string" || !session.url.startsWith("https://checkout.stripe.com/")) return reply({ error: "تعذر إنشاء جلسة دفع آمنة." }, 502);
       return reply({ checkoutUrl: session.url, sessionId: session.id });
+    }
+
+    if (request.method === "POST" && path === "/api/billing-portal") {
+      if (!PAYMENTS_ENABLED) return reply({ error: "إدارة الاشتراكات المدفوعة غير متاحة حالياً." }, 403);
+      if (!STRIPE_SECRET_KEY || !STRIPE_WEBHOOK_SECRET || !SERVICE_ROLE_KEY) return reply({ error: "إدارة الفوترة غير مهيأة بعد." }, 503);
+      if (!await billingGateOpen()) return reply({ error: "إدارة الفوترة غير متاحة قبل اعتماد وضع الإطلاق التجاري." }, 403);
+      const token = request.headers.get("Authorization")!.slice(7);
+      const subscriptions = await getJson(
+        "/rest/v1/subscriptions?select=provider,provider_customer_id,status,current_period_end&user_id=eq." +
+          encodeURIComponent(user.id) +
+          "&provider=eq.stripe&status=in.(active,trialing,past_due,canceled)&order=updated_at.desc&limit=10",
+        token,
+      );
+      const current = subscriptions.find((item: Record<string, unknown>) =>
+        typeof item.provider_customer_id === "string" &&
+        /^cus_[A-Za-z0-9]+$/.test(item.provider_customer_id) &&
+        typeof item.current_period_end === "string" &&
+        Date.parse(item.current_period_end) > Date.now()
+      );
+      if (!current) return reply({ error: "لا يوجد اشتراك Stripe ساري مرتبط بهذا الحساب." }, 404);
+      const siteUrl = SITE_URL.endsWith("/") ? SITE_URL.slice(0, -1) : SITE_URL;
+      if (!siteUrl.startsWith("https://")) return reply({ error: "عنوان الموقع الآمن غير مضبوط." }, 503);
+      const form = new URLSearchParams();
+      form.set("customer", String(current.provider_customer_id));
+      form.set("return_url", siteUrl + "/?membership=managed");
+      const session = await stripeRequest("billing_portal/sessions", form);
+      if (typeof session.url !== "string" || !session.url.startsWith("https://billing.stripe.com/")) {
+        return reply({ error: "تعذر إنشاء رابط إدارة فوترة آمن." }, 502);
+      }
+      return reply({ portalUrl: session.url });
     }
 
     return reply({ error: "Not found" }, 404);

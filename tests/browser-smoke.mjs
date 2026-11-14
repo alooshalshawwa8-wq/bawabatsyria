@@ -8,11 +8,18 @@ const context = await browser.newContext({ serviceWorkers: "block", viewport: { 
 const page = await context.newPage();
 const pageErrors = [];
 const externalRequests = [];
+const mockedAuthRequests = [];
 
 page.on("pageerror", error => pageErrors.push(error.message));
-await page.route("**/*", route => {
+await page.route("**/*", async route => {
   const url = new URL(route.request().url());
-  if (url.hostname === "alooshalshawwa8-wq.github.io") return route.continue();
+  if (["alooshalshawwa8-wq.github.io", "127.0.0.1", "localhost"].includes(url.hostname)) return route.continue();
+  if (url.hostname === "elzquyehghuxhswogsch.supabase.co" &&
+      ((route.request().method() === "POST" && ["/auth/v1/signup", "/auth/v1/resend", "/auth/v1/recover"].includes(url.pathname)) ||
+       (route.request().method() === "PUT" && url.pathname === "/auth/v1/user"))) {
+    mockedAuthRequests.push({ path: url.pathname, method: route.request().method(), url: route.request().url(), body: route.request().postData() || "", authorization: route.request().headers()["authorization"] || "" });
+    return route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+  }
   externalRequests.push(url.hostname);
   return route.abort();
 });
@@ -32,6 +39,63 @@ try {
   await vault.waitFor({ state: "visible", timeout: 5000 });
   if (!(await vault.innerText()).includes("نسخة شاملة لمساحات العمل")) throw new Error("Full-site personal vault was not mounted");
   if (!(await vault.innerText()).includes("النسخ لا تشمل كلمات المرور")) throw new Error("Full-site vault privacy notice missing");
+
+  await page.locator("#membershipBtn").click();
+  await page.locator("#membershipEmail").fill("ofoq-smoke@example.com");
+  await page.locator("#membershipPassword").fill("x".repeat(12));
+  await page.locator("#membershipSignup").click();
+  await page.locator("#membershipAuthStatus").getByText(/تم إرسال طلب إنشاء الحساب/).waitFor({ state: "visible", timeout: 5000 });
+  const signupRequest = mockedAuthRequests.find(item => item.path === "/auth/v1/signup" && item.method === "POST");
+  if (!signupRequest || !signupRequest.body.includes("ofoq-smoke@example.com")) {
+    throw new Error("Signup did not submit the expected email to Supabase Auth");
+  }
+  if (!signupRequest.url || !signupRequest.url.includes("redirect_to=")) {
+    throw new Error("Signup did not configure the email confirmation redirect URL");
+  }
+  await page.locator("#membershipResend").click();
+  await page.locator("#membershipAuthStatus").getByText(/إذا كان الحساب بحاجة إلى تأكيد/).waitFor({ state: "visible", timeout: 5000 });
+  await page.locator("#membershipRecover").click();
+  await page.locator("#membershipAuthStatus").getByText(/إذا كان البريد مسجلاً/).waitFor({ state: "visible", timeout: 5000 });
+  if (!mockedAuthRequests.some(item => item.path === "/auth/v1/resend" && item.body.includes("ofoq-smoke@example.com"))) {
+    throw new Error("Email confirmation resend did not reach the mocked Supabase Auth endpoint");
+  }
+  if (!mockedAuthRequests.some(item => item.path === "/auth/v1/recover" && item.body.includes("ofoq-smoke@example.com"))) {
+    throw new Error("Password recovery did not reach the mocked Supabase Auth endpoint");
+  }
+
+  // Error descriptions are already decoded by URLSearchParams. A literal percent
+  // must not trigger a second decodeURIComponent exception or remain in the URL.
+  await page.evaluate(() => {
+    window.location.hash = "error=access_denied&error_description=invalid%25token";
+    window.consumeAuthCallback();
+  });
+  await page.locator("#membershipAuthStatus").getByText(/invalid%token/).waitFor({ state: "visible", timeout: 5000 });
+  if (await page.evaluate(() => window.location.hash)) throw new Error("Auth error callback fragment was not cleared");
+
+  // Simulate Supabase's recovery callback and prove that the user can complete
+  // the password reset through the authenticated Auth user endpoint.
+  await page.evaluate(() => {
+    window.location.hash = "access_token=ofoq-smoke-access&refresh_token=ofoq-smoke-refresh&expires_in=3600&type=recovery";
+    window.consumeAuthCallback();
+  });
+  await page.locator("#membershipNewPasswordWrap").waitFor({ state: "visible", timeout: 5000 });
+  await page.locator("#membershipNewPassword").fill("short");
+  await page.locator("#membershipSetNewPassword").click();
+  await page.locator("#membershipAuthStatus").getByText(/يجب ألا تقل عن 8 أحرف/).waitFor({ state: "visible", timeout: 5000 });
+  if (mockedAuthRequests.some(item => item.path === "/auth/v1/user" && item.method === "PUT")) {
+    throw new Error("Short recovery password was sent to Supabase Auth");
+  }
+  await page.locator("#membershipNewPassword").fill("OfoqSmokePassword2026!");
+  await page.locator("#membershipSetNewPassword").click();
+  await page.locator("#membershipAuthStatus").getByText("تم تحديث كلمة المرور بنجاح").waitFor({ state: "visible", timeout: 5000 });
+  const passwordUpdate = mockedAuthRequests.find(item => item.path === "/auth/v1/user" && item.method === "PUT");
+  if (!passwordUpdate || !passwordUpdate.authorization.includes("ofoq-smoke-access") || !passwordUpdate.body.includes("OfoqSmokePassword2026!")) {
+    throw new Error("Password recovery did not submit the new password with the recovery access token");
+  }
+  if (await page.locator("#membershipNewPasswordWrap").isVisible() || await page.locator("#membershipSetNewPassword").isVisible()) {
+    throw new Error("Password recovery controls remained visible after a successful update");
+  }
+  if (await page.locator("#membershipNewPassword").inputValue()) throw new Error("New password field was not cleared after success");
 
   await page.evaluate(async () => {
     const section = window.BAWABA_SECTIONS.find(item => item.id === "social_media_hub");
@@ -70,6 +134,23 @@ try {
     const workspaceText = await page.locator("#specialTool").innerText();
     if (!workspaceText.trim()) throw new Error("Empty workspace for " + section.id);
   }
+
+  // Verify user-authored trading journal content is rendered as text, never executable HTML.
+  await page.evaluate(async () => {
+    const section = window.BAWABA_SECTIONS.find(item => item.id === "trading_academy");
+    if (!section) throw new Error("Trading academy section is missing");
+    await window.openSection(section);
+  });
+  await page.locator('[data-ta-tab="journal"]').click();
+  const xssProbe = '<img src=x onerror="window.__ofoqXss=1">';
+  await page.locator("#taAsset").fill("BTC/USD");
+  await page.locator("#taDirection").selectOption({ label: "Long" });
+  await page.locator("#taNotes").fill(xssProbe);
+  await page.locator("#taSaveTrade").click();
+  await page.locator("#taJournalList").getByText(xssProbe).waitFor({ state: "visible", timeout: 5000 });
+  if (await page.locator("#taJournalList img").count()) throw new Error("Trading journal rendered user input as an HTML image element");
+  if (await page.evaluate(() => window.__ofoqXss === 1)) throw new Error("Trading journal user input executed as script");
+  await page.locator("#taJournalList").getByRole("button", { name: "حذف السجل" }).click();
 
   const commandDialog = page.locator("#ofoq-command-overlay");
   await page.keyboard.press("Control+k");
@@ -368,7 +449,25 @@ try {
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => window.scrollTo(0, 0));
-  const widthCheck = await page.evaluate(() => ({ viewport: window.innerWidth, document: document.documentElement.scrollWidth }));
+  const widthCheck = await page.evaluate(() => {
+    const viewport = window.innerWidth;
+    const offenders = [...document.querySelectorAll("body *")].map(el => {
+      const rect = el.getBoundingClientRect();
+      const style = getComputedStyle(el);
+      return {
+        tag: el.tagName.toLowerCase(),
+        id: el.id || "",
+        className: typeof el.className === "string" ? el.className.slice(0, 100) : "",
+        right: Math.round(rect.right * 10) / 10,
+        left: Math.round(rect.left * 10) / 10,
+        width: Math.round(rect.width * 10) / 10,
+        position: style.position,
+        overflow: style.overflowX
+      };
+    }).filter(item => item.width > 0 && (item.right > viewport + 2 || item.left < -2))
+      .sort((a, b) => b.right - a.right).slice(0, 12);
+    return { viewport, document: document.documentElement.scrollWidth, offenders };
+  });
   if (widthCheck.document > widthCheck.viewport + 2) throw new Error("Horizontal overflow on mobile: " + JSON.stringify(widthCheck));
 
   if (pageErrors.length) throw new Error("Uncaught browser errors: " + pageErrors.join(" | "));

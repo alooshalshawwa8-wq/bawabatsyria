@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 html = (ROOT / "index.html").read_text(encoding="utf-8")
 assistant = (ROOT / "supabase/functions/site-assistant/index.ts").read_text(encoding="utf-8")
 membership = (ROOT / "supabase/functions/membership-api/index.ts").read_text(encoding="utf-8")
+webhook_security = (ROOT / "supabase/functions/membership-api/stripe-webhook-security.mjs").read_text(encoding="utf-8")
 worker = (ROOT / "service-worker.js").read_text(encoding="utf-8")
 core = (ROOT / "ofoq-core.js").read_text(encoding="utf-8")
 ecommerce = (ROOT / "ecommerce-studio.js").read_text(encoding="utf-8")
@@ -69,8 +70,6 @@ for token in (
     'supabaseFetch("/auth/v1/user", token)',
     'metadata.role === "OWNER" && metadata.owner === true && metadata.owner_access === "lifetime"',
     'request.method === "POST" && path === "/api/stripe/webhook"',
-    'verifyStripeSignature(payload, request.headers.get("Stripe-Signature") ?? "")',
-    'Math.abs(Date.now() / 1000 - timestamp) > 300',
     'readBoundedText(request, 262_144)',
     'readBoundedText(request, 8_192)',
     'Number.isSafeInteger(delta)',
@@ -85,6 +84,15 @@ for token in (
     'if (!await billingGateOpen()) return reply(',
 ):
     require(token in membership, "membership API security/monetization guard missing: " + token)
+for token in (
+    'verifyStripeSignature(payload, request.headers.get("Stripe-Signature") ?? "", STRIPE_WEBHOOK_SECRET)',
+    "Math.abs(nowSeconds - timestamp) > 300",
+    "Number.isSafeInteger(timestamp)",
+    "Number.isSafeInteger(created)",
+    "EVENT_ID_PATTERN",
+    "EVENT_TYPE_PATTERN",
+):
+    require(token in webhook_security or token in membership, "Stripe webhook security guard missing: " + token)
 require("SUPABASE_SERVICE_ROLE_KEY" not in html and "STRIPE_SECRET_KEY" not in html, "membership provider secrets must not enter browser HTML")
 require('Access-Control-Allow-Origin": "https://alooshalshawwa8-wq.github.io"' in membership, "membership API exact-origin CORS contract missing")
 

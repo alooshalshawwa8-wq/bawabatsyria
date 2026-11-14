@@ -77,7 +77,7 @@ main{max-width:1180px;margin:auto;padding:28px 18px 60px}.hero{padding:34px 26px
 .calc{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:15px}.calc label{font-size:12px;color:var(--muted)}.calc input,.calc select{display:block;width:100%;margin-top:6px;background:#0b1527;border:1px solid var(--line);padding:11px;border-radius:9px;color:white}.result{font-size:22px;color:var(--gold2);margin-top:14px;word-break:break-word}
 .empty{grid-column:1/-1;padding:24px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
 .membership-card{border:1px solid var(--line);background:linear-gradient(145deg,#15233b,#101a2d);border-radius:15px;padding:17px;display:flex;flex-direction:column;gap:10px}.membership-card h3{color:var(--gold2);margin:0}.membership-card p{font-size:13px;margin:0}.membership-card ul{padding-right:19px;color:#c2ccda;font-size:13px;line-height:1.9;margin:0}.membership-card button:disabled{opacity:.55;cursor:not-allowed}.panel.open{display:block}footer{border-top:1px solid var(--line);padding:20px;text-align:center;color:var(--muted);font-size:12px;line-height:1.8}
-@media(max-width:600px){header{padding:11px 14px}.brand strong{font-size:16px}.brand small{font-size:11px}.hero{padding:24px 17px}.searchrow{flex-direction:column}.searchrow .btn{width:100%}.section-head{align-items:start;flex-direction:column}}
+@media(max-width:600px){header{padding:11px 14px;flex-wrap:wrap;gap:8px}header>.brand{flex:1 1 145px;min-width:0}header>.brand>div:last-child{min-width:0}header>div:last-child{flex:1 1 180px;min-width:0;max-width:100%;flex-wrap:wrap;justify-content:flex-end}header>div:last-child .btn{padding:8px 10px;font-size:12px}.brand strong{font-size:16px}.brand small{font-size:11px}.hero{padding:24px 17px}.searchrow{flex-direction:column}.searchrow .btn{width:100%}.section-head{align-items:start;flex-direction:column}}
 
 .ai-helper{margin-top:22px;padding:18px;border:1px solid #526b8e;border-radius:14px;background:linear-gradient(145deg,#142642,#0e192b)}.ai-helper h3,.ai-catalog h3{color:var(--gold2);margin:0 0 8px}.ai-helper p,.ai-catalog p{font-size:13px;color:#c2ccda;line-height:1.8}.ai-helper textarea{display:block;width:100%;min-height:120px;margin-top:8px;background:#0b1527;border:1px solid var(--line);border-radius:9px;padding:12px;color:white;line-height:1.8}.ai-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.ai-links a{display:inline-flex;align-items:center;border:1px solid #405879;border-radius:9px;padding:8px 11px;color:#e8d29b;text-decoration:none;font-size:13px}.ai-links a:hover{border-color:var(--gold);background:#1b2d49}.ai-catalog{margin-top:18px;padding:16px;border:1px solid var(--line);border-radius:12px;background:#0d192b}.ai-catalog-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.ai-catalog-card{border:1px solid var(--line);border-radius:10px;padding:12px;background:#14233a}.ai-catalog-card strong{display:block;color:var(--gold2);margin-bottom:6px}.ai-catalog-card a{display:block;color:#d7e5fa;text-decoration:none;font-size:13px;padding:4px 0}.ai-catalog-card a:hover{text-decoration:underline}.ai-tag{font-size:11px;color:#aebed2}
 #bawaba-welcome{position:fixed;inset:0;z-index:10050;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at 50% 42%,#294b70,#101c35 52%,#080e1b);overflow:hidden;transition:opacity .3s,visibility .3s}
@@ -569,12 +569,14 @@ main{position:relative}
 <div class="calc">
 <label>البريد الإلكتروني<input id="membershipEmail" type="email" autocomplete="email" placeholder="name@example.com"></label>
 <label>كلمة المرور<input id="membershipPassword" type="password" autocomplete="current-password" minlength="8" placeholder="8 أحرف على الأقل"></label>
+<label id="membershipNewPasswordWrap" hidden>كلمة المرور الجديدة<input id="membershipNewPassword" type="password" autocomplete="new-password" minlength="8" placeholder="8 أحرف على الأقل"></label>
 </div>
-<div class="panel-actions"><button class="btn" id="membershipLogin" type="button">تسجيل الدخول</button><button class="btn secondary" id="membershipSignup" type="button">إنشاء حساب جديد</button><button class="btn secondary" id="membershipRecover" type="button">نسيت كلمة المرور؟</button><button class="btn secondary" id="membershipResend" type="button">إعادة إرسال رسالة التأكيد</button><button class="btn secondary" id="membershipLogout" type="button">تسجيل الخروج</button></div>
+<div class="panel-actions"><button class="btn" id="membershipLogin" type="button">تسجيل الدخول</button><button class="btn secondary" id="membershipSignup" type="button">إنشاء حساب جديد</button><button class="btn secondary" id="membershipRecover" type="button">نسيت كلمة المرور؟</button><button class="btn secondary" id="membershipSetNewPassword" type="button" hidden>حفظ كلمة المرور الجديدة</button><button class="btn secondary" id="membershipResend" type="button">إعادة إرسال رسالة التأكيد</button><button class="btn secondary" id="membershipLogout" type="button">تسجيل الخروج</button></div>
 <div class="notice" id="membershipAuthStatus" role="status">يمكنك التصفح دون حساب. لإنشاء حساب شخصي أدخل بريدك وكلمة مرورك ثم اختر «إنشاء حساب جديد».</div>
 <div class="notice" id="membershipStatus" role="status">يتم التحقق من إعداد خدمة العضوية…</div>
 <div class="grid" id="membershipPlans" style="margin-top:16px"></div>
 <div class="notice" id="membershipWallet" style="margin-top:16px">المحفظة وسجل النقاط يظهران بعد تسجيل الدخول وربط حسابك بالخدمة.</div>
+ <div class="panel-actions" id="membershipBillingActions" hidden style="margin-top:10px"><button class="btn secondary" id="membershipManageBilling" type="button">إدارة الاشتراك والفوترة</button></div>
 <div class="notice" id="ownerAdminTools" hidden style="margin-top:16px">
   <strong>أدوات مالك المنصة — إدارة النقاط</strong>
   <div class="calc">
@@ -3067,12 +3069,20 @@ return saved.access_token&&Number(saved.expires_at)>Date.now()?saved.access_toke
 function consumeAuthCallback(){
 const hash=new URLSearchParams(window.location.hash.replace(/^#/,''));
 const accessToken=hash.get('access_token'),refreshToken=hash.get('refresh_token'),type=hash.get('type'),error=hash.get('error_description');
-if(error){const status=document.getElementById('membershipAuthStatus');if(status)status.textContent='تعذر تأكيد البريد: '+decodeURIComponent(error.replace(/\\+/g,' '));return;}
+if(error){history.replaceState(null,document.title,window.location.pathname+window.location.search);const status=document.getElementById('membershipAuthStatus');if(status)status.textContent='تعذر تأكيد البريد: '+error;return;}
 if(accessToken){
 saveMembershipSession({access_token:accessToken,refresh_token:refreshToken||'',expires_in:Number(hash.get('expires_in'))||3600});
 history.replaceState(null,document.title,window.location.pathname+window.location.search);
 const status=document.getElementById('membershipAuthStatus');
-if(status)status.textContent=type==='signup'?'تم تأكيد بريدك الإلكتروني وتفعيل جلسة حسابك بنجاح.':'تم إكمال التحقق بنجاح.';
+if(type==='recovery'){
+const wrap=document.getElementById('membershipNewPasswordWrap');
+const button=document.getElementById('membershipSetNewPassword');
+if(wrap)wrap.hidden=false;
+if(button)button.hidden=false;
+const field=document.getElementById('membershipNewPassword');
+if(field)field.focus();
+if(status)status.textContent='تم التحقق من رابط الاستعادة. أدخل كلمة مرور جديدة ثم احفظها.';
+}else if(status)status.textContent=type==='signup'?'تم تأكيد بريدك الإلكتروني وتفعيل جلسة حسابك بنجاح.':'تم إكمال التحقق بنجاح.';
 }
 }
 consumeAuthCallback();
@@ -3095,11 +3105,12 @@ else status.textContent='تم إرسال طلب إنشاء الحساب. افح�
 document.getElementById('membershipLogin').addEventListener('click',()=>membershipAuth('login'));
 document.getElementById('membershipSignup').addEventListener('click',()=>membershipAuth('signup'));
 document.getElementById('membershipRecover').addEventListener('click',recoverMembershipPassword);
+document.getElementById('membershipSetNewPassword').addEventListener('click',updateRecoveredPassword);
 document.getElementById('membershipResend').addEventListener('click',resendMembershipConfirmation);
 async function resendMembershipConfirmation(){
 const email=document.getElementById('membershipEmail').value.trim();
 const status=document.getElementById('membershipAuthStatus');
-if(!email||! /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){status.textContent='أدخل البريد الإلكتروني الذي أنشأت به الحساب أولاً.';return;}
+if(!email||! /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){status.textContent='أدخل البريد الإلكتروني الذي أنشأت به الحساب أولاً.';return;}
 status.textContent='جارٍ إرسال رسالة تأكيد جديدة…';
 try{
 const redirectTo=window.location.origin+window.location.pathname;
@@ -3109,10 +3120,28 @@ status.textContent='إذا كان الحساب بحاجة إلى تأكيد، ف
 }catch(error){status.textContent=error.message||'تعذر إعادة إرسال رسالة التأكيد حالياً.';}
 }
 document.getElementById('membershipLogout').addEventListener('click',()=>{clearMembershipSession();membershipAuthStatusReset();loadMembership();});
+async function updateRecoveredPassword(){
+const password=document.getElementById('membershipNewPassword').value;
+const status=document.getElementById('membershipAuthStatus');
+const token=await refreshMembershipSession();
+if(!token){status.textContent='انتهت جلسة الاستعادة. اطلب رابط استعادة جديداً من بريدك.';return;}
+if(password.length<8){status.textContent='كلمة المرور الجديدة يجب ألا تقل عن 8 أحرف.';return;}
+const button=document.getElementById('membershipSetNewPassword');
+button.disabled=true;status.textContent='جارٍ تحديث كلمة المرور…';
+try{
+const response=await fetch(authUrl+'/auth/v1/user',{method:'PUT',headers:{'content-type':'application/json',apikey:authAnonKey,authorization:'Bearer '+token},body:JSON.stringify({password})});
+const data=await response.json().catch(()=>({}));
+if(!response.ok)throw new Error(data.msg||data.message||data.error_description||'تعذر تحديث كلمة المرور.');
+document.getElementById('membershipNewPassword').value='';
+document.getElementById('membershipNewPasswordWrap').hidden=true;
+button.hidden=true;status.textContent='تم تحديث كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.';
+}catch(error){status.textContent=error.message||'تعذر تحديث كلمة المرور حالياً.';}
+finally{button.disabled=false;}
+}
 async function recoverMembershipPassword(){
 const email=document.getElementById('membershipEmail').value.trim();
 const status=document.getElementById('membershipAuthStatus');
-if(!email||!/^\\S+@\\S+\\.\\S+$/.test(email)){status.textContent='أدخل بريدك الإلكتروني أولاً، ثم اضغط «نسيت كلمة المرور؟».';return;}
+if(!email||!/^\S+@\S+\.\S+$/.test(email)){status.textContent='أدخل بريدك الإلكتروني أولاً، ثم اضغط «نسيت كلمة المرور؟».';return;}
 status.textContent='جارٍ إرسال رابط استعادة كلمة المرور…';
 try{
 const redirectTo=window.location.origin+window.location.pathname;
@@ -3127,6 +3156,7 @@ function openMembership(){document.body.classList.remove('section-mode');panel.c
 async function loadMembership(){
 await refreshMembershipSession();
 membershipPlans.replaceChildren();
+document.getElementById("membershipBillingActions").hidden=true;
 ownerAdminTools.hidden=true;
 if(!membershipApi){membershipStatus.textContent='واجهة العضوية جاهزة، لكن خادم العضوية لم يُنشر أو يُربط بعد. لن نعرض دفعاً وهمياً أو نفعّل VIP قبل ربط الخادم.';membershipPlans.append(membershipNode('div','الاحترافية · VIP · الأعمال — الأسعار ومعالجة الدفع تُحمّل من الخادم بعد تهيئته.','empty'));return;}
 membershipStatus.textContent='جارٍ الاتصال بخدمة العضوية…';
@@ -3152,9 +3182,22 @@ if(!membershipToken()){membershipWallet.textContent='لم يتم ربط جلسة
 const meResponse=await fetch(membershipApi+'/api/me',{headers:{authorization:'Bearer '+membershipToken(),accept:'application/json'}});
 if(!meResponse.ok)throw new Error('تعذر التحقق من حسابك');
 const me=await meResponse.json();
-const ownerEntitlement=(me.entitlements||[]).some(x=>x.entitlement_key==='owner_access'&&x.active===true);const vipEntitlement=(me.entitlements||[]).some(x=>x.entitlement_key==='vip_access'&&x.active===true);const isPlatformOwner=(me.owner===true||me.role==='OWNER'||ownerEntitlement);if(isPlatformOwner){ownerAdminTools.hidden=false;membershipStatus.textContent='✦ تم تفعيل حساب مالك المنصة بنجاح — OWNER / SUPER ADMIN — عضوية مجانية مدى الحياة تشمل VIP والاحترافية والأعمال وجميع الميزات. لا تحتاج إلى شراء اشتراك.';membershipWallet.textContent='✦ مالك المنصة · OWNER / SUPER ADMIN · وصول مجاني دائم مفعّل. الصلاحيات: '+(me.entitlements||[]).filter(x=>x.active).map(x=>x.entitlement_key).join('، ')+' · رصيد النقاط: '+Number(me.points||0).toLocaleString('ar')+' نقطة.';}else{membershipWallet.textContent='رصيد النقاط: '+Number(me.points||0).toLocaleString('ar')+' نقطة · الصلاحيات: '+(me.entitlements||[]).filter(x=>x.active).map(x=>x.entitlement_key).join('، ')+' · الاشتراكات: '+(me.subscriptions||[]).map(x=>x.plan_id+' ('+x.status+')').join('، ');}
+const currentStripeSubscription=(me.subscriptions||[]).find(x=>x.provider==='stripe'&&['active','trialing','past_due','canceled'].includes(x.status)&&Date.parse(x.current_period_end||'')>Date.now());if(currentStripeSubscription)document.getElementById('membershipBillingActions').hidden=false;const ownerEntitlement=(me.entitlements||[]).some(x=>x.entitlement_key==='owner_access'&&x.active===true);const vipEntitlement=(me.entitlements||[]).some(x=>x.entitlement_key==='vip_access'&&x.active===true);const isPlatformOwner=(me.owner===true||me.role==='OWNER'||ownerEntitlement);if(isPlatformOwner){ownerAdminTools.hidden=false;membershipStatus.textContent='✦ تم تفعيل حساب مالك المنصة بنجاح — OWNER / SUPER ADMIN — عضوية مجانية مدى الحياة تشمل VIP والاحترافية والأعمال وجميع الميزات. لا تحتاج إلى شراء اشتراك.';membershipWallet.textContent='✦ مالك المنصة · OWNER / SUPER ADMIN · وصول مجاني دائم مفعّل. الصلاحيات: '+(me.entitlements||[]).filter(x=>x.active).map(x=>x.entitlement_key).join('، ')+' · رصيد النقاط: '+Number(me.points||0).toLocaleString('ar')+' نقطة.';}else{membershipWallet.textContent='رصيد النقاط: '+Number(me.points||0).toLocaleString('ar')+' نقطة · الصلاحيات: '+(me.entitlements||[]).filter(x=>x.active).map(x=>x.entitlement_key).join('، ')+' · الاشتراكات: '+(me.subscriptions||[]).map(x=>x.plan_id+' ('+x.status+')').join('، ');}
 }catch(error){membershipStatus.textContent='خدمة العضوية غير متاحة حالياً. تحقق من إعداد الخادم ومفاتيح المصادقة والدفع.';}
 }
+async function openMembershipBillingPortal(){
+const token=await refreshMembershipSession();
+if(!membershipApi||!token)return;
+const button=document.getElementById("membershipManageBilling");
+button.disabled=true;membershipStatus.textContent="جارٍ فتح بوابة إدارة الاشتراك الآمنة…";
+try{
+const response=await fetch(membershipApi+"/api/billing-portal",{method:"POST",headers:{authorization:"Bearer "+token,"content-type":"application/json"},body:"{}"});
+const data=await response.json();if(!response.ok||!data.portalUrl)throw new Error(data.error||"تعذر فتح بوابة إدارة الاشتراك");
+if(!data.portalUrl.startsWith("https://billing.stripe.com/"))throw new Error("رابط إدارة الفوترة غير صالح.");
+location.href=data.portalUrl;
+}catch(error){membershipStatus.textContent=error.message||"تعذر فتح بوابة إدارة الاشتراك.";}finally{button.disabled=false;}
+}
+document.getElementById("membershipManageBilling").addEventListener("click",openMembershipBillingPortal);
 async function startMembershipCheckout(planId){
 const token=await refreshMembershipSession();
 if(!membershipApi||!token)return;
