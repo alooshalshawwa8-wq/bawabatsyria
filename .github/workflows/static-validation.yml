@@ -38,6 +38,8 @@ jobs:
           deno check supabase/functions/site-assistant/index.ts
           deno check supabase/functions/membership-api/index.ts
           deno check supabase/functions/football-data/index.ts
+      - name: Run Edge Function security contract tests
+        run: node tests/edge-function-security-contract.mjs
       - name: Validate static app contracts
         run: |
           node --input-type=module <<'NODE'
