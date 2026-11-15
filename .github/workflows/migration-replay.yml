@@ -1,0 +1,63 @@
+name: OFOQ clean PostgreSQL migration replay
+
+on:
+  push:
+    branches:
+      - ofoq/ofoq-001-execution
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ofoq-migration-replay-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  replay-all-migrations:
+    name: Replay all migrations on disposable local Supabase
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Check out development branch
+        uses: actions/checkout@v4
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Generate ephemeral local Supabase configuration
+        run: supabase init --force
+
+      - name: Start disposable local Supabase stack
+        run: supabase start
+
+      - name: Replay every migration from an empty local database
+        run: supabase db reset --local
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+
+      - name: Assert migration history and critical objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PGPASSWORD=postgres
+          DB=(psql --host 127.0.0.1 --port 54322 --username postgres --dbname postgres --no-psqlrc --set ON_ERROR_STOP=1 --tuples-only --no-align)
+          migration_count="$("${DB[@]}" --command "select count(*) from supabase_migrations.schema_migrations;")"
+          recovered_count="$("${DB[@]}" --command "select count(*) from supabase_migrations.schema_migrations where version in ('20261109161357','20261109161417','20261109161525','20261109161555','20261109161635','20261109173150','20261109173201','20261110063058','20261110161112','20261110161138','20261111120208','20261111124712','20261111124728','20261111124846');")"
+          printf 'Applied migration count: %s\nRecovered migration count: %s\n' "$migration_count" "$recovered_count"
+          test "$migration_count" = "36"
+          test "$recovered_count" = "14"
+          "${DB[@]}" --command "select to_regprocedure('public.football_api_budget_reserve(text,text)') is not null and to_regprocedure('public.football_api_budget_status()') is not null;" | grep -qx t
+          "${DB[@]}" --command "select provider_blocked from public.football_api_budget_policy where singleton = true;" | grep -qx t
+          echo "PASS: all 36 migrations replayed; all 14 recovered versions present; critical football guard functions and blocked-provider policy exist."
+
+      - name: Stop disposable local Supabase stack
+        if: always()
+        run: supabase stop --no-backup
