@@ -32,6 +32,10 @@ for (const file of [
   assert.ok(existsSync(resolve(root, file)), "Required private asset missing: " + file);
 }
 assert.ok(existsSync(resolve(root, "assets")), "Private asset directory missing");
+const robots = readFileSync(resolve(root, "robots.txt"), "utf8");
+assert.match(robots, /Disallow: \\/); 
+assert.doesNotMatch(robots, /Sitemap:/i);
+assert.ok(!existsSync(resolve(root, "sitemap.xml")), "Private artifact must not advertise or ship a public sitemap");
 const headers = readFileSync(resolve(root, "_headers"), "utf8");
 assert.match(headers, /X-Robots-Tag:\s*noindex, nofollow, noarchive/i);
 assert.match(headers, /X-Content-Type-Options:\s*nosniff/i);
