@@ -20,7 +20,7 @@ Cloudflare Pages Git integration officially supports both public and private Git
 ### Private build artifact
 - `scripts/build-private-pages.mjs` builds `dist/` from an explicit allowlist of public front-end files and `assets/`.
 - It excludes `backend/`, `supabase/`, migrations, tests, scripts, workflows, documentation, and repository metadata.
-- It changes the artifact's robots meta to `noindex,nofollow,noarchive`, removes canonical/JSON-LD public indexing metadata, and copies the Pages `_headers` file.
+- It changes the artifact's robots meta to `noindex,nofollow,noarchive`, removes canonical/JSON-LD public indexing metadata, rewrites `robots.txt` to disallow crawlers, omits the public sitemap, and copies the Pages `_headers` file.
 - It removes registration of the legacy public PWA service worker and, on the first authenticated online visit, unregisters old same-origin service workers and clears only `ofoq-shell-*` caches. This prevents an old offline app-shell cache from being the intended access path to the private deployment. Offline availability is intentionally disabled for the private build.
 - `tests/private-pages-build-contract.mjs` verifies the output shape and that source-only folders and service-worker registration are absent.
 - Static-validation CI now runs the private build and contract test.
