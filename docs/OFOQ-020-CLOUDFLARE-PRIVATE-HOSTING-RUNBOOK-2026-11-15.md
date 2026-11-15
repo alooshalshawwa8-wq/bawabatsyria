@@ -144,7 +144,7 @@ A pinned, free Gitleaks v8.30.1 full-history scan has been added in this branch 
 - do not paste the secret into issues, PR comments, or chat;
 - remember that public clones/caches cannot be recalled.
 
-A clean scan reduces risk but does not prove that every secret format or external copy has been found.
+The initial 912-commit scan returned 13 generic-key matches. Manual context review classified 10 as localStorage namespace identifiers and 3 as the intentionally public `sb_publishable_` client key. Exact fingerprints only were added to `.gitleaksignore`; see `docs/OFOQ-022-GITLEAKS-TRIAGE-2026-11-15.md`. The rerun must still pass before cutover. No confirmed secret was found among these 13 matches. A clean scan reduces risk but does not prove that every secret format or external copy has been found.
 
 ## 6. Final cutover sequence
 
