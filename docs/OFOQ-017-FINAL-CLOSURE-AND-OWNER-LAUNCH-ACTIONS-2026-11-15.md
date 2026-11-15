@@ -1,62 +1,64 @@
-# OFOQ-017 — Final Closure Decision and Owner-Only Launch Actions
-**Date:** 2026-11-15  
-**Branch:** `ofoq/ofoq-001-execution`  
-**Related:** OFOQ-012 through OFOQ-016
+# OFOQ-017 — قرار الإغلاق الهندسي وبوابات الخصوصية والإطلاق
+**تاريخ التحديث:** 2026-11-15  
+**النطاق:** تلخيص الأدلة الحالية والفصل بين ما أُنجز برمجياً وما يحتاج حساب المالك أو إعداداً خارجياً.
 
-## Executive status
+## الحالة التنفيذية
 
-**The investigation and engineering work that can be completed safely through the currently connected free tools is closed. The public-trial release is NOT certified and must remain blocked until the owner-only gates below are evidenced.**
+**أُغلقت أعمال التحقيق والتجهيز التي يمكن إثباتها عبر الأدوات المتصلة، لكن أُفُق لم يصبح موقعاً خاصاً بعد، ولم تُعتمد جاهزيته لإطلاق عام أو تجريبي.** لا يجوز مساواة اكتمال التحقيق بإغلاق بوابات التشغيل.
 
-This is a deliberate safety decision, not an assertion that the platform is fully ready.
+## ما أُنجز وتدعمه الأدلة
 
-## Closed with evidence
+1. استعادة ملفات الترحيلات التاريخية الـ14 ومطابقتها مع سجل Supabase؛ baseline المعاد بناؤه موصوف بوضوح على أنه إعادة بناء وليس ملفاً تاريخياً أصلياً.
+2. توثيق نجاح إعادة تشغيل الترحيلات في بيئة محلية مؤقتة ضمن سجلات GitHub Actions السابقة. يجب الاستناد إلى أحدث تشغيل للفرع المعني عند كل دمج، لا إلى تشغيل تاريخي فقط.
+3. جرد 78 قسماً. الأقسام الـ18 التي كانت تستخدم قالباً عاماً عولجت في المصدر بأدوات محلية متخصصة؛ يصنفها جرد OFOQ-019 كـ `LOCAL_SPECIALIST_TOOL`. لا يعني ذلك اتصالاً بمزود خارجي أو نموذج ذكاء اصطناعي حي.
+4. مشروع Supabase الإنتاجي `bawabatsyria` بحالة `ACTIVE_HEALTHY` وPostgreSQL 17.11. أظهر فحص 2026-11-15 عدد 37 ترحيلاً مطبقاً.
+5. Security Advisor: 12 ملاحظة INFO لجداول RLS بلا سياسات، وتحذير WARN واحد لتعطيل حماية كلمات المرور المسرّبة. فحص الصلاحيات أكد عدم وجود SELECT/INSERT لـ `anon` أو `authenticated` على الجداول الاثني عشر؛ لا تضف سياسات عامة لإسكات INFO.
+6. Performance Advisor: 26 ملاحظة INFO لفهارس غير مستخدمة؛ لم تُحذف أي فهارس لعدم كفاية بيانات الحمل الفعلي.
+7. `site-assistant` المنشورة v21 تطابق المصدر الحالي في استخدام `cf-connecting-ip` وHMAC ومحدد دائم عبر RPC `reserve_site_assistant_rate_limit` بحد 12 طلباً/60 ثانية. لا تعتمد النسخة الحالية على `x-forwarded-for`. بقي التحقق المستقل من عقد ingress موضع متابعة؛ راجع OFOQ-008.
+8. وظائف `membership-api` v23 و`football-data` v46 نشطة. الدفع معطل عمداً، ومزود كرة القدم ما زال محجوباً بسبب تعليق حساب المزود.
+9. لم تُعدّل بيانات الإنتاج أو مخططه أو صلاحياته أو إعدادات Auth أو SMTP أو الأسرار أو الوظائف المنشورة أو الفوترة في هذه المراجعة.
 
-1. Historical recovery of the 14 missing migration source files: 14/14 exact matches against Supabase migration history; recorded in OFOQ-012.
-2. Baseline provenance investigation: original historical baseline not found. A clearly labelled reconstructed baseline was added to the development branch; it is not represented as historical source recovery.
-3. Clean replay: 37 migration files replayed in a disposable local Supabase environment in successful prior run `43689747824`; latest branch-head rerun is tracked separately and must be green before merge.
-4. Static, membership/portal, Playwright browser, mobile, and read-only health checks passed on branch head `4443380f1d00825130e247b62bedbe3cb6d47ec3`, except the latest migration replay was still running at time of this report.
-5. 78 registered sections and their shared workspace interaction were audited. The audit explicitly identified 18 sections still using a generic guide template; these are not certified as specialized functional services.
-6. Production Supabase project was confirmed ACTIVE_HEALTHY. Health Advisor returned no findings.
-7. No production schema/data, RLS/grants, Auth, SMTP, Edge Function, secrets, billing, or provider state was changed. No paid service was activated. PR #23 remains draft/open/unmerged.
+## بوابات المالك والتشغيل
 
-## Owner-only gates — cannot be truthfully closed from the connected tools
+### A. تسليم البريد الحقيقي
+يلزم إعداد SMTP معتمد ومجاني إن أمكن، ومرسل موثق، وSite URL وروابط Redirect دقيقة في Supabase Auth، ثم اختبار التسجيل والتأكيد وإعادة الإرسال واستعادة كلمة المرور بصندوق بريد حقيقي. لا تعطل تأكيد البريد كاختصار، ولا ترسل أسرار SMTP أو مفاتيح API في المحادثة أو GitHub.
 
-### A. Real email delivery
-The connected Supabase actions expose project metadata, SQL, logs, advisors, and Edge Function inventory; they do not expose the project's Auth SMTP or Site URL/Redirect URL configuration controls. Unified logs currently expose only `pgbouncer_logs` and `postgres_logs`, not Auth delivery logs. Therefore SMTP delivery cannot be proven or safely configured by this assistant.
+### B. عقد ingress ومحددات إساءة الاستخدام
+محدد نَبْراس الدائم موجود في المصدر والإنتاج، لكن يلزم إثبات أن `cf-connecting-ip` لا يمكن تزويره على مسار Supabase الفعلي. اختبر الطلبات المباشرة والرؤوس المفقودة/المعدلة/المكررة ضمن نافذة مضبوطة، دون تسجيل عناوين IP خام أو استهلاك حصة المزود بلا داعٍ.
 
-Owner action:
-1. In Supabase Dashboard → Authentication → SMTP Settings, configure a free/approved SMTP provider and verified sender domain.
-2. In Authentication → URL Configuration, set the canonical production Site URL and exact allowed redirect URLs.
-3. Publish SPF, DKIM and DMARC DNS records supplied by that mail provider.
-4. Run signup, confirmation, resend, password-reset and redirect tests using an owner-approved mailbox.
-5. Record message receipt, sender authentication results and callback destination. Do not disable email confirmation as a shortcut.
+### C. حماية كلمات المرور
+Supabase Security Advisor ما زال يبلغ عن تعطيل Leaked Password Protection. يلزم تفعيلها من لوحة Auth إذا كانت متاحة في الخطة الحالية، ثم إعادة فحص Security Advisor. لا ترقية مدفوعة دون موافقة صريحة.
 
-Never paste SMTP passwords or API keys into chat or GitHub.
+### D. النسخ الاحتياطي والعزل
+يلزم اختبار استعادة نسخة احتياطية في بيئة منفصلة، واختبارات ملكية وعزل لبيانات الملفات الشخصية والمخزون والمحاسبة والاشتراكات والنقاط. لا تُنشئ حسابات إنتاج تجريبية ولا تغيّر بيانات المستخدمين الحقيقيين دون خطة معتمدة.
 
-### B. Trusted client identity and durable abuse throttling
-The current `site-assistant` function uses per-isolate in-memory throttling and reads `x-forwarded-for`. The available evidence does not prove that the ingress overwrites this header with a trusted client address. The global daily AI reservation is a cost ceiling, not a per-client abuse-control substitute.
+### E. صدق حالة الميزات
+- الأدوات المحلية المتخصصة تبقى مصنفة محلياً، ولا تُعرض كتوصيلات خارجية أو ذكاء اصطناعي مباشر.
+- أي مزود محجوب يظهر على أنه غير متاح.
+- الدفع يبقى معطلاً.
+- لا يُعلن عن خدمة حية إلا بعد اختبارها بمصدر حقيقي مصرح به.
 
-Owner/engineering action:
-1. Confirm the exact Supabase ingress header contract from authoritative deployment configuration or use a trusted upstream that overwrites client identity.
-2. Implement and test a shared durable limiter keyed only by that verified identity; if anonymous users are supported, add an abuse-resistant challenge such as a free CAPTCHA with owner-configured public/site and secret keys.
-3. Verify spoofed forwarding headers cannot bypass limits; test concurrent requests across separate Edge isolates.
-4. Keep the global daily reservation as a second independent budget guard.
+## بوابة الخصوصية — أولوية P0
 
-Do not simply trust arbitrary `x-forwarded-for`, disable throttling, or introduce a shared global per-minute cap that lets one visitor deny service to everyone.
+المستودع الحالي عام وموقع GitHub Pages عام. لا تجعل شاشة دخول JavaScript أو CORS الموقع خاصاً؛ الملفات الثابتة تظل قابلة للتحميل المباشر. كما أن تحويل المستودع إلى Private على GitHub Free يوقف نشر Pages تلقائياً.
 
-### C. Auth password hardening
-Supabase Security Advisor still reports leaked-password protection disabled. The connected tools cannot update this Auth setting. Owner must check plan eligibility and enable it in Authentication → Security and Password settings if available. Do not upgrade to a paid plan without explicit approval.
+تم إعداد مسار بديل مجاني في OFOQ-020:
+- Cloudflare Pages يدعم ربط مستودع GitHub عام أو خاص.
+- Cloudflare Access يحمي اسم الإنتاج `<project>.pages.dev`، كما يجب حماية روابط المعاينة أو تعطيلها.
+- تم إعداد أداة بناء خاصة بمبدأ allowlist، تستبعد الخلفية والترحيلات والاختبارات والتوثيق من artifact، وتزيل فهرسة محركات البحث وتلغي تسجيل Service Worker القديم حتى لا يتجاوز الوصول عبر نسخة offline مخزنة.
+- يجب اختيار اسم Pages النهائي قبل إنشاء المشروع؛ لا يمكن تغيير نطاق `pages.dev` بعد الإنشاء.
+- يجب تحديث CORS في الوظائف الثلاث وSite URL/Redirect allowlist في Supabase Auth إلى نطاق Pages الجديد، ثم إعادة نشر الوظائف واختبار الدخول والميزات قبل تغيير رؤية المستودع.
+- بعد نجاح Access واختبارات الموقع، يمكن تحويل مستودع GitHub إلى Private على الخطة المجانية؛ سيُلغى نشر GitHub Pages القديم تلقائياً، بينما يدعم تكامل Cloudflare Pages المستودعات الخاصة.
+- لا يوجد حتى تاريخ هذا التقرير اتصال Cloudflare مفوض، ولم يتم إنشاء Pages project أو Access policy أو تحويل المستودع إلى Private. لذلك الموقع **ليس خاصاً بعد**.
 
-### D. Recovery and isolation evidence
-Before a public trial, run a disposable backup-restore drill and multi-user ownership/isolation tests covering profiles, inventory, accounting, subscriptions, points and any owner-scoped records. Preserve evidence and confirm cross-user reads/writes are denied. Do not create production test accounts or alter live user data without an approved test mailbox and test plan.
+## معيار الإغلاق النهائي
 
-### E. Feature truthfulness
-The audit found 18 generic-template sections. Until domain-specific functionality is implemented and tested, label them as guides/planning workspaces, not live integrations. Provider-dependent modules must remain marked unavailable when providers are blocked. Billing remains disabled.
+لا تُغلق بوابة الخصوصية حتى:
+1. يكون نطاق الإنتاج محمياً بـ Access بسياسة تسمح لبريد المالك المعتمد فقط.
+2. تكون روابط المعاينة غير متاحة للعامة أو محمية بالسياسة نفسها.
+3. ينجح دخول المالك من أجهزته وتعمل مسارات Auth والوظائف الثلاث بعد تحديث CORS.
+4. لا يستطيع غير المصرح له تحميل الموقع أو أصوله عبر نطاق Pages.
+5. لا يعود رابط GitHub Pages القديم متاحاً بعد جعل المستودع خاصاً.
+6. يُعاد اختبار الوظائف الأساسية، وتُراجع سجلات النشر دون كشف أسرار.
 
-## Release gate and closure rule
-
-The release checklist may be marked PASS only when A–D have recorded evidence, the latest migration replay and all branch-head CI checks are green, the 18 generic-template sections are honestly labelled or completed, and the owner explicitly approves release.
-
-PR #23 must remain draft/open until that review. No production merge or deployment is authorized by this report.
-
-**Final disposition: engineering investigation closed; public-trial launch gate OPEN — owner evidence required.**
+**القرار:** لا دمج إنتاجي ولا نشر أو تغيير Auth/SMTP/RLS/GRANT/أسرار/دفع/مزود بيانات/استضافة أو DNS لمجرد إغلاق التقرير. تُنفذ الأعمال التحضيرية في فرع منفصل وتُختبر قبل أي تغيير لا رجعة فيه.
