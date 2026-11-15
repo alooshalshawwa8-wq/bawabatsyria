@@ -66,6 +66,10 @@ for (const match of html.matchAll(/<script[^>]+src=["']([^"']+)["']/g)) {
   assert.ok(existsSync(resolve(root, relative)), "HTML references a missing private asset: " + relative);
 }
 
+const retirementWorkflow = readFileSync(resolve(".github/workflows/retire-github-pages.yml"), "utf8");
+assert.match(retirementWorkflow, /if: inputs\.confirm_retirement == true/);
+assert.match(retirementWorkflow, /OFOQ_PRIVATE_SITE_URL: \$\{\{ inputs\.private_site_url \}\}/);
+
 const forbidden = new Set(["docs", "tests", "supabase", "backend", "scripts", ".github", ".git"]);
 for (const entry of readdirSync(root, { withFileTypes: true })) {
   assert.ok(!forbidden.has(entry.name), "Private artifact leaked a source-only path: " + entry.name);
