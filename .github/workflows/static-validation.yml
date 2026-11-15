@@ -56,6 +56,7 @@ jobs:
           node --check ofoq-workspace-extensions.js
           node --check scripts/validate-ofoq-section-registry.mjs
           node --check tests/journal-draft-rpc-contract.mjs
+          node --check tests/inventory-opening-rpc-contract.mjs
       - name: Validate the 78-section registry and module coverage
         run: node scripts/validate-ofoq-section-registry.mjs
       - name: Set up Deno
@@ -76,6 +77,8 @@ jobs:
         run: node tests/edge-function-security-contract.mjs
       - name: Validate atomic journal draft workflow
         run: node tests/journal-draft-rpc-contract.mjs
+      - name: Validate atomic inventory opening balance workflow
+        run: node tests/inventory-opening-rpc-contract.mjs
       - name: Validate static app contracts
         run: |
           node --input-type=module <<'NODE'
