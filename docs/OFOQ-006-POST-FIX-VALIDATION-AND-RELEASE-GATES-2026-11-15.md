@@ -26,7 +26,7 @@ The additive rate-limit migration was applied to production as version `20261115
 
 ## Current Pages deployment
 
-GitHub Pages deployment from the merged main commit `feb3dcc2be99fea6ff674a6c1b7e7ca4caf0abb9` is running. The previous deployment's post-deploy browser test found 390px horizontal overflow; the merged responsive fix passed branch browser/mobile smoke tests. The final live Pages smoke test must complete before handover.
+GitHub Pages deployment run `43694505822` from merged main commit `feb3dcc2be99fea6ff674a6c1b7e7ca4caf0abb9` completed successfully. Post-deploy browser smoke tests passed for all sections and key controls. Lighthouse quality audit and performance/quality budget enforcement also passed. The previous 390px horizontal overflow did not recur.
 
 ## Release gates still open
 
