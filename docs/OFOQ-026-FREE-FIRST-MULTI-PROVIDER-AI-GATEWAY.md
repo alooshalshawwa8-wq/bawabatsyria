@@ -216,3 +216,40 @@ This specification does not:
 - Authorize any paid provider, paid credits, billing method, or subscription.
 
 **Recommended next implementation:** add a server-side provider registry and refactor the current Gemini call behind an adapter in a separate development branch, with tests proving paid/unknown providers are impossible to select. Only after this is stable should a second provider be connected.
+
+
+## 10. Deeper quota-schema audit — verified
+
+The existing migration `20261109161356_reconstructed_foundational_baseline.sql` defines `public.ai_provider_daily_usage` with:
+- `provider`
+- `usage_date`
+- `requests_used`
+- `updated_at`
+- A primary key on `(provider, usage_date)`.
+
+It has RLS enabled, all client-role privileges revoked, and service-role access only. The helper `public.reserve_ai_provider_request(text, integer)` is `SECURITY DEFINER`, rejects invalid limits, atomically increments the provider/day counter, and returns a boolean. Client roles are explicitly denied execution; only `service_role` can execute it. A later migration sets its `search_path` to the empty string.
+
+### Current limitations of this quota ledger
+
+- Daily request count only; no model-level, task-level, token, input/output, minute, or provider cost accounting.
+- No persisted provider-reported quota headers or reset timestamps.
+- No explicit reservation lifecycle (reserved / completed / failed / released).
+- The reservation is consumed before the external provider call and is not refunded on provider error or timeout. This is conservative for rate safety but can waste the daily app allowance.
+- Provider name is the only partition key, so multiple models under one provider share the same counter.
+- The current daily limit of 30 is passed by the Edge Function; it is an app-level cap, not a provider's verified free-tier allowance.
+
+### Safe migration approach
+
+Do not replace or mutate the existing quota function in-place as the first step. Add a versioned quota contract in a new reviewed migration after:
+1. Creating a local disposable database from all migrations.
+2. Verifying grants, RLS and function ownership.
+3. Testing concurrent reservations and quota exhaustion.
+4. Confirming rollback behavior.
+5. Reviewing the production schema separately before any hosted migration.
+
+The existing provider/day counter should remain as a coarse global safety ceiling during a staged transition. New model-level and token-level accounting can be introduced alongside it, then compared before changing enforcement.
+
+## 11. Provider data-policy warning
+
+The provider's API price is only one part of the decision. A $0 API call may still expose submitted data to provider retention, abuse review, human review, or model-improvement processing under the applicable free-tier terms. The registry therefore must treat data policy as a hard eligibility gate, not a footnote. For example, Google's published Gemini Free tier states that submitted content may be used to improve Google products. The private app must not send sensitive records to that route by default.
+
