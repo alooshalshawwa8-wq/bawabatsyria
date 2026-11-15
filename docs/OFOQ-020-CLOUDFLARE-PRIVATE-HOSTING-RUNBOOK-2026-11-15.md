@@ -37,19 +37,35 @@ In Cloudflare Dashboard → Workers & Pages → Create application → Pages →
 |---|---|
 | Git provider | GitHub |
 | Repository | `alooshalshawwa8-wq/bawabatsyria` |
-| Production branch | `main` |
+| Initial production branch | `ofoq/private-access-readiness-2026-11-15` (or `main` after PR #32 is merged) |
 | Framework preset | None |
 | Root directory | `/` (repository root) |
-| Build command | `python3 -m pip install --user Pillow && node scripts/build-private-pages.mjs` |
-| Build output directory | `dist` |
-| Build image | v3 (Node.js 22.23.4 and Python 3.13.3) |
-| Environment variables | `NODE_VERSION=22`, `PYTHON_VERSION=3.13.3` |
+| Initial build command | `node scripts/build-private-hold.mjs` |
+| Initial build output | `dist-hold` |
+| Preview branch | None / disabled until Access is configured |
 
 Important:
 - Choose the project name carefully. Cloudflare documents that the `*.pages.dev` subdomain cannot currently be changed after project creation; changing it requires deleting and recreating the project.
 - Keep preview deployments disabled until preview Access policies are configured, or explicitly protect all preview URLs. Cloudflare states that preview deployments are public by default.
 - Do not use Direct Upload for this plan: Git integration supports the existing GitHub workflow and private repositories.
 - The Cloudflare GitHub App must be installed only for this repository if possible, following least-privilege repository access.
+
+## 3A. Publish only a non-sensitive holding page first
+
+Do **not** deploy the full OFOQ application before the Access gate is active.
+
+1. The initial Pages deployment must use `scripts/build-private-hold.mjs` with output directory `dist-hold`. This publishes only a small setup notice and no application code or user data.
+2. Disable preview branch deployments initially.
+3. Configure and test the Access policy on the production `<project>.pages.dev` hostname while only the holding page is deployed.
+4. Confirm an unauthenticated clean browser cannot load the holding page or its assets, and the owner can pass Access.
+5. Only after that test passes, change Pages build settings to:
+   - Build command: `python3 -m pip install --user Pillow && node scripts/build-private-pages.mjs`
+   - Build output directory: `dist`
+   - Build image: v3
+   - Environment variables: `NODE_VERSION=22`, `PYTHON_VERSION=3.13.3`
+6. Deploy the full app behind the already-tested Access gate. Keep preview deployments disabled unless their Access policies have been verified.
+
+The first production branch can be the prepared PR branch because it contains the holding builder. After PR #32 is merged, change the production branch to `main`. Do not expose the full app as a public preview URL during this transition.
 
 ## 4. Protect every Cloudflare hostname
 
