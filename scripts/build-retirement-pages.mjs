@@ -55,7 +55,7 @@ small{display:block;color:#9eacc2;line-height:1.8}
   try {
     if ("serviceWorker" in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map(registration => registration.unregister()));
+      const appPath = new URL("./", location.href).pathname;\n      await Promise.all(registrations.filter(registration => new URL(registration.scope).pathname.startsWith(appPath)).map(registration => registration.unregister()));
     }
     if ("caches" in window) {
       const names = await caches.keys();
