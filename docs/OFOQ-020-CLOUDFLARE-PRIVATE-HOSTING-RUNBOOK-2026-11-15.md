@@ -23,7 +23,7 @@ Cloudflare Pages Git integration officially supports both public and private Git
 - It changes the artifact's robots meta to `noindex,nofollow,noarchive`, removes canonical/JSON-LD public indexing metadata, rewrites `robots.txt` to disallow crawlers, omits the public sitemap, and copies the Pages `_headers` file.
 - It removes registration of the legacy public PWA service worker and, on the first authenticated online visit, unregisters old same-origin service workers and clears only `ofoq-shell-*` caches. This prevents an old offline app-shell cache from being the intended access path to the private deployment. Offline availability is intentionally disabled for the private build.
 - `tests/private-pages-build-contract.mjs` verifies the output shape and that source-only folders and service-worker registration are absent.
-- The GitHub Pages workflow now requires both a public repository and the explicit repository variable `OFOQ_PUBLIC_PAGES_ENABLED=true`; unset/false prevents a later push from accidentally republishing the old public app after retirement.
+- The GitHub Pages workflow no longer deploys on `push`. A deployment requires a manual `workflow_dispatch` with `enable_public_deploy=true`, and the repository must still be public. The input defaults to `false`, so a routine push or merge cannot republish the old public app.
 - A separate manual-only `retire-github-pages.yml` workflow builds and deploys a minimal retirement page after an explicit boolean confirmation and the final protected Pages URL. It clears the old origin's service worker and OFOQ caches when each owner device visits it online.
 - Static-validation CI now runs the private build and contract test.
 
