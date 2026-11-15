@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const read = path => readFile(new URL("../" + path, import.meta.url), "utf8");
-const [assistant, football, membership] = await Promise.all([
+const [assistant, football, membership, index] = await Promise.all([
   read("supabase/functions/site-assistant/index.ts"),
   read("supabase/functions/football-data/index.ts"),
   read("supabase/functions/membership-api/index.ts"),
+  read("index.html"),
 ]);
 
 // Nibras / AI assistant: bounded, normalized input and fail-closed provider budget.
@@ -29,9 +30,23 @@ assert.doesNotMatch(assistant, /request\.headers\.get\(["']x-forwarded-for/i);
 assert.match(assistant, /hashClientIp\(clientIp, serviceKey\)/);
 assert.match(assistant, /reserve_site_assistant_rate_limit/);
 assert.match(assistant, /rateAllowed !== true/);
+assert.match(assistant, /async function authenticatedOfoqOwner/);
+assert.match(assistant, /request\.headers\.get\("authorization"\)/);
+assert.match(assistant, /metadata\.role === "OWNER" && metadata\.owner === true && metadata\.owner_access === "lifetime"/);
+assert.match(assistant, /Owner access required/);
+assert.match(assistant, /Access-Control-Allow-Headers": "content-type, apikey, authorization"/);
+assert.match(index, /refreshMembershipSession\(\)/);
+assert.match(index, /Authorization':'Bearer '\+token/);
+assert.match(index, /functions\/v1\/site-assistant/);
+
 
 // Football API: request throttles must fail closed if persistent rate checks fail.
 assert.match(football, /request\.method !== "GET"/);
+assert.match(football, /const ownerUser = await authenticatedFootballUser\(request\)/);
+assert.match(football, /ownerMetadata\.role !== "OWNER"/);
+assert.match(football, /ownerMetadata\.owner !== true/);
+assert.match(football, /ownerMetadata\.owner_access !== "lifetime"/);
+
 assert.match(football, /request\.headers\.get\("cf-connecting-ip"\)/);
 assert.doesNotMatch(football, /request\.headers\.get\(["']x-forwarded-for/i);
 assert.match(football, /isValidClientIp\(clientIp\)/);
@@ -54,5 +69,6 @@ assert.match(membership, /validateStripeEventEnvelope\(event\)/);
 assert.match(membership, /if \(!PAYMENTS_ENABLED\)/);
 assert.match(membership, /billingGateOpen\(\)/);
 assert.match(membership, /readBoundedText\(request, 262_144\)/);
+assert.match(membership, /if \(!user\.owner\) return reply\(\{ error: "Platform owner access required" \}, 403\)/);
 
 console.log("OFOQ Edge Function security contracts passed.");
