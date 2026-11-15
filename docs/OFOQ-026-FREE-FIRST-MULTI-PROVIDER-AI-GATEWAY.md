@@ -272,3 +272,22 @@ This is a controlled refactor, not yet a multi-provider gateway. No new provider
 ### Remaining verification gate
 
 The pull request CI must pass on the updated commit, including Deno type-check and the new registry tests. The browser smoke test and the other PR checks must also complete successfully. No merge or deployment follows automatically from green CI.
+
+
+## 13. Development progress — isolated provider transport adapter
+
+A second implementation slice now separates provider selection from provider transport:
+- Added `gemini-adapter.ts` as a dedicated server-side transport adapter.
+- The Edge Function delegates generation to the adapter and no longer performs the Gemini HTTP request inline.
+- The adapter accepts only the server-resolved provider config, normalized conversation contents, and the trusted system instruction.
+- Added a 25-second request timeout.
+- Classifies quota exhaustion (HTTP 429), transient server failures, provider errors, malformed responses, and empty model output.
+- Does not parse or log provider error response bodies; operational logging records only a bounded status and error class.
+- Added mocked transport tests for successful Arabic output, server-side API-key header use, request payload, quota failure, transient failure and malformed output.
+- CI now runs the registry tests and adapter tests, alongside Edge Function type-checking and security contract tests.
+
+### Explicit limitation
+
+The registry still permits only the existing Gemini integration. No multi-provider routing, provider fallback, provider credentials, provider accounts, or new database quota ledger have been added. The adapter refactor is not a claim that the existing model or account has a verified free allocation. The configured model's current ID and pricing eligibility still require independent verification.
+
+The change remains in the development branch and must pass the complete PR checks before it is considered ready for review. It has not been merged or deployed.
