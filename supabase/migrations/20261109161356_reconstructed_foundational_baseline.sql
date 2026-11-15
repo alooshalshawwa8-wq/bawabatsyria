@@ -24,6 +24,29 @@ create table public.membership_plans (
 create unique index membership_plans_stripe_price_id_key
   on public.membership_plans(stripe_price_id) where stripe_price_id is not null;
 
+create table public.entitlements (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  entitlement_key text not null,
+  active boolean not null default false,
+  source text not null,
+  expires_at timestamptz,
+  updated_at timestamptz not null default now(),
+  primary key (user_id,entitlement_key)
+);
+create index entitlements_active_user_idx on public.entitlements(user_id,active);
+
+create table public.points_ledger (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  delta integer not null,
+  reason text not null,
+  idempotency_key text not null unique,
+  created_at timestamptz not null default now(),
+  constraint points_ledger_delta_check check (delta <> 0),
+  constraint points_ledger_reason_check check (length(trim(reason)) between 1 and 160)
+);
+create index points_ledger_user_created_idx on public.points_ledger(user_id,created_at desc);
+
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   display_name text,
@@ -148,6 +171,8 @@ create index inventory_movements_item_created_idx on public.inventory_movements(
 -- foundational tables. Subsequent historical migrations still apply their
 -- recorded grants and function hardening in their original order.
 alter table public.membership_plans enable row level security;
+alter table public.entitlements enable row level security;
+alter table public.points_ledger enable row level security;
 alter table public.profiles enable row level security;
 alter table public.subscriptions enable row level security;
 alter table public.inventory_items enable row level security;
@@ -158,6 +183,17 @@ alter table public.journal_lines enable row level security;
 
 create policy "Membership plans readable by everyone" on public.membership_plans
   for select to anon,authenticated using (active = true);
+create policy "Entitlements readable by owner" on public.entitlements
+  for select to authenticated using ((select auth.uid()) = user_id);
+create policy "Points ledger readable by owner" on public.points_ledger
+  for select to authenticated using ((select auth.uid()) = user_id);
+create policy "Points ledger grant by platform owner" on public.points_ledger
+  for insert to authenticated with check (
+    (select auth.jwt()) -> 'app_metadata' ->> 'role' = 'OWNER'
+    and (select auth.jwt()) -> 'app_metadata' ->> 'owner' = 'true'
+    and (select auth.jwt()) -> 'app_metadata' ->> 'owner_access' = 'lifetime'
+  );
+
 create policy "Profiles readable by owner" on public.profiles
   for select to authenticated using ((select auth.uid()) = id);
 create policy "Profiles editable by owner" on public.profiles
@@ -229,6 +265,12 @@ create policy "Journal lines owner delete draft" on public.journal_lines
       where e.id = journal_lines.entry_id and e.user_id = (select auth.uid()) and e.status = 'draft'
     )
   );
+
+-- Points summary view; a later recorded migration enables security_invoker.
+create view public.points_balances as
+  select user_id,coalesce(sum(delta),0::bigint) as balance
+  from public.points_ledger
+  group by user_id;
 
 -- Trigger helper functions recovered from the current catalog. The private
 -- schema is intentionally not exposed to API roles.
