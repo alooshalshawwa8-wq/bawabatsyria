@@ -186,16 +186,21 @@ football = (ROOT / "supabase/functions/football-data/index.ts").read_text(encodi
 for token in (
     'request.method !== "GET"',
     'origin !== ALLOWED_ORIGIN',
-    'request.headers.get("x-forwarded-for")',
-    'rateAllowed(ip)',
-    'persistentRateAllowed(await hashClientKey(ip), 60)',
+    'request.headers.get("cf-connecting-ip")',
+    'isValidClientIp(clientIp)',
+    'if (!isValidClientIp(clientIp) || !SERVICE_KEY)',
+    'rateAllowed(clientBucket)',
+    'persistentRateAllowed(clientBucket, 60)',
     'persistentRate === null',
     'if (!persistentRate)',
     'p_window_seconds: 60',
     'p_max_requests: maxRequests',
+    'name: "HMAC", hash: "SHA-256"',
     'async function hashClientKey(value: string)',
 ):
     require(token in football, "Football API abuse-control contract missing: " + token)
+require('request.headers.get("x-forwarded-for")' not in football,
+        "Football API must not trust caller-controlled X-Forwarded-For")
 require('user.appMetadata?.role === "OWNER" && user.appMetadata?.owner === true' in football,
         "Football owner-only authorization metadata contract missing")
 require('const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")' in football,
