@@ -122,8 +122,8 @@ Deno.serve(async (request: Request) => {
     return reply({ error: "المحادثة طويلة كتير. اختصر آخر الرسائل وجرب من جديد." }, 413);
   }
 
-  // Reserve a globally enforced daily request slot before contacting Gemini.
-  // This prevents parallel Edge isolates from bypassing the provider budget.
+  // Reserve a globally enforced per-client slot before body parsing and owner validation.
+  // This also limits invalid-token traffic before it reaches Supabase Auth.
   const supabaseUrl = SUPABASE_URL;
   const serviceKey = SERVICE_KEY;
   if (!supabaseUrl || !serviceKey) {
