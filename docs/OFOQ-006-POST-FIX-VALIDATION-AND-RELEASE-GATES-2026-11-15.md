@@ -1,46 +1,42 @@
 # OFOQ-006 — Post-fix validation and release gates
 Date: 2026-11-15
 Branch: `ofoq/ofoq-001-execution`
-Verified commit: `d121ec481a9c8ac44de005fb468ea93d89ae2845`
 Pull request: #23 (open, draft; not merged)
 
-## Verified outcomes
-
-The read-only health audit generated from the verified commit reports:
+## Verified outcomes on the development branch
 
 - 78 registered sections; section identifiers are unique.
 - 113 static buttons have accessible names.
 - 11 unique local application scripts exist.
 - 0 duplicate static ID groups; no audit warnings.
+- Browser and mobile smoke tests pass on the PR branch, including the 390px mobile viewport.
+- Static validation, Deno type checks, Edge Function security contracts, and read-only Health Patrol pass.
+- All 38 tracked migrations replay successfully from an empty local Supabase database, with critical relations, functions, and RLS assertions passing.
+- The 14 previously missing historical migration files were restored and their SQL bodies were compared against `supabase_migrations.schema_migrations.statements`: 14/14 match after trimming outer whitespace only.
 
-The audit artifact was retrieved from workflow run `43683175328` (artifact `ofoq-health-report-6`).
+## Nibras security update
 
-All four check runs associated with the commit completed successfully:
+The development branch replaces the per-runtime in-memory limiter and caller-controlled X-Forwarded-For parsing with:
+- the hosted-ingress `cf-connecting-ip` header;
+- HMAC-SHA256 pseudonymous bucket keys (raw IPs are not stored);
+- a PostgreSQL-backed atomic 12 requests / 60 seconds limiter;
+- a service-role-only RPC, RLS-protected table, empty search_path, and 24-hour retention.
 
-- Read-only application and security checks.
-- OFOQ static validation.
-- Membership and portal validation, including Playwright browser smoke tests.
-- Edge Function validation, including TypeScript checks and security contract tests.
+The migration and function source are in the PR branch only. They have not been applied to production or deployed. Production deployment order must be: apply the additive rate-limit migration, verify the RPC/table, then deploy the Edge Function version that calls it.
 
-These results establish branch-level automated validation only. They do not certify production deployment, real email delivery, provider availability, or end-to-end payment operation.
+## Current Pages deployment
 
-## Changes in this validation batch
-
-- Made repeated style-element IDs unique in `index.html`.
-- Gave the second Nibras mascot SVG instance distinct gradient IDs and matching fragment references.
-- Renamed the cinematic featured script ID so it no longer collides with the style element ID.
-- Corrected the static duplicate-ID audit to ignore IDs assembled dynamically at runtime, such as the workspace pane IDs.
-- Confirmed the report now returns zero duplicate-ID groups and zero warnings.
+GitHub Pages deployment run `43692718264` reported a successful deployment from `main`. Its post-deploy browser smoke test then failed on the old deployed main build with horizontal overflow at a 390px viewport (document width 411px). The PR branch contains the responsive fix and its local browser/mobile smoke tests pass. A fresh Pages deployment and post-deploy smoke test are still required after the PR is approved and merged.
 
 ## Release gates still open
 
-1. **Migration reconciliation:** 14 migrations applied in Supabase do not have matching SQL files in the current development/main source tree. Their original SQL must be recovered from a trusted backup or source history. Do not reconstruct migration bodies from names or create replacement migrations under the same timestamps.
-2. **Email delivery:** Configure and verify SMTP in an approved test window; existing browser/auth mocks do not prove real confirmation or recovery email delivery.
-3. **Assistant rate limiting:** Verify that the edge gateway overwrites/trusts `x-forwarded-for` and that clients cannot spoof the value, or replace it with a verified client-IP source.
-4. **Auth hardening:** Review and enable leaked-password protection through the supported Supabase Auth settings, after checking impact and owner approval.
-5. **Payments:** Keep billing disabled. Do not enable Stripe or manual payment flows until explicitly authorized and separately tested.
-6. **Production release:** Keep PR #23 in draft and do not merge until the above gates are resolved and reviewed.
+1. **Real email delivery:** configure a verified SMTP sender/domain and complete a real confirmation/recovery email test. Auth mocks do not prove delivery.
+2. **Auth hardening:** review and enable leaked-password protection through supported Supabase Auth settings after checking impact. This has not been changed.
+3. **Account journey:** run signup → confirmation → login → logout/login → password recovery with a real test mailbox.
+4. **Service readiness:** the 78-section registry is not 78 fully connected services. Many sections are local templates; live provider feeds and external integrations must be explicitly verified and labelled.
+5. **Payments:** keep billing disabled. Do not enable Stripe or manual payment flows until explicitly authorized and separately tested.
+6. **Production release:** PR #23 remains a draft. After review/approval, merge, confirm Pages deployment and live browser/mobile checks, then apply the Nibras migration and deploy its Edge Function in the correct order.
 
 ## Safety boundary
 
-No production schema, RLS policy, Auth setting, secret, Edge Function deployment, payment setting, or production data was changed as part of this validation batch. Work was limited to the development branch, static source corrections, automated checks, and review documentation.
+No production schema, RLS policy, Auth setting, secret, Edge Function deployment, payment setting, or production user data was changed during this validation batch. Work was limited to development-branch source, read-only production SQL comparison, and isolated CI environments.
