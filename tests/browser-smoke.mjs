@@ -54,6 +54,14 @@ try {
   }
   await page.locator("#membershipResend").click();
   await page.locator("#membershipAuthStatus").getByText(/إذا كان الحساب بحاجة إلى تأكيد/).waitFor({ state: "visible", timeout: 5000 });
+  const resendRequest = mockedAuthRequests.find(item => item.path === "/auth/v1/resend" && item.method === "POST");
+  const expectedAuthRedirect = new URL(page.url()).origin + new URL(page.url()).pathname;
+  if (!resendRequest || new URL(resendRequest.url).searchParams.get("redirect_to") !== expectedAuthRedirect) {
+    throw new Error("Resend confirmation did not pass the exact current-page redirect_to query parameter");
+  }
+  if (JSON.parse(resendRequest.body).options?.emailRedirectTo) {
+    throw new Error("Resend confirmation incorrectly placed emailRedirectTo inside the REST JSON body");
+  }
   await page.locator("#membershipRecover").click();
   await page.locator("#membershipAuthStatus").getByText(/إذا كان البريد مسجلاً/).waitFor({ state: "visible", timeout: 5000 });
   if (!mockedAuthRequests.some(item => item.path === "/auth/v1/resend" && item.body.includes("ofoq-smoke@example.com"))) {
