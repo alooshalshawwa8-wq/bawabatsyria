@@ -2,7 +2,7 @@ name: OFOQ static validation
 
 on:
   push:
-    branches: [main]
+    branches: [main, aloosh/brand-prep-2026-11-15]
     paths:
       - "index.html"
       - "*.js"
@@ -15,7 +15,7 @@ on:
       - "robots.txt"
       - "service-worker.js"
   pull_request:
-    branches: [main]
+    branches: [main, ofoq/private-access-readiness-2026-11-15]
     paths:
       - "index.html"
       - "*.js"
@@ -51,6 +51,15 @@ jobs:
           node --check ofoq-core.js
           node --check ofoq-commerce-cloud.js
           node --check ofoq-vault.js
+          node --check ofoq-data.js
+          node --check ofoq-workspaces.js
+          node --check ofoq-workspace-extensions.js
+          node --check scripts/validate-ofoq-section-registry.mjs
+          node --check tests/journal-draft-rpc-contract.mjs
+          node --check tests/inventory-opening-rpc-contract.mjs
+          node --check tests/rpc-idempotency-contract.mjs
+      - name: Validate the 78-section registry and module coverage
+        run: node scripts/validate-ofoq-section-registry.mjs
       - name: Set up Deno
         uses: denoland/setup-deno@v2
         with:
@@ -67,6 +76,12 @@ jobs:
           deno check supabase/functions/football-data/index.ts
       - name: Run Edge Function security contract tests
         run: node tests/edge-function-security-contract.mjs
+      - name: Validate atomic journal draft workflow
+        run: node tests/journal-draft-rpc-contract.mjs
+      - name: Validate atomic inventory opening balance workflow
+        run: node tests/inventory-opening-rpc-contract.mjs
+      - name: Validate owner-scoped RPC idempotency workflow
+        run: node tests/rpc-idempotency-contract.mjs
       - name: Validate static app contracts
         run: |
           node --input-type=module <<'NODE'

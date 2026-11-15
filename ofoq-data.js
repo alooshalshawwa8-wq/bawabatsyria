@@ -10,10 +10,30 @@ async function auth(path,body){const r=await fetch(BASE+"/auth/v1"+path,{method:
 async function token(){if(!BASE||!ANON)throw Error("إعداد الاتصال السحابي غير مكتمل.");let s=read();if(!s||!s.access_token)throw Error("سجّل الدخول من بوابة العضوية أولاً.");if(s.refresh_token&&Number(s.expires_at||0)<Date.now()+60000){if(!refreshPromise)refreshPromise=auth("/token?grant_type=refresh_token",{refresh_token:s.refresh_token}).then(save).finally(()=>refreshPromise=null);s=await refreshPromise;}return s.access_token;}
 async function getUser(force){if(!force&&userPromise)return userPromise;userPromise=(async()=>{const t=await token(),r=await fetch(BASE+"/auth/v1/user",{headers:{apikey:ANON,Authorization:"Bearer "+t},cache:"no-store"}),u=await r.json().catch(()=>({}));if(!r.ok||!u.id)throw Error("انتهت جلسة الحساب؛ سجّل الدخول مجدداً.");const s=read()||{};try{sessionStorage.setItem(LEGACY,JSON.stringify({access_token:s.access_token,refresh_token:s.refresh_token||"",user:{id:u.id,email:u.email||null}}));}catch(_){}return{id:u.id,email:u.email||null};})().catch(e=>{userPromise=null;throw e});return userPromise;}
 async function request(table,o){o=o||{};const t=await token(),u=await getUser(),q=o.query?(typeof o.query==="string"?o.query.replace(/^\?/,""):new URLSearchParams(o.query).toString()):"",url=BASE+"/rest/v1/"+encodeURIComponent(table)+(q?"?"+q:"");const r=await fetch(url,{method:o.method||"GET",headers:{apikey:ANON,Authorization:"Bearer "+t,"Content-Type":"application/json",Prefer:o.prefer||"return=representation"},...(o.body!==undefined?{body:JSON.stringify(o.body)}:{}),cache:"no-store"});if(r.status===401&&!o.retried){const s=read();if(s&&s.refresh_token){save(await auth("/token?grant_type=refresh_token",{refresh_token:s.refresh_token}));userPromise=null;return request(table,Object.assign({},o,{retried:true}));}}const raw=await r.text();let d=null;try{d=raw?JSON.parse(raw):null}catch(_){d={message:raw}}if(!r.ok)throw Error(d&&(d.message||d.details||d.hint)||"فشل الطلب السحابي ("+r.status+").");return d;}
+const pendingRpcKeys=new Map();
+async function requestKey(scope,identity){
+ if(!/^[a-z][a-z0-9-]{1,40}$/.test(scope))throw Error("نطاق مفتاح العملية غير صالح.");
+ const canonical=JSON.stringify(identity||{});
+ let fingerprint=null;
+ try{const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(canonical));fingerprint=Array.from(new Uint8Array(digest)).map(x=>x.toString(16).padStart(2,"0")).join("")}catch(_){}
+ const storageKey="ofoq_rpc_pending_"+scope+"_v1";
+ if(fingerprint){try{const old=JSON.parse(sessionStorage.getItem(storageKey)||"null");if(old&&old.fingerprint===fingerprint&&old.requestId)return old.requestId}catch(_){}}
+ const memory=pendingRpcKeys.get(scope);
+ if(memory&&memory.identity===canonical)return memory.requestId;
+ const requestId=crypto.randomUUID();
+ pendingRpcKeys.set(scope,{identity:canonical,requestId});
+ if(fingerprint){try{sessionStorage.setItem(storageKey,JSON.stringify({fingerprint,requestId}))}catch(_){}}
+ return requestId;
+}
+function clearRequestKey(scope,requestId){
+ pendingRpcKeys.delete(scope);
+ try{const k="ofoq_rpc_pending_"+scope+"_v1",old=JSON.parse(sessionStorage.getItem(k)||"null");if(old&&old.requestId===requestId)sessionStorage.removeItem(k)}catch(_){}
+}
+async function rpc(name,args,retried){if(!/^[a-z][a-z0-9_]{0,62}$/.test(name))throw Error("اسم العملية السحابية غير صالح.");const t=await token();await getUser();const url=BASE+"/rest/v1/rpc/"+encodeURIComponent(name),r=await fetch(url,{method:"POST",headers:{apikey:ANON,Authorization:"Bearer "+t,"Content-Type":"application/json",Prefer:"return=representation"},body:JSON.stringify(args||{}),cache:"no-store"});if(r.status===401&&!retried){const s=read();if(s&&s.refresh_token){save(await auth("/token?grant_type=refresh_token",{refresh_token:s.refresh_token}));userPromise=null;return rpc(name,args,true);}}const raw=await r.text();let d=null;try{d=raw?JSON.parse(raw):null}catch(_){d={message:raw}}if(!r.ok)throw Error(d&&(d.message||d.details||d.hint)||"فشل تنفيذ العملية السحابية ("+r.status+").");return d;}
 function sid(){try{let v=sessionStorage.getItem("ofoq_analytics_session_v1");if(!v){v=crypto.randomUUID();sessionStorage.setItem("ofoq_analytics_session_v1",v)}return v}catch(_){return crypto.randomUUID()}}
 async function track(event,section){if(!/^(section_open|tool_run|lead_created|order_created|career_application_created)$/.test(event)||!/^[a-z0-9_-]{1,80}$/.test(section||""))return false;try{const u=await getUser();await request("ofoq_usage_events",{method:"POST",prefer:"return=minimal",body:{user_id:u.id,event_name:event,section_id:section,session_id:sid()}});return true}catch(_){return false}}
 async function edge(path){const t=await token();const base=String(window.BAWABA_API_BASE||BASE+"/functions/v1/membership-api").replace(/\/$/,"");const r=await fetch(base+path,{headers:{apikey:ANON,Authorization:"Bearer "+t},cache:"no-store"});const raw=await r.text();let d=null;try{d=raw?JSON.parse(raw):null}catch(_){d={message:raw}}if(!r.ok)throw Error(d&&(d.error||d.message)||"تعذر جلب بيانات المنصة ("+r.status+").");return d}
-window.OFOQData=Object.freeze({getUser,request,track,edge,invalidateSession(){userPromise=null;},async signOutLocal(){try{localStorage.removeItem(KEY);localStorage.removeItem("bawabatsyria_access_token");sessionStorage.removeItem(LEGACY)}catch(_){}window.BAWABA_ACCESS_TOKEN="";userPromise=null;}});
+window.OFOQData=Object.freeze({getUser,request,rpc,requestKey,clearRequestKey,track,edge,invalidateSession(){userPromise=null;},async signOutLocal(){try{localStorage.removeItem(KEY);localStorage.removeItem("bawabatsyria_access_token");sessionStorage.removeItem(LEGACY)}catch(_){}window.BAWABA_ACCESS_TOKEN="";userPromise=null;}});
 const old=window.openSection;if(typeof old==="function"&&!old.__ofoqTracked){const w=function(s){if(s&&s.id)track("section_open",s.id);return old.apply(this,arguments)};w.__ofoqTracked=true;window.openSection=w;}
 window.addEventListener("storage",e=>{if(e.key===KEY&&!e.newValue){try{sessionStorage.removeItem(LEGACY)}catch(_){}userPromise=null}});
 })();
