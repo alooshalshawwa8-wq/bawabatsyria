@@ -52,7 +52,7 @@ export async function generateWithGemini(
   try {
     data = await response.json();
   } catch {
-    return { ok: false, status: response.status, kind: "provider" };
+    return { ok: false, status: response.status, kind: "provider", latencyMs: elapsed() };
   }
 
   const answer = (data as {
