@@ -76,6 +76,9 @@ assert.match(membership, /if \(!PAYMENTS_ENABLED\)/);
 assert.match(membership, /billingGateOpen\(\)/);
 assert.match(membership, /readBoundedText\(request, 262_144\)/);
 assert.match(membership, /Deno\.env\.get\("OFOQ_ALLOWED_ORIGIN"\)/);
+assert.match(membership, /if \(origin !== ALLOWED_ORIGIN\) return new Response\(null, \{ status: 403 \}\)/, "membership OPTIONS must use the configured exact origin");
+assert.match(membership, /origin !== ALLOWED_ORIGIN\) \{/, "membership requests must use the configured exact origin");
+assert.doesNotMatch(membership, /origin !== "https:\/\/alooshalshawwa8-wq\.github\.io"/, "membership must not retain hard-coded old-origin guards");
 assert.match(membership, /if \(!user\.owner\) return reply\(\{ error: "Platform owner access required" \}, 403\)/);
 
 console.log("OFOQ Edge Function security contracts passed.");
