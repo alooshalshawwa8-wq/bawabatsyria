@@ -46,26 +46,6 @@ begin
       using errcode = '22023';
   end if;
 
-  select a.currency into v_debit_currency
-    from public.accounting_accounts as a
-   where a.id = p_debit_account_id
-     and a.user_id = v_user_id
-     and a.is_active = true
-   for share;
-  if not found then
-    raise exception 'Active debit account not found' using errcode = '23503';
-  end if;
-
-  select a.currency into v_credit_currency
-    from public.accounting_accounts as a
-   where a.id = p_credit_account_id
-     and a.user_id = v_user_id
-     and a.is_active = true
-   for share;
-  if not found then
-    raise exception 'Active credit account not found' using errcode = '23503';
-  end if;
-
   if p_request_id is null then
     raise exception 'A request id is required for safe retries' using errcode = '22023';
   end if;
@@ -99,6 +79,26 @@ begin
     return v_existing_result;
   end if;
 
+  select a.currency into v_debit_currency
+    from public.accounting_accounts as a
+   where a.id = p_debit_account_id
+     and a.user_id = v_user_id
+     and a.is_active = true
+   for share;
+  if not found then
+    raise exception 'Active debit account not found' using errcode = '23503';
+  end if;
+
+  select a.currency into v_credit_currency
+    from public.accounting_accounts as a
+   where a.id = p_credit_account_id
+     and a.user_id = v_user_id
+     and a.is_active = true
+   for share;
+  if not found then
+    raise exception 'Active credit account not found' using errcode = '23503';
+  end if;
+
   if v_debit_currency is distinct from v_credit_currency then
     raise exception 'Both journal accounts must use the same currency'
       using errcode = '23514';
@@ -126,8 +126,8 @@ $function$;
 
 revoke all on function public.create_journal_draft(text,date,uuid,uuid,numeric,uuid)
   from public, anon;
-grant execute on function public.create_journal_draft(text,date,uuid,uuid,numeric)
+grant execute on function public.create_journal_draft(text,date,uuid,uuid,numeric,uuid)
   to authenticated;
 
-comment on function public.create_journal_draft(text,date,uuid,uuid,numeric)
+comment on function public.create_journal_draft(text,date,uuid,uuid,numeric,uuid)
   is 'Atomically creates one balanced draft journal entry for the authenticated user; posting remains a separate explicit operation.';
