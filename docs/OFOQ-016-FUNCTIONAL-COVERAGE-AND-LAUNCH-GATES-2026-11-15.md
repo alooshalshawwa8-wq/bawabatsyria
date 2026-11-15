@@ -39,7 +39,9 @@ It also verifies the command-centre Escape behavior twice: closing the command c
 
 All 78 sections receive the shared workspace layer (tools, tasks, notes, knowledge and reusable templates). The source also contains dedicated modules for selected areas, including trading, zodiac entertainment, market-price calculations, cooking, marketing copy, accounting/inventory, premium catalogues, and a configurable set of utility modules.
 
-This architecture is useful as a common foundation but is not equivalent to 78 independently integrated backend services. Do not label local-only tools as AI-connected, live-data, or cloud-synchronized services.
+A source-level inventory found 70 section-specific utility-module entries. Of these, 18 currently share the same generic “دليل عملي ومخطط تعلّم” template rather than a domain-specific tool: `science_space`, `world_encyclopedia`, `ai_lab`, `environment_climate`, `personal_finance`, `world_history`, `global_languages`, `global_cuisine`, `family_life`, `books_knowledge`, `creative_studio`, `photography_media`, `gaming_arena`, `fitness_wellness`, `digital_citizenship`, `global_travel`, `startup_lab`, and `sustainable_living`. The other 52 utility entries have named, domain-oriented calculators or generators, although their output is local/template-based and still requires validation. Additional bespoke branches exist for trading, zodiac, prices, cooking, marketing, catalogues, accounting/inventory, football, and the AI assistant.
+
+This architecture is useful as a common foundation but is not equivalent to 78 independently integrated backend services. Do not label local-only tools as AI-connected, live-data, or cloud-synchronized services. The 18 generic-template sections are an explicit feature-completion backlog, not a passed specialized-functionality gate.
 
 ## 4. Remaining launch gates — NOT CLOSED
 
