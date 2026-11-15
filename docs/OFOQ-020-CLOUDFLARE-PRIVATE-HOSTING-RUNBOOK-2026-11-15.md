@@ -154,16 +154,20 @@ PR #32 removes automatic GitHub Pages deployment on `push`. A public deployment 
 
 Do not change repository visibility until all preceding tests pass.
 
-1. Confirm the Cloudflare production hostname is Access-protected.
-2. Confirm owner sign-in and core app functionality work through Cloudflare.
-3. Confirm preview deployments cannot be reached anonymously.
-4. Confirm the app no longer relies on a cached service worker for access.
-5. Convert the GitHub repository to Private. GitHub documents that on GitHub Free, a published Pages site is automatically unpublished when a repository becomes private.
-6. Cloudflare Pages Git integration supports private GitHub repositories; verify the next Cloudflare build still succeeds after the visibility change.
-7. Verify the old GitHub Pages URL is no longer served and cannot bypass Access.
-8. Re-run all browser/mobile smoke and Edge Function contract tests; record the new deployment URL and build SHA.
+1. Create the Cloudflare Pages project with the non-sensitive holding artifact only; disable preview deployments.
+2. Configure Cloudflare Access on the production `<project>.pages.dev` hostname and test anonymous denial plus owner sign-in.
+3. Switch the Pages build to the full private artifact only after Access is confirmed.
+4. Deploy the owner-only Supabase function/RLS changes after a verified backup. Confirm owner login, then disable new Auth signups. Verify no-token 401, non-owner 403, owner success, and non-owner PostgREST denial.
+5. Set `OFOQ_ALLOWED_ORIGIN`, membership `SITE_URL`, and Supabase Auth Site URL / Redirect URLs to the exact production Pages origin. Redeploy and smoke-test all three functions.
+6. Confirm preview deployments cannot be reached anonymously and that the private artifact has no service worker or public sitemap.
+7. Merge PR #32 only after its required CI checks pass and the Cloudflare holding page/Access setup is ready. Switch the Cloudflare production branch to `main`.
+8. Manually run `retire-github-pages.yml` with `confirm_retirement=true` and the exact private Pages URL. This publishes only the retirement notice on the old GitHub Pages path; the old automatic deploy workflow now requires an explicit manual opt-in and will not republish on pushes.
+9. While each owner device is online, visit the old GitHub Pages URL and confirm the retirement page clears only the OFOQ-scoped service worker and `ofoq-shell-*` caches. Keep the retirement notice available for at least 7 days or until every owner device has visited.
+10. Only then change the GitHub repository to Private. On GitHub Free, the old Pages site is automatically unpublished; Cloudflare Pages must continue building from the private repository through its authorized GitHub App.
+11. Verify the old GitHub Pages URL is unavailable, the Cloudflare hostname denies anonymous access, the owner can use the full app, and direct Supabase calls still deny non-owner identities.
+12. Re-run browser/mobile smoke tests and record the final deployment URL and build SHA.
 
-If any step fails, stop the cutover, keep the current source intact, and restore the prior hosting route only as a temporary fallback. Do not claim privacy while the old public URL remains accessible.
+If any step fails, stop the cutover, keep the source and database intact, and do not claim privacy while the old app or any bypass URL remains reachable.
 
 ### GitHub Actions free-quota note
 
