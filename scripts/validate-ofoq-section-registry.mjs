@@ -54,6 +54,16 @@ const utilityIds = [...utilitySource.matchAll(/^\s*([a-z][a-z0-9_]*):\s*\{\s*tit
 assert.equal(utilityIds.length, 70, "Expected 70 primary utility module definitions; found " + utilityIds.length);
 assert.equal(new Set(utilityIds).size, utilityIds.length, "Duplicate utility module keys detected");
 
+const augmentedUtilityIds = [];
+for (const match of html.matchAll(/Object\\.assign\\(utilityModules,\\s*\\{/g)) {
+  const objectStart = html.indexOf("{", match.index);
+  const objectEnd = matchingDelimiter(html, objectStart);
+  const body = html.slice(objectStart + 1, objectEnd);
+  const keys = [...body.matchAll(/^\\s*([a-z][a-z0-9_]*):\\s*\\{\\s*title:/gm)].map(item => item[1]);
+  assert.equal(new Set(keys).size, keys.length, "Duplicate keys in a utilityModules augmentation");
+  augmentedUtilityIds.push(...keys);
+}
+
 const directRendererIds = [...html.matchAll(/sec\.id\s*===\s*'([a-z][a-z0-9_]*)'/g)].map(match => match[1]);
 const workspaceIds = [...(workspaces + "\n" + extensions).matchAll(/section\.id\s*===\s*["']([a-z][a-z0-9_]*)["']/g)].map(match => match[1]);
 const catalog = new Set(ids);
@@ -61,11 +71,11 @@ const assertKnown = (label, values) => {
   const orphans = [...new Set(values)].filter(id => !catalog.has(id));
   assert.deepEqual(orphans, [], label + " reference unknown catalogue IDs: " + orphans.join(", "));
 };
-assertKnown("Utility registry", utilityIds);
+assertKnown("Utility registry", [...utilityIds, ...augmentedUtilityIds]);
 assertKnown("Direct renderer", directRendererIds);
 assertKnown("Cloud workspace", workspaceIds);
 
-const covered = new Set([...utilityIds, ...directRendererIds, ...workspaceIds]);
+const covered = new Set([...utilityIds, ...augmentedUtilityIds, ...directRendererIds, ...workspaceIds]);
 for (const id of ["auto_moto_gallery", "tech_devices", "luxury_villas"]) covered.add(id);
 const uncovered = ids.filter(id => !covered.has(id));
 assert.deepEqual(uncovered, [], "Catalogue sections without a registered utility, direct renderer, or cloud workspace: " + uncovered.join(", "));
@@ -73,7 +83,7 @@ assert.deepEqual(uncovered, [], "Catalogue sections without a registered utility
 console.log("OFOQ section registry validation passed.");
 console.log(JSON.stringify({
   catalogueSections: records.length,
-  utilityModules: utilityIds.length,
+  utilityModules: utilityIds.length,\n  augmentedUtilityModules: augmentedUtilityIds.length,
   directRendererReferences: new Set(directRendererIds).size,
   cloudWorkspaceTargets: new Set(workspaceIds).size,
   uncoveredSections: 0
