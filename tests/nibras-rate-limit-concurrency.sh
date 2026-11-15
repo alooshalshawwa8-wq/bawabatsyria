@@ -33,9 +33,9 @@ if [[ "$failed" -ne 0 ]]; then
   exit 1
 fi
 
-allowed="$(grep -hxc 't' "$tmp"/* | awk '{ total += $1 } END { print total + 0 }')"
-denied="$(grep -hxc 'f' "$tmp"/* | awk '{ total += $1 } END { print total + 0 }')"
-invalid="$(grep -hvE '^(t|f)$' "$tmp"/* || true)"
+allowed="$(awk '$0 == \"t\" { total++ } END { print total + 0 }' "$tmp"/*)"
+denied="$(awk '$0 == \"f\" { total++ } END { print total + 0 }' "$tmp"/*)"
+invalid="$(awk '$0 != \"t\" && $0 != \"f\" { print }' "$tmp"/*)"
 
 printf 'Concurrent Nibras limiter results: allowed=%s denied=%s\n' "$allowed" "$denied"
 if [[ "$allowed" != "12" || "$denied" != "28" || -n "$invalid" ]]; then
