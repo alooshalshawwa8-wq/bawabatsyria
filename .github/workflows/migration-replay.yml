@@ -95,6 +95,12 @@ jobs:
             IF public.is_ofoq_owner() IS DISTINCT FROM false THEN
               RAISE EXCEPTION 'non-owner metadata must fail is_ofoq_owner()';
             END IF;
+            IF has_function_privilege('anon', 'public.is_ofoq_owner()', 'EXECUTE') THEN
+              RAISE EXCEPTION 'anon must not execute is_ofoq_owner()';
+            END IF;
+            IF NOT has_function_privilege('authenticated', 'public.is_ofoq_owner()', 'EXECUTE') THEN
+              RAISE EXCEPTION 'authenticated must execute is_ofoq_owner() for RLS evaluation';
+            END IF;
             SELECT count(*) INTO uncovered
             FROM pg_policies
             WHERE schemaname = 'public'
