@@ -22,11 +22,11 @@ The development branch replaces the per-runtime in-memory limiter and caller-con
 - a PostgreSQL-backed atomic 12 requests / 60 seconds limiter;
 - a service-role-only RPC, RLS-protected table, empty search_path, and 24-hour retention.
 
-The migration and function source are in the PR branch only. They have not been applied to production or deployed. Production deployment order must be: apply the additive rate-limit migration, verify the RPC/table, then deploy the Edge Function version that calls it.
+The additive rate-limit migration was applied to production as version `20261115082629`. The matching Edge Function `site-assistant` was then deployed as active version 21. Read-only verification confirmed the table/function exist, RLS is enabled, `anon` and `authenticated` cannot read/execute, and `service_role` has the required access.
 
 ## Current Pages deployment
 
-GitHub Pages deployment run `43692718264` reported a successful deployment from `main`. Its post-deploy browser smoke test then failed on the old deployed main build with horizontal overflow at a 390px viewport (document width 411px). The PR branch contains the responsive fix and its local browser/mobile smoke tests pass. A fresh Pages deployment and post-deploy smoke test are still required after the PR is approved and merged.
+GitHub Pages deployment from the merged main commit `feb3dcc2be99fea6ff674a6c1b7e7ca4caf0abb9` is running. The previous deployment's post-deploy browser test found 390px horizontal overflow; the merged responsive fix passed branch browser/mobile smoke tests. The final live Pages smoke test must complete before handover.
 
 ## Release gates still open
 
@@ -39,4 +39,4 @@ GitHub Pages deployment run `43692718264` reported a successful deployment from 
 
 ## Safety boundary
 
-No production schema, RLS policy, Auth setting, secret, Edge Function deployment, payment setting, or production user data was changed during this validation batch. Work was limited to development-branch source, read-only production SQL comparison, and isolated CI environments.
+Production changes were limited to one additive rate-limit migration and the matching `site-assistant` Edge Function deployment. No Auth setting, SMTP secret, payment setting, RLS policy on existing user tables, or production user data was changed.
