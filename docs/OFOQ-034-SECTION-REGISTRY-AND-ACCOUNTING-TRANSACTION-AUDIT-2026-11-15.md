@@ -11,7 +11,7 @@ The validator:
 - Locates the `const sections = [...]` catalogue and finds its closing bracket with a delimiter scanner that respects quoted strings, escapes, and comments.
 - Requires exactly 78 catalogue records and unique stable IDs.
 - Requires non-empty title, icon, and description fields.
-- Checks the 70 primary `utilityModules` keys for uniqueness and catalogue membership.
+- Checks the 70 primary `utilityModules` keys and all 28 keys across three `Object.assign(utilityModules, ...)` augmentation registries for uniqueness within each registry and catalogue membership.
 - Checks direct renderer section references and the cloud workspace extension targets against the catalogue.
 - Requires every catalogue entry to have a utility module, a direct renderer, a workspace extension, or one of the three explicit premium-catalogue renderers.
 
@@ -20,6 +20,7 @@ The validator:
 The validator's extraction and coverage rules were independently exercised against the current branch source during this audit:
 - Catalogue records: 78; unique IDs: 78.
 - Primary utility modules: 70; orphan keys: 0.
+- Augmented utility modules: 28 across three registries; orphan keys: 0.
 - Direct renderer references: 11 unique; orphan references: 0.
 - Cloud workspace targets: `business`, `accounting_vip`, `jobs`, `freelance_vip`; orphan references: 0.
 - Uncovered catalogue sections: 0.
