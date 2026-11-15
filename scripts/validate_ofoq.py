@@ -166,7 +166,7 @@ trigger_acl_migration = ROOT / "supabase/migrations/20261113132427_restrict_work
 require(trigger_acl_migration.is_file(), "trigger-only function privilege migration missing")
 require("REVOKE EXECUTE ON FUNCTION public.trim_user_workspace_backup_history() FROM PUBLIC, anon, authenticated;" in trigger_acl_migration.read_text(encoding="utf-8"), "trigger-only helper must not be exposed as client RPC")
 
-# AI assistant request hardening: exact-origin POST, bounded payloads, and fail-closed global budget.
+# AI assistant request hardening: exact-origin POST, bounded payloads, and fail-closed provider/model quota ledger.
 for token in (
     'request.method !== "POST"',
     'origin !== ALLOWED_ORIGIN',
@@ -177,8 +177,10 @@ for token in (
     'readBoundedBody(request, 24_000)',
     'body.messages.length > 12',
     'item.content.trim().slice(0, 2000)',
-    'reserve_ai_provider_request',
-    'budgetAllowed !== true',
+    'reserve_ai_model_quota',
+    'reservation?.allowed !== true',
+    'mark_ai_model_provider_attempt',
+    'settle_ai_model_quota',
 ):
     require(token in assistant, "AI assistant abuse-control contract missing: " + token)
 
@@ -216,13 +218,15 @@ for secret_marker in ("GEMINI_API_KEY", "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_S
     require(secret_marker not in html, "server secret marker leaked into index.html: " + secret_marker)
 require("functions/v1/football-data" not in gemini.group(1), "Gemini assistant must not trigger football API calls")
 
-# The deployed AI source is kept in Git with its real global daily quota guard.
+# The AI source uses a provider/model-scoped durable quota ledger and a verified-free eligibility gate.
 for token in (
     'Deno.env.get("GEMINI_API_KEY")',
-    "reserve_ai_provider_request",
-    'p_provider: "gemini"',
-    "p_daily_limit: 30",
-    "budgetAllowed !== true",
+    "reserve_ai_model_quota",
+    "p_provider_id: route.provider.id",
+    "p_model_id: route.provider.modelId",
+    "mark_ai_model_provider_attempt",
+    "settle_ai_model_quota",
+    "if (!route)",
     "SUPABASE_SERVICE_ROLE_KEY",
     "SUPABASE_SECRET_KEYS",
     "sectionProfiles",
