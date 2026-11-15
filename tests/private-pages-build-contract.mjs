@@ -42,7 +42,7 @@ assert.match(headers, /X-Content-Type-Options:\s*nosniff/i);
 assert.match(headers, /Cache-Control:\s*no-store/i);
 
 const pagesWorkflow = readFileSync(resolve(".github/workflows/pages.yml"), "utf8");
-assert.match(pagesWorkflow, /if: github\\.event\\.repository\\.private == false && vars\\.OFOQ_PUBLIC_PAGES_ENABLED == 'true'/);
+assert.match(pagesWorkflow, /if: github\.event\.repository\.private == false && vars\.OFOQ_PUBLIC_PAGES_ENABLED == 'true'/);
 
 const forbidden = new Set(["docs", "tests", "supabase", "backend", "scripts", ".github", ".git"]);
 for (const entry of readdirSync(root, { withFileTypes: true })) {
