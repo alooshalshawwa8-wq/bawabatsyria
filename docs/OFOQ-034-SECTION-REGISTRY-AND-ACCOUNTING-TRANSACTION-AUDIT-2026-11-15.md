@@ -42,8 +42,15 @@ Confirmed safeguards:
 - The surviving baseline trigger applies each movement to stock in the same database transaction and rejects a movement that would make stock negative.
 - The duplicate later public trigger/function pair is explicitly removed by the follow-up migration, leaving the private baseline trigger as the intended stock mutation path.
 
-Operational caveat:
-- The UI creates a new item with quantity zero and then submits the opening movement as a second request. If the second request fails, the item can remain with zero stock. This is recoverable and does not create phantom stock, but the UX should expose the incomplete opening-balance state and offer a retry rather than implying the opening balance was saved.
+### Implemented on the development branch
+
+Added `supabase/migrations/20261115191000_create_atomic_inventory_item_rpc.sql`:
+- Adds `public.create_inventory_item_with_opening_movement` as a `SECURITY INVOKER` function with an empty search path.
+- Derives ownership from `auth.uid()`; validates name, SKU length, unit, non-negative opening quantity, unit-cost precision, and a three-letter currency code.
+- Creates the inventory item at zero, then inserts the optional opening movement. The existing protected database trigger updates stock in the same transaction; any failure rolls back both item and movement.
+- Grants execution only to authenticated users, with PUBLIC/anon revoked.
+
+Updated `ofoq-workspaces.js` to call the atomic RPC instead of issuing separate item and movement requests. Added `tests/inventory-opening-rpc-contract.mjs` and included its syntax and contract checks in static CI.
 
 ## 3. Journal and accounting review
 
@@ -71,10 +78,10 @@ Added `supabase/migrations/20261115190000_create_atomic_journal_draft_rpc.sql`:
 
 Updated `ofoq-data.js` with an authenticated POST-only PostgREST RPC transport, including the existing session refresh pattern. Updated `ofoq-workspace-extensions.js` so the journal UI uses the atomic RPC and continues to leave entries as drafts; posting remains a separate explicit action.
 
-Added `tests/journal-draft-rpc-contract.mjs` and wired it plus syntax checks for the changed shared data/workspace scripts into static CI.
+Added `tests/journal-draft-rpc-contract.mjs` and `tests/inventory-opening-rpc-contract.mjs`; both are wired into static CI along with syntax checks for the changed shared data/workspace scripts.
 
 Remaining hardening:
-- Add a client request UUID and database idempotency ledger before implementing automatic retries for this operation. The current RPC itself is atomic, but a user retry after an ambiguous network timeout could create a second valid draft.
+- Add client request UUIDs and database idempotency protection to both creation RPCs before implementing automatic retries. Each RPC is atomic, but a user retry after an ambiguous network timeout could create a second valid draft or inventory item.
 - Run the migration replay and static CI against this branch before considering the change verified. No CI run has yet been observed for this branch.
 
 ## 4. Scope and non-actions
