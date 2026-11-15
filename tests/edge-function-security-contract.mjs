@@ -30,6 +30,7 @@ assert.doesNotMatch(assistant, /request\.headers\.get\(["']x-forwarded-for/i);
 assert.match(assistant, /hashClientIp\(clientIp, serviceKey\)/);
 assert.match(assistant, /reserve_site_assistant_rate_limit/);
 assert.match(assistant, /rateAllowed !== true/);
+assert.ok(assistant.indexOf("reserve_site_assistant_rate_limit") < assistant.indexOf("const ownerAuth = await authenticatedOfoqOwner(request)"), "Nibras must rate-limit before Auth lookup");
 assert.match(assistant, /async function authenticatedOfoqOwner/);
 assert.match(assistant, /request\.headers\.get\("authorization"\)/);
 assert.match(assistant, /metadata\.role === "OWNER" && metadata\.owner === true && metadata\.owner_access === "lifetime"/);
@@ -46,6 +47,7 @@ assert.match(football, /const ownerUser = await authenticatedFootballUser\(reque
 assert.match(football, /ownerMetadata\.role !== "OWNER"/);
 assert.match(football, /ownerMetadata\.owner !== true/);
 assert.match(football, /ownerMetadata\.owner_access !== "lifetime"/);
+assert.ok(football.indexOf("const ownerUser = await authenticatedFootballUser(request)") < football.indexOf("const clientIp = request.headers.get"), "football API must authenticate owner before provider/IP processing");
 
 assert.match(football, /request\.headers\.get\("cf-connecting-ip"\)/);
 assert.doesNotMatch(football, /request\.headers\.get\(["']x-forwarded-for/i);
