@@ -79,6 +79,7 @@ writeFileSync(resolve(output, "_headers"), `/*
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer
   X-Frame-Options: DENY
-  Content-Security-Policy: frame-ancestors 'none'
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Content-Security-Policy: default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
 `, "utf8");
 console.log("Legacy GitHub Pages retirement artifact built. Visit it online on each owner device before unpublishing.");
