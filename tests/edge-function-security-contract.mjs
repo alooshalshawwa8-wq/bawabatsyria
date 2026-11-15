@@ -18,7 +18,7 @@ assert.match(assistant, /"x-goog-api-key": provider\.apiKey/);
 assert.match(aiRegistry, /export type AiProviderId = "gemini"/);
 assert.match(aiRegistry, /providerId !== "gemini"/);
 assert.match(aiRegistry, /https:\/\/generativelanguage\.googleapis\.com/);
-assert.match(aiRegistry, /pricingStatus: "free-tier-limited"/);
+assert.match(aiRegistry, /pricingStatus: "free-tier-unverified"/);
 assert.doesNotMatch(aiRegistry, /process\.env|localStorage|window\./);
 assert.doesNotMatch(assistant, /body\.provider|body\.model|body\.endpoint/);
 assert.doesNotMatch(assistant, /apiKey\s*:\s*body\./);
