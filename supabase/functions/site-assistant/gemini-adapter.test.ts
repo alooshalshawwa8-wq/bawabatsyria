@@ -14,6 +14,7 @@ Deno.test("Gemini adapter sends only the resolved server configuration", async (
     seenBody = JSON.parse(String(init?.body));
     return Response.json({
       candidates: [{ content: { parts: [{ text: "مرحبا" }, { text: " بك" }] } }],
+      usageMetadata: { promptTokenCount: 8, candidatesTokenCount: 3, totalTokenCount: 11 },
     });
   };
   const result = await generateWithGemini(
@@ -22,7 +23,12 @@ Deno.test("Gemini adapter sends only the resolved server configuration", async (
     "تعليمات اختبار",
     fakeFetch,
   );
-  assertEquals(result, { ok: true, answer: "مرحبا بك" });
+  assertEquals(result.ok, true);
+  if (result.ok) {
+    assertEquals(result.answer, "مرحبا بك");
+    assertEquals(result.usage, { promptTokenCount: 8, candidatesTokenCount: 3, totalTokenCount: 11 });
+    assertEquals(result.latencyMs >= 0, true);
+  }
   assertEquals(seenUrl, provider.endpoint);
   assertEquals(seenKey, "test-secret");
   assertEquals((seenBody.contents as unknown[]).length, 1);
@@ -32,19 +38,22 @@ Deno.test("Gemini adapter sends only the resolved server configuration", async (
 Deno.test("Gemini quota errors are classified without reading provider error payloads", async () => {
   const fakeFetch: typeof fetch = async () => new Response("private provider detail", { status: 429 });
   const result = await generateWithGemini(provider, [{ role: "user", parts: [{ text: "x" }] }], "system", fakeFetch);
-  assertEquals(result, { ok: false, status: 429, kind: "quota" });
+  assertEquals(result.ok, false);
+  if (!result.ok) { assertEquals(result.status, 429); assertEquals(result.kind, "quota"); }
 });
 
 Deno.test("Gemini server errors are classified as transient", async () => {
   const fakeFetch: typeof fetch = async () => new Response("provider detail", { status: 503 });
   const result = await generateWithGemini(provider, [{ role: "user", parts: [{ text: "x" }] }], "system", fakeFetch);
-  assertEquals(result, { ok: false, status: 503, kind: "transient" });
+  assertEquals(result.ok, false);
+  if (!result.ok) { assertEquals(result.status, 503); assertEquals(result.kind, "transient"); }
 });
 
 Deno.test("malformed successful responses do not become empty assistant messages", async () => {
   const fakeFetch: typeof fetch = async () => Response.json({ candidates: [] });
   const result = await generateWithGemini(provider, [{ role: "user", parts: [{ text: "x" }] }], "system", fakeFetch);
-  assertEquals(result, { ok: false, status: 200, kind: "empty" });
+  assertEquals(result.ok, false);
+  if (!result.ok) { assertEquals(result.status, 200); assertEquals(result.kind, "empty"); }
 });
 
 Deno.test("Gemini adapter distinguishes a request timeout", async () => {
@@ -52,7 +61,8 @@ Deno.test("Gemini adapter distinguishes a request timeout", async () => {
     throw new DOMException("deadline exceeded", "TimeoutError");
   };
   const result = await generateWithGemini(provider, [{ role: "user", parts: [{ text: "x" }] }], "system", fakeFetch);
-  assertEquals(result, { ok: false, status: 0, kind: "timeout" });
+  assertEquals(result.ok, false);
+  if (!result.ok) { assertEquals(result.status, 0); assertEquals(result.kind, "timeout"); }
 });
 
 Deno.test("Gemini adapter treats network failures as transient", async () => {
@@ -60,5 +70,6 @@ Deno.test("Gemini adapter treats network failures as transient", async () => {
     throw new TypeError("network unavailable");
   };
   const result = await generateWithGemini(provider, [{ role: "user", parts: [{ text: "x" }] }], "system", fakeFetch);
-  assertEquals(result, { ok: false, status: 0, kind: "transient" });
+  assertEquals(result.ok, false);
+  if (!result.ok) { assertEquals(result.status, 0); assertEquals(result.kind, "transient"); }
 });
