@@ -31,7 +31,7 @@ assert.match(assistant, /hashClientIp\(clientIp, serviceKey\)/);
 assert.match(assistant, /reserve_site_assistant_rate_limit/);
 assert.match(assistant, /rateAllowed !== true/);
 assert.ok(assistant.indexOf("reserve_site_assistant_rate_limit") < assistant.indexOf("const ownerAuth = await authenticatedOfoqOwner(request)"), "Nibras must rate-limit before Auth lookup");
-assert.match(assistant, /async function authenticatedOfoqOwner/);
+assert.match(assistant, /Deno\.env\.get\("OFOQ_ALLOWED_ORIGIN"\)/);\nassert.match(assistant, /async function authenticatedOfoqOwner/);
 assert.match(assistant, /request\.headers\.get\("authorization"\)/);
 assert.match(assistant, /metadata\.role === "OWNER" && metadata\.owner === true && metadata\.owner_access === "lifetime"/);
 assert.match(assistant, /Owner access required/);
@@ -43,7 +43,7 @@ assert.match(index, /functions\/v1\/site-assistant/);
 
 // Football API: request throttles must fail closed if persistent rate checks fail.
 assert.match(football, /request\.method !== "GET"/);
-assert.match(football, /const ownerUser = await authenticatedFootballUser\(request\)/);
+assert.match(football, /Deno\.env\.get\("OFOQ_ALLOWED_ORIGIN"\)/);\nassert.match(football, /const ownerUser = await authenticatedFootballUser\(request\)/);
 assert.match(football, /ownerMetadata\.role !== "OWNER"/);
 assert.match(football, /ownerMetadata\.owner !== true/);
 assert.match(football, /ownerMetadata\.owner_access !== "lifetime"/);
@@ -71,6 +71,6 @@ assert.match(membership, /validateStripeEventEnvelope\(event\)/);
 assert.match(membership, /if \(!PAYMENTS_ENABLED\)/);
 assert.match(membership, /billingGateOpen\(\)/);
 assert.match(membership, /readBoundedText\(request, 262_144\)/);
-assert.match(membership, /if \(!user\.owner\) return reply\(\{ error: "Platform owner access required" \}, 403\)/);
+assert.match(membership, /Deno\.env\.get\("OFOQ_ALLOWED_ORIGIN"\)/);\nassert.match(membership, /if \(!user\.owner\) return reply\(\{ error: "Platform owner access required" \}, 403\)/);
 
 console.log("OFOQ Edge Function security contracts passed.");
