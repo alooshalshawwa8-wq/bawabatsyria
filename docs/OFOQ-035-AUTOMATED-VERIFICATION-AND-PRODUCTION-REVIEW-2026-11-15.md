@@ -41,8 +41,11 @@ A dedicated PostgreSQL integration test was then added at `tests/rpc-idempotency
 - Duplicate journal-draft creation returns the same entry id.
 - Exactly one journal entry and two journal lines are created.
 
-The integration test is wired into the clean migration replay workflow. Its new run is pending/in progress and has not yet produced a result at the time of this update. Do not treat this final RPC integration check as passed until the workflow reports success:
-[Latest migration replay run](https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/43744655658)
+The integration test passed on the disposable PostgreSQL stack:
+[GitHub Actions run 43744523946](https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/43744523946)
+
+A follow-up test-hardening commit also sets the individual `request.jwt.claim.sub` and `request.jwt.claim.role` settings in addition to the aggregate claims JSON. Static validation passed on that latest commit. Its clean replay/integration run is queued:
+[Latest migration replay run 43744874985](https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/43744874985)
 
 ## 3. Retry-safety refinement
 
