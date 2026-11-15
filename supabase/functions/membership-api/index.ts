@@ -335,14 +335,14 @@ async function getJson(path: string, token?: string) {
 Deno.serve(async (request: Request) => {
   if (request.method === "OPTIONS") {
     const origin = request.headers.get("Origin") ?? "";
-    if (origin !== "https://alooshalshawwa8-wq.github.io") return new Response(null, { status: 403 });
+    if (origin !== ALLOWED_ORIGIN) return new Response(null, { status: 403 });
     return new Response(null, { status: 204, headers: corsHeaders });
   }
   if (!SUPABASE_URL || !API_KEY) return reply({ error: "Membership service is not configured" }, 503);
 
   const path = pathOf(new URL(request.url));
   const origin = request.headers.get("Origin") ?? "";
-  if (path !== "/api/stripe/webhook" && origin && origin !== "https://alooshalshawwa8-wq.github.io") {
+  if (path !== "/api/stripe/webhook" && origin && origin !== ALLOWED_ORIGIN) {
     return reply({ error: "Origin not allowed" }, 403);
   }
   try {
