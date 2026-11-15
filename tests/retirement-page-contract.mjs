@@ -7,7 +7,7 @@ assert.ok(existsSync(resolve(root, "index.html")));
 const html = readFileSync(resolve(root, "index.html"), "utf8");
 assert.match(html, /name="robots" content="noindex,nofollow,noarchive"/);
 const privateUrl = new URL(process.env.OFOQ_PRIVATE_SITE_URL ?? "");
-assert.match(html, new RegExp(privateUrl.origin.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\assert.match(html, /https:\/\/ofoq-private\.pages\.dev\//);").replace(/\\/$/, "") + "/"));
+assert.ok(html.includes('href="' + privateUrl.origin + '/"'), "Retirement page must link to the configured private host");
 assert.match(html, /serviceWorker\.getRegistrations\(/);
 assert.match(html, /caches\.keys\(/);
 assert.match(html, /ofoq-shell-/);
