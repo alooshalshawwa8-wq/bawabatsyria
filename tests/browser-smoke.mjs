@@ -120,6 +120,42 @@ try {
   const savedUtilityNote = await page.evaluate(() => JSON.parse(localStorage.getItem("ofoq-notes-social_media_hub") || "{}").notes || "");
   if (!savedUtilityNote.includes("خطة محتوى أولية") || !savedUtilityNote.includes("OFOQ Smoke Brand")) throw new Error("Utility output was not saved to the section notes");
 
+  const specialistCases = [
+    { id: "science_space", expected: "تقدير زمن الرحلة", values: { distance: "1", speed: "30" } },
+    { id: "world_encyclopedia", expected: "بطاقة بحث موسوعية", values: { topic: "طريق الحرير", question: "كيف أثّر في التجارة؟", sources: "مصدر مرجعي تجريبي" } },
+    { id: "ai_lab", expected: "قالب أمر قابل للاختبار", values: { role: "محلل", task: "حلل خطة مشروع", context: "بيانات تجريبية", constraints: "لا تختلق معلومات", format: "نقاط" } },
+    { id: "environment_climate", expected: "تقدير الأثر للفترة", values: { electricity: "100", electricFactor: "0.4", transport: "20", transportFactor: "0.2" } },
+    { id: "personal_finance", expected: "ملخص الميزانية الشهرية", values: { income: "3000", fixed: "1000", variable: "700", savings: "500" } },
+    { id: "world_history", expected: "بطاقة حدث تاريخي", values: { event: "حدث تجريبي", date: "1900", place: "مكان تجريبي", context: "سياق", source: "مرجع" } },
+    { id: "global_languages", expected: "بطاقة مفردة", values: { language: "الإسبانية", word: "hola", meaning: "مرحباً", example: "Hola, ¿cómo estás?" } },
+    { id: "global_cuisine", expected: "مقادير معدلة", values: { ingredient: "أرز", quantity: "2", unit: "كوب", base: "4", target: "6" } },
+    { id: "family_life", expected: "بطاقة مهمة أسرية", values: { task: "ترتيب المنزل", person: "عضو الأسرة", days: "3", day: "السبت والاثنين والأربعاء" } },
+    { id: "books_knowledge", expected: "سجل القراءة", values: { title: "كتاب تجريبي", author: "مؤلف", pages: "100", read: "25", takeaway: "فكرة رئيسية" } },
+    { id: "creative_studio", expected: "موجز إبداعي", values: { project: "مشروع تجريبي", audience: "الجمهور", objective: "توضيح الفكرة", style: "بسيط", deliverables: "موجز" } },
+    { id: "photography_media", expected: "نتيجة التعريض", values: { aperture: "2.8", shutter: "0.008", iso: "100" } },
+    { id: "gaming_arena", expected: "خطة تدريب أسبوعية", values: { game: "لعبة تجريبية", focus: "التصويب", sessions: "4", minutes: "45" } },
+    { id: "fitness_wellness", expected: "ملخص النشاط الأسبوعي", values: { activity: "المشي", minutes: "30", days: "5", goal: "الانتظام" } },
+    { id: "digital_citizenship", expected: "مراجعة عادات الأمان الرقمي", values: { accounts: "5", mfa: "3", reused: "1", backup: "نعم" } },
+    { id: "global_travel", expected: "تقدير ميزانية الرحلة", values: { destination: "وجهة تجريبية", nights: "3", daily: "50", transport: "120", reserve: "10" } },
+    { id: "startup_lab", expected: "ملخص اقتصاديات الوحدة", values: { revenue: "12000", variable: "4500", fixed: "3000", units: "200", acquisition: "1000", customers: "50" } },
+    { id: "sustainable_living", expected: "تقدير الاستبدال السنوي", values: { items: "20", price: "0.15", replacement: "8", reuse: "5" } }
+  ];
+  for (const toolCase of specialistCases) {
+    await page.evaluate(async id => {
+      const target = window.BAWABA_SECTIONS.find(item => item.id === id);
+      if (!target) throw new Error("Missing specialist section: " + id);
+      await window.openSection(target);
+    }, toolCase.id);
+    for (const [field, value] of Object.entries(toolCase.values)) {
+      await page.locator("#util_" + field).fill(value);
+    }
+    await page.locator("#specialTool").getByRole("button", { name: "أنشئ النتيجة" }).click();
+    const output = await page.locator("#specialTool textarea[readonly]").first().inputValue();
+    if (!output.includes(toolCase.expected)) {
+      throw new Error("Specialist tool failed to generate expected output for " + toolCase.id + ": " + output);
+    }
+  }
+
   for (const section of sections) {
     await page.evaluate(async id => {
       const target = window.BAWABA_SECTIONS.find(item => item.id === id);
