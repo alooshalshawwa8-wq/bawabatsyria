@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import {
   copyFileSync,
   cpSync,
@@ -52,6 +53,9 @@ for (const relativePath of publicDirectories) {
   }
   cpSync(source, resolve(output, relativePath), { recursive: true });
 }
+
+// Match the public build's responsive WebP variants without copying build tooling into dist.
+execFileSync("python3", [resolve(root, "scripts/generate-responsive-webp.py"), resolve(output, "assets")], { stdio: "inherit" });
 
 // The private deployment must not be indexed as a public website.
 const indexPath = resolve(output, "index.html");
