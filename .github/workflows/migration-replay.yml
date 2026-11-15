@@ -4,8 +4,16 @@ on:
   push:
     branches:
       - ofoq/ofoq-001-execution
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/config.toml"
+      - "supabase/seed.sql"
   pull_request:
     branches: [main]
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/config.toml"
+      - "supabase/seed.sql"
   workflow_dispatch:
 
 permissions:
