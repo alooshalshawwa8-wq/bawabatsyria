@@ -9,6 +9,8 @@ on:
       - "supabase/config.toml"
       - "supabase/seed.sql"
       - "tests/nibras-rate-limit-concurrency.sh"
+      - "tests/ai-quota-ledger-*.sql"
+      - "tests/ai-quota-ledger-*.sh"
   pull_request:
     branches: [main]
     paths:
