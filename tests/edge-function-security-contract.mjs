@@ -2,19 +2,26 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const read = path => readFile(new URL("../" + path, import.meta.url), "utf8");
-const [assistant, football, membership, index, aiRegistry, geminiAdapter] = await Promise.all([
+const [assistant, football, membership, index, aiRegistry, geminiAdapter, aiTaskRouter] = await Promise.all([
   read("supabase/functions/site-assistant/index.ts"),
   read("supabase/functions/football-data/index.ts"),
   read("supabase/functions/membership-api/index.ts"),
   read("index.html"),
   read("supabase/functions/site-assistant/ai-provider-registry.ts"),
   read("supabase/functions/site-assistant/gemini-adapter.ts"),
+  read("supabase/functions/site-assistant/ai-task-router.ts"),
 ]);
 
 // AI provider registry: fixed server-side allowlist, no client-selected URLs/models or paid fallback.
 assert.match(assistant, /import \{ resolveAiProvider \} from "\.\/ai-provider-registry\.ts"/);
 assert.match(assistant, /resolveAiProvider\("gemini", Deno\.env\.get\("GEMINI_API_KEY"\)/);
 assert.match(assistant, /generateWithGemini\(/);
+assert.match(assistant, /resolveAiRoute\(/);
+assert.match(assistant, /from "\.\/ai-task-router\.ts"/);
+assert.match(assistant, /taskBySection/);
+assert.match(aiTaskRouter, /SUPPORTED_TASKS/);
+assert.match(aiTaskRouter, /resolveAiProvider\("gemini", apiKey\)/);
+assert.doesNotMatch(aiTaskRouter, /body\.provider|body\.model|body\.endpoint|openrouter|groq|cloudflare/);
 assert.match(assistant, /from "\.\/gemini-adapter\.ts"/);
 assert.doesNotMatch(assistant, /fetch\(provider\.endpoint/);
 assert.match(geminiAdapter, /x-goog-api-key/);
