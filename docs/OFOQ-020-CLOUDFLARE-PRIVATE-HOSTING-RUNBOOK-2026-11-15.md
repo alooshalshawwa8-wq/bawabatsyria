@@ -18,7 +18,7 @@ Cloudflare Pages Git integration officially supports both public and private Git
 ## 2. Prepared in this branch
 
 ### Private build artifact
-- `scripts/build-private-pages.mjs` builds `dist/` from an explicit allowlist of public front-end files and `assets/`.
+- `scripts/build-private-pages.mjs` builds `dist/` from an explicit allowlist of public front-end files and `assets/`, then runs the shared Pillow-based responsive WebP generator so both PNG fallbacks and all referenced WebP variants exist.
 - It excludes `backend/`, `supabase/`, migrations, tests, scripts, workflows, documentation, and repository metadata.
 - It changes the artifact's robots meta to `noindex,nofollow,noarchive`, removes canonical/JSON-LD public indexing metadata, rewrites `robots.txt` to disallow crawlers, omits the public sitemap, and copies the Pages `_headers` file.
 - It removes registration of the legacy public PWA service worker and, on the first authenticated online visit, unregisters old same-origin service workers and clears only `ofoq-shell-*` caches. This prevents an old offline app-shell cache from being the intended access path to the private deployment. Offline availability is intentionally disabled for the private build.
@@ -40,7 +40,7 @@ In Cloudflare Dashboard → Workers & Pages → Create application → Pages →
 | Production branch | `main` |
 | Framework preset | None |
 | Root directory | `/` (repository root) |
-| Build command | `node scripts/build-private-pages.mjs` |
+| Build command | `python3 -m pip install --user Pillow && node scripts/build-private-pages.mjs` |
 | Build output directory | `dist` |
 | Node version | 22 (current Pages build image includes Node 22; pin `NODE_VERSION=22` if the dashboard/build image requires it) |
 
