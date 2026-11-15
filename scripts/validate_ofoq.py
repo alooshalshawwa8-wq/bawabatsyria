@@ -56,6 +56,30 @@ priority_ids = re.findall(r'"([^"]+)"', html[priority_start:priority_end])
 require(len(priority_ids) == len(set(priority_ids)), "duplicate priority IDs")
 require(set(section_ids) == set(priority_ids), "section priority list does not match catalogue")
 
+# Utility registry integrity and specialist-tool coverage.
+utility_start = html.find("const utilityModules=")
+utility_end = html.find("async function openSection", utility_start)
+require(utility_start >= 0 and utility_end > utility_start, "utility registry boundary missing")
+utility_source = html[utility_start:utility_end]
+utility_entries = re.findall(r"^\s*([a-z0-9_]+):\s*\{\s*title:'([^']+)'", utility_source, re.M)
+utility_ids = [item[0] for item in utility_entries]
+require(len(utility_ids) == 70 and len(utility_ids) == len(set(utility_ids)), "expected 70 unique utility module definitions")
+require("دليل عملي ومخطط تعلّم" not in utility_source, "legacy generic guide templates must not return")
+specialist_ids = (
+    "science_space", "world_encyclopedia", "ai_lab", "environment_climate",
+    "personal_finance", "world_history", "global_languages", "global_cuisine",
+    "family_life", "books_knowledge", "creative_studio", "photography_media",
+    "gaming_arena", "fitness_wellness", "digital_citizenship", "global_travel",
+    "startup_lab", "sustainable_living",
+)
+for specialist_id in specialist_ids:
+    require(specialist_id in utility_ids, "specialist local tool missing: " + specialist_id)
+browser_suite = (ROOT / "tests/browser-smoke.mjs").read_text(encoding="utf-8")
+require("specialistCases" in browser_suite, "browser suite must exercise specialist tools")
+for specialist_id in specialist_ids:
+    require(specialist_id in browser_suite, "specialist browser case missing: " + specialist_id)
+
+
 # Shared futuristic navigation must remain keyboard- and accessibility-friendly.
 command = re.search(r'<script id="ofoq-command-center-v2">([\s\S]*?)</script>', html)
 require(command, "command center script missing")
