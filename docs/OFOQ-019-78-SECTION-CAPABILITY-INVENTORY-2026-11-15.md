@@ -118,7 +118,86 @@
 | `terms_of_use` | سياسة الاستخدام وإخلاء المسؤولية | مولّد أداة مهيأ | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | إعداد/مولّد محلي ذو توجه تخصصي؛ لم يثبت تكامل حي أو اكتمال وظيفي مستقل. |
 | `accessibility_center` | مركز الوصول الرقمي وتجربة الجميع | مولّد أداة مهيأ | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | إعداد/مولّد محلي ذو توجه تخصصي؛ لم يثبت تكامل حي أو اكتمال وظيفي مستقل. |
 
-## 4. ما الذي أثبتته اختبارات المتصفح؟
+## 4. سجل وحدات الأدوات الـ70
+
+تم استخراج 70 تعريفاً من `utilityModules` على رأس الفرع الحالي. يوضح الجدول اسم الأداة وعدد حقول الإدخال وحالة استخدامها. عدد الحقول لا يثبت جودة النتيجة أو اكتمال المجال.
+
+| المعرّف | اسم الأداة | حقول الإدخال | الحالة | الملاحظة |
+|---|---|---:|---|---|
+| `trader_market` | حاسبة تكلفة مواد البناء | 3 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `trading_academy` | حاسبة حجم المخاطرة للصفقة | 4 | `OVERRIDDEN_SPECIAL_RENDERER` | المسار المخصص يتولى العرض؛ تعريف utility غير مستخدم |
+| `freelance_vip` | حاسبة تسعير العمل الحر | 4 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `jobs` | منشئ سيرة ذاتية أولية | 6 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `energy` | حاسبة حجم منظومة الطاقة الشمسية | 4 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `transport` | حاسبة تكلفة الوقود للرحلة | 3 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `business` | حاسبة نقطة التعادل للمشروع | 3 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `realestate` | حاسبة قيمة العقار التقديرية | 3 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `education` | مخطط توزيع ساعات الدراسة | 3 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `water` | حاسبة مدة كفاية خزان المياه | 3 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `reports` | منشئ مسودة شكوى أو بلاغ | 5 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `travel_visa` | قائمة تجهيز ملف السفر والتأشيرة | 4 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `domestic_economy` | مخطط ميزانية الأسرة | 5 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `telecom` | حاسبة استهلاك باقة الإنترنت | 3 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `fertilizers` | حاسبة كمية السماد | 3 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `agriculture` | حاسبة البذار والمساحة | 3 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `civil` | قائمة تجهيز معاملة مدنية | 3 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `consular` | منظم ملف المعاملة القنصلية | 4 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `legal` | منشئ مسودة اتفاق مبسطة | 6 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `apps_games` | مقارن مواصفات تشغيل البرامج والألعاب | 5 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `cash_shield` | قائمة فحص رسالة أو رابط مشبوه | 4 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `security` | خطة استجابة أولية لحادث رقمي | 4 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `video_factory_vip` | كاتب سيناريو فيديو قصير | 5 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `directory_services` | منشئ بطاقة نشاط تجاري | 6 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `mirror` | مساعد اختيار الستايل الشخصي | 4 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `code_sandbox` | مدقق ومنسق JSON | 1 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `no_khosoosie` | مساعد تنظيم سؤال دراسي | 4 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `engineer_vip` | حاسبة حجم وتكلفة عنصر هندسي | 4 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `body_language` | دفتر ملاحظة التواصل غير اللفظي | 4 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `nostalgia_archive` | موثق الذكريات والحكايات | 5 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `syria_curriculum` | منشئ بطاقات المراجعة الدراسية | 3 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `solidarity` | منشئ بطاقة مبادرة تطوعية | 5 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `cars_guide` | منظم موعد صيانة المركبة | 4 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `tourism` | مخطط برنامج رحلة سياحية | 4 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `culture` | منظم فعالية ثقافية | 6 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `birds_pets` | سجل رعاية الحيوان الأليف | 5 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `sports_radar` | مخطط جلسة تدريب رياضي | 4 | `OVERRIDDEN_SPECIAL_RENDERER` | المسار المخصص يتولى العرض؛ تعريف utility غير مستخدم |
+| `news` | منشئ تقرير خبر محلي موثق | 6 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `expatriates_invest` | حاسبة عائد الاستثمار ونقطة الاسترداد | 4 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `heritage` | موثق رواية وتراث محلي | 5 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `syria_ai` | مهيئ الأسئلة للخدمات والمعلومات العامة | 4 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `health` | منظم التحضير للموعد الطبي | 4 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `social_media_hub` | استوديو إدارة منصات التواصل وصناعة المحتوى | 6 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `ecommerce_studio` | حاسبة المتجر ومولد بطاقة المنتج | 6 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `design_lab` | مولّد موجز حملة محتوى | 6 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `language_academy` | منشئ جلسة تعلم ومراجعة | 4 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `fitness_coach` | مخطط نشاط أسبوعي آمن | 5 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `events_calendar` | مخطط المناسبة والميزانية | 6 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `syria_marketplace` | منشئ إعلان بيع أو خدمة | 6 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `privacy_center` | دليل الخصوصية وحماية البيانات | 2 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `terms_of_use` | مراجعة شروط الاستخدام | 2 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `accessibility_center` | قائمة تحسين سهولة الوصول | 2 | `LOCAL_DOMAIN_TOOL_UNVERIFIED` | أداة/مولّد تخصصي؛ يلزم اختبار وظيفي مستقل |
+| `science_space` | حاسبة زمن الرحلة الفضائية | 2 | `LOCAL_SPECIALIST_TOOL` | أداة محلية مختبرة |
+| `world_encyclopedia` | منظم ملف بحث موسوعي | 4 | `LOCAL_SPECIALIST_TOOL` | أداة محلية مختبرة |
+| `ai_lab` | مختبر بناء واختبار الأوامر الذكية | 5 | `LOCAL_SPECIALIST_TOOL` | أداة محلية مختبرة |
+| `environment_climate` | حاسبة أثر الطاقة والتنقل | 4 | `LOCAL_SPECIALIST_TOOL` | أداة محلية مختبرة |
+| `personal_finance` | مخطط الميزانية والادخار الشهري | 4 | `LOCAL_SPECIALIST_TOOL` | أداة محلية مختبرة |
+| `world_history` | منشئ بطاقة حدث وخط زمني تاريخي | 5 | `LOCAL_SPECIALIST_TOOL` | أداة محلية مختبرة |
+| `global_languages` | بطاقات المفردات والتدريب اللغوي | 5 | `LOCAL_SPECIALIST_TOOL` | أداة محلية مختبرة |
+| `global_cuisine` | حاسبة مضاعفة مقادير الوصفات | 5 | `LOCAL_SPECIALIST_TOOL` | أداة محلية مختبرة |
+| `family_life` | منظم مهام الأسرة الأسبوعي | 5 | `LOCAL_SPECIALIST_TOOL` | أداة محلية مختبرة |
+| `books_knowledge` | متتبع القراءة ومراجعة الكتب | 5 | `LOCAL_SPECIALIST_TOOL` | أداة محلية مختبرة |
+| `creative_studio` | مولد موجز المشروع الإبداعي | 5 | `LOCAL_SPECIALIST_TOOL` | أداة محلية مختبرة |
+| `photography_media` | حاسبة التعريض الضوئي EV | 3 | `LOCAL_SPECIALIST_TOOL` | أداة محلية مختبرة |
+| `gaming_arena` | مخطط تدريب الألعاب والرياضات الإلكترونية | 5 | `LOCAL_SPECIALIST_TOOL` | أداة محلية مختبرة |
+| `fitness_wellness` | حاسبة حجم النشاط الأسبوعي | 4 | `LOCAL_SPECIALIST_TOOL` | أداة محلية مختبرة |
+| `digital_citizenship` | فاحص عادات الأمان الرقمي | 4 | `LOCAL_SPECIALIST_TOOL` | أداة محلية مختبرة |
+| `global_travel` | حاسبة ميزانية الرحلة | 5 | `LOCAL_SPECIALIST_TOOL` | أداة محلية مختبرة |
+| `startup_lab` | حاسبة اقتصاديات الوحدة ونقطة التعادل | 6 | `LOCAL_SPECIALIST_TOOL` | أداة محلية مختبرة |
+| `sustainable_living` | حاسبة تقليل المنتجات أحادية الاستخدام | 4 | `LOCAL_SPECIALIST_TOOL` | أداة محلية مختبرة |
+
+**ملخص وحدات الأدوات:** 18 أداة محلية متخصصة مختبرة، و50 أداة تخصصية تحتاج اختبارات قبول مستقلة، وتعريفان (`trading_academy` و`sports_radar`) يتجاوزهما مسار عرض مخصص. لا يعني وجود تعريف في `utilityModules` أنه هو المسار الذي ينفذ عند فتح القسم.
+
+## 9. ما الذي أثبتته اختبارات المتصفح؟
 
 على رأس الفرع `c4aa6626f29035c9bee73bca8e31d3118db8eeee` اكتمل بنجاح:
 - اختبار فتح الأقسام الـ78 والتحقق من مطابقة العنوان وظهور مساحة العمل المشتركة.
