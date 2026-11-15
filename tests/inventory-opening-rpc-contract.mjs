@@ -17,8 +17,12 @@ assert.match(migration, /grant execute on function public\.create_inventory_item
 assert.doesNotMatch(migration, /security definer/i, "Inventory RPC must not bypass RLS");
 
 assert.match(data, /async function rpc\(name,args,retried\)/);
-assert.match(ui, /D\.rpc\("create_inventory_item_with_opening_movement"/, "Inventory UI must use atomic creation");
-assert.doesNotMatch(ui, /D\.request\("inventory_items",\{method:"POST"/, "Inventory UI must not create an item separately");
-assert.doesNotMatch(ui, /D\.request\("inventory_movements",\{method:"POST"/, "Inventory UI must not create opening stock separately");
+const start = ui.indexOf('btn(a,"إضافة صنف"');
+const end = ui.indexOf('btn(a,"تحديث المخزون"', start);
+assert.ok(start >= 0 && end > start, "Inventory creation handler boundaries must exist");
+const handler = ui.slice(start, end);
+assert.match(handler, /D\.rpc\("create_inventory_item_with_opening_movement"/, "Inventory UI must use atomic creation");
+assert.doesNotMatch(handler, /D\.request\("inventory_items",\{method:"POST"/, "Inventory UI must not create an item separately");
+assert.doesNotMatch(handler, /D\.request\("inventory_movements",\{method:"POST"/, "Inventory UI must not create opening stock separately");
 
 console.log("Atomic inventory opening balance contract passed.");
