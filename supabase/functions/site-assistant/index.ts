@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { resolveAiRoute, type AiTask } from "./ai-task-router.ts";
 import { generateWithGemini } from "./gemini-adapter.ts";
+import { normalizeAiUsageEvent } from "./ai-usage-contract.ts";
 
 const ALLOWED_ORIGIN = Deno.env.get("OFOQ_ALLOWED_ORIGIN") ?? "https://alooshalshawwa8-wq.github.io";
 const cors = {
@@ -269,6 +270,16 @@ Deno.serve(async (request: Request) => {
     contents,
     sectionInstruction ? `${SYSTEM_PROMPT}\n\nتخصص هذا القسم: ${sectionInstruction}` : SYSTEM_PROMPT,
   );
+  const usageEvent = normalizeAiUsageEvent({
+    providerId: route.provider.id,
+    modelId: route.provider.modelId,
+    task: route.task,
+    status: result.ok ? "success" : result.kind === "quota" ? "quota_exhausted" : "failed",
+    latencyMs: result.latencyMs,
+    usage: result.ok ? result.usage : null,
+  });
+  // Structured operational telemetry only: no prompt, response, user ID, or key.
+  console.info("AI_USAGE_EVENT", usageEvent);
   if (result.ok) return reply({ answer: result.answer });
   if (result.kind === "quota") {
     return reply({ error: "حصة مزود الذكاء الاصطناعي ممتلئة حالياً. جرّب لاحقاً." }, 429);
