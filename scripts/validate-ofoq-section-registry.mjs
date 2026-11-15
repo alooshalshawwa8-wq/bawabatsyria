@@ -83,7 +83,8 @@ assert.deepEqual(uncovered, [], "Catalogue sections without a registered utility
 console.log("OFOQ section registry validation passed.");
 console.log(JSON.stringify({
   catalogueSections: records.length,
-  utilityModules: utilityIds.length,\n  augmentedUtilityModules: augmentedUtilityIds.length,
+  utilityModules: utilityIds.length,
+  augmentedUtilityModules: augmentedUtilityIds.length,
   directRendererReferences: new Set(directRendererIds).size,
   cloudWorkspaceTargets: new Set(workspaceIds).size,
   uncoveredSections: 0
