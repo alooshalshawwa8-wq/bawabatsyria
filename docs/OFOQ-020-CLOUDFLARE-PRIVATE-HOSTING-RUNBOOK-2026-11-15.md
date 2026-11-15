@@ -111,6 +111,19 @@ Before unpublishing GitHub Pages, prepare and deploy a temporary retirement page
 
 Open the retirement page online on every owner device/browser profile that previously installed or visited the PWA, and verify the old worker and OFOQ caches are gone. Devices that never reconnect to receive the retirement page may retain a local offline copy; this is a local-device cleanup limitation, not a server-side public bypass.
 
+### Full-history credential audit before privatization
+
+The GitHub repository metadata check on 2026-11-15 showed `forks_count=0`, but this does not prove nobody has cloned or downloaded the public source. Changing visibility cannot revoke credentials or erase existing copies.
+
+A pinned, free Gitleaks v8.30.1 full-history scan has been added in this branch as `.github/workflows/secret-history-scan.yml`. It checks all reachable refs/commit history with full checkout depth and redacts findings from logs. The scan must complete successfully before repository privatization. If a finding is real:
+- treat the credential as compromised and rotate/revoke it at its provider immediately;
+- inspect provider logs for unauthorized use;
+- remove the secret from current source and Git history only with a reviewed history-rewrite plan;
+- do not paste the secret into issues, PR comments, or chat;
+- remember that public clones/caches cannot be recalled.
+
+A clean scan reduces risk but does not prove that every secret format or external copy has been found.
+
 ## 6. Final cutover sequence
 
 Do not change repository visibility until all preceding tests pass.
