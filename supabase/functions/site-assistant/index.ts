@@ -114,9 +114,6 @@ Deno.serve(async (request: Request) => {
   if (origin !== ALLOWED_ORIGIN) return reply({ error: "Origin not allowed" }, 403);
   if (request.method !== "POST") return reply({ error: "Method not allowed" }, 405);
 
-  const ownerAuth = await authenticatedOfoqOwner(request);
-  if (!ownerAuth.ok) return reply({ error: ownerAuth.status === 403 ? "Owner access required" : "Owner authentication required" }, ownerAuth.status);
-
   const apiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
   if (!apiKey) return reply({ error: "المساعد يعمل حالياً بوضع الإرشاد الأساسي؛ خدمة الإجابات الذكية المتقدمة غير متاحة مؤقتاً." }, 503);
 
@@ -125,33 +122,6 @@ Deno.serve(async (request: Request) => {
     return reply({ error: "المحادثة طويلة كتير. اختصر آخر الرسائل وجرب من جديد." }, 413);
   }
 
-  let body: Record<string, unknown> | null = null;
-  try {
-    const rawBody = await readBoundedBody(request, 24_000);
-    body = JSON.parse(rawBody);
-  } catch (error) {
-    if (error instanceof Error && error.message === "BODY_TOO_LARGE") {
-      return reply({ error: "المحادثة طويلة كتير. اختصر آخر الرسائل وجرب من جديد." }, 413);
-    }
-    return reply({ error: "صيغة المحادثة غير صالحة." }, 400);
-  }
-  if (!body || !Array.isArray(body.messages) || body.messages.length < 1 || body.messages.length > 12) {
-    return reply({ error: "صيغة المحادثة غير صالحة." }, 400);
-  }
-
-  const contents: Array<{ role: "user" | "model"; parts: Array<{ text: string }> }> = [];
-  for (const item of body.messages) {
-    if (!item || !["user", "assistant"].includes(item.role) || typeof item.content !== "string") continue;
-    const content = item.content.trim().slice(0, 2000);
-    if (!content) continue;
-    const role = item.role === "assistant" ? "model" : "user";
-    const last = contents[contents.length - 1];
-    if (last?.role === role) last.parts[0].text += "\n" + content;
-    else contents.push({ role, parts: [{ text: content }] });
-  }
-  if (!contents.length || contents[contents.length - 1].role !== "user") {
-    return reply({ error: "أرسل سؤالك أولاً." }, 400);
-  }
   // Reserve a globally enforced daily request slot before contacting Gemini.
   // This prevents parallel Edge isolates from bypassing the provider budget.
   const supabaseUrl = SUPABASE_URL;
@@ -188,6 +158,37 @@ Deno.serve(async (request: Request) => {
   const rateAllowed = await rateResponse.json().catch(() => false);
   if (rateAllowed !== true) {
     return reply({ error: "عم توصلني رسائل بسرعة 😊 خذ نفس صغير وجرب كمان شوي." }, 429);
+  }
+
+  const ownerAuth = await authenticatedOfoqOwner(request);
+  if (!ownerAuth.ok) return reply({ error: ownerAuth.status === 403 ? "Owner access required" : "Owner authentication required" }, ownerAuth.status);
+
+  let body: Record<string, unknown> | null = null;
+  try {
+    const rawBody = await readBoundedBody(request, 24_000);
+    body = JSON.parse(rawBody);
+  } catch (error) {
+    if (error instanceof Error && error.message === "BODY_TOO_LARGE") {
+      return reply({ error: "المحادثة طويلة كتير. اختصر آخر الرسائل وجرب من جديد." }, 413);
+    }
+    return reply({ error: "صيغة المحادثة غير صالحة." }, 400);
+  }
+  if (!body || !Array.isArray(body.messages) || body.messages.length < 1 || body.messages.length > 12) {
+    return reply({ error: "صيغة المحادثة غير صالحة." }, 400);
+  }
+
+  const contents: Array<{ role: "user" | "model"; parts: Array<{ text: string }> }> = [];
+  for (const item of body.messages) {
+    if (!item || !["user", "assistant"].includes(item.role) || typeof item.content !== "string") continue;
+    const content = item.content.trim().slice(0, 2000);
+    if (!content) continue;
+    const role = item.role === "assistant" ? "model" : "user";
+    const last = contents[contents.length - 1];
+    if (last?.role === role) last.parts[0].text += "\n" + content;
+    else contents.push({ role, parts: [{ text: content }] });
+  }
+  if (!contents.length || contents[contents.length - 1].role !== "user") {
+    return reply({ error: "أرسل سؤالك أولاً." }, 400);
   }
   let budgetResponse: Response;
   try {
