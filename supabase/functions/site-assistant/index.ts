@@ -9,38 +9,30 @@ const cors = {
   "Vary": "Origin",
 };
 const JSON_HEADERS = { ...cors, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" };
-const hits = new Map<string, number[]>();
-let lastRateMapPruneAt = 0;
-
 function reply(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: JSON_HEADERS });
 }
 
-// Best-effort per-runtime throttling. Production-wide quotas should also be
-// configured at the provider/gateway because Edge isolates are ephemeral.
-function rateAllowed(ip: string) {
-  const now = Date.now();
-  if (now - lastRateMapPruneAt >= 60_000) {
-    for (const [key, timestamps] of hits) {
-      const active = timestamps.filter(time => now - time < 60_000);
-      if (active.length) hits.set(key, active);
-      else hits.delete(key);
-    }
-    lastRateMapPruneAt = now;
+function isValidClientIp(value: string) {
+  if (!value || value.length > 45) return false;
+  if (/^[0-9.]+$/.test(value)) {
+    const octets = value.split(".");
+    return octets.length === 4 && octets.every(part => /^\d{1,3}$/.test(part) && Number(part) <= 255);
   }
-  if (!hits.has(ip) && hits.size >= 10_000) {
-    const oldest = hits.keys();
-    while (hits.size > 8_000) {
-      const entry = oldest.next();
-      if (entry.done) break;
-      hits.delete(entry.value);
-    }
-  }
-  const recent = (hits.get(ip) ?? []).filter(time => now - time < 60_000);
-  if (recent.length >= 12) return false;
-  recent.push(now);
-  hits.set(ip, recent);
-  return true;
+  return value.includes(":") && /^[0-9a-fA-F:]+$/.test(value);
+}
+
+async function hashClientIp(ip: string, secret: string) {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(ip));
+  return Array.from(new Uint8Array(signature), byte => byte.toString(16).padStart(2, "0")).join("");
 }
 
 async function readBoundedBody(request: Request, maxBytes: number) {
@@ -96,9 +88,6 @@ Deno.serve(async (request: Request) => {
   if (origin !== ALLOWED_ORIGIN) return reply({ error: "Origin not allowed" }, 403);
   if (request.method !== "POST") return reply({ error: "Method not allowed" }, 405);
 
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (!rateAllowed(ip)) return reply({ error: "عم توصلني رسائل بسرعة 😊 خذ نفس صغير وجرب كمان شوي." }, 429);
-
   const apiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
   if (!apiKey) return reply({ error: "المساعد يعمل حالياً بوضع الإرشاد الأساسي؛ خدمة الإجابات الذكية المتقدمة غير متاحة مؤقتاً." }, 503);
 
@@ -144,6 +133,36 @@ Deno.serve(async (request: Request) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? secretKeyMap.default ?? "";
   if (!supabaseUrl || !serviceKey) {
     return reply({ error: "خدمة الذكاء غير متاحة مؤقتاً بسبب إعدادات الحماية." }, 503);
+  }
+
+  // Only trust Cloudflare's client-IP header on the hosted Supabase ingress.
+  // Never fall back to caller-controlled X-Forwarded-For values.
+  const clientIp = request.headers.get("cf-connecting-ip")?.trim() ?? "";
+  if (!isValidClientIp(clientIp)) {
+    return reply({ error: "تعذر التحقق من مصدر الاتصال الآمن. حاول لاحقاً." }, 503);
+  }
+  let rateResponse: Response;
+  try {
+    const bucketKey = await hashClientIp(clientIp, serviceKey);
+    rateResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/reserve_site_assistant_rate_limit`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": serviceKey,
+        "Authorization": `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({ p_bucket_key: bucketKey, p_window_seconds: 60, p_max_requests: 12 }),
+    });
+  } catch {
+    return reply({ error: "تعذر التحقق من حد الاستخدام الآمن. حاول لاحقاً." }, 503);
+  }
+  if (!rateResponse.ok) {
+    console.error("Nibras rate reservation failed", rateResponse.status);
+    return reply({ error: "خدمة الحماية غير متاحة مؤقتاً. حاول لاحقاً." }, 503);
+  }
+  const rateAllowed = await rateResponse.json().catch(() => false);
+  if (rateAllowed !== true) {
+    return reply({ error: "عم توصلني رسائل بسرعة 😊 خذ نفس صغير وجرب كمان شوي." }, 429);
   }
   let budgetResponse: Response;
   try {
