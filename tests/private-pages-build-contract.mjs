@@ -33,7 +33,7 @@ for (const file of [
 }
 assert.ok(existsSync(resolve(root, "assets")), "Private asset directory missing");
 const robots = readFileSync(resolve(root, "robots.txt"), "utf8");
-assert.match(robots, /Disallow: \\/); 
+assert.ok(robots.includes("Disallow: /"), "Private robots policy must disallow crawler access"); 
 assert.doesNotMatch(robots, /Sitemap:/i);
 assert.ok(!existsSync(resolve(root, "sitemap.xml")), "Private artifact must not advertise or ship a public sitemap");
 const headers = readFileSync(resolve(root, "_headers"), "utf8");
