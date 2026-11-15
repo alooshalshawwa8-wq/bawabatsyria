@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-const ALLOWED_ORIGIN = "https://alooshalshawwa8-wq.github.io";
+const ALLOWED_ORIGIN = Deno.env.get("OFOQ_ALLOWED_ORIGIN") ?? "https://alooshalshawwa8-wq.github.io";
 const cors = {
   "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
   "Access-Control-Allow-Headers": "content-type, apikey, authorization",
