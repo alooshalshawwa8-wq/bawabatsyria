@@ -51,6 +51,11 @@ jobs:
           node --check ofoq-core.js
           node --check ofoq-commerce-cloud.js
           node --check ofoq-vault.js
+          node --check ofoq-data.js
+          node --check ofoq-workspaces.js
+          node --check ofoq-workspace-extensions.js
+          node --check scripts/validate-ofoq-section-registry.mjs
+          node --check tests/journal-draft-rpc-contract.mjs
       - name: Validate the 78-section registry and module coverage
         run: node scripts/validate-ofoq-section-registry.mjs
       - name: Set up Deno
@@ -69,6 +74,8 @@ jobs:
           deno check supabase/functions/football-data/index.ts
       - name: Run Edge Function security contract tests
         run: node tests/edge-function-security-contract.mjs
+      - name: Validate atomic journal draft workflow
+        run: node tests/journal-draft-rpc-contract.mjs
       - name: Validate static app contracts
         run: |
           node --input-type=module <<'NODE'
