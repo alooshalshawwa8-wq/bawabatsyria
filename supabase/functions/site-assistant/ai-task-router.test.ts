@@ -1,12 +1,9 @@
 import { assertEquals } from "jsr:@std/assert@1";
 import { resolveAiRoute } from "./ai-task-router.ts";
 
-Deno.test("trusted text task classes resolve to the fixed Gemini provider", () => {
+Deno.test("all task routes remain blocked until free-tier eligibility is verified", () => {
   for (const task of ["conversation", "summarization", "classification", "coding", "analysis"]) {
-    const route = resolveAiRoute(task, "test-secret");
-    assertEquals(route?.task, task);
-    assertEquals(route?.provider.id, "gemini");
-    assertEquals(route?.provider.modelId, "gemini-3.5-flash-lite");
+    assertEquals(resolveAiRoute(task, "test-secret"), null);
   }
 });
 
