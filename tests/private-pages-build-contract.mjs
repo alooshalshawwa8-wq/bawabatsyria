@@ -43,7 +43,8 @@ assert.match(headers, /X-Content-Type-Options:\s*nosniff/i);
 assert.match(headers, /Cache-Control:\s*no-store/i);
 
 const pagesWorkflow = readFileSync(resolve(".github/workflows/pages.yml"), "utf8");
-assert.match(pagesWorkflow, /if: github\.event\.repository\.private == false && vars\.OFOQ_PUBLIC_PAGES_ENABLED == 'true'/);
+assert.match(pagesWorkflow, /if: github\.event_name == 'workflow_dispatch' && inputs\.enable_public_deploy == true && github\.event\.repository\.private == false/);
+assert.match(pagesWorkflow, /enable_public_deploy:[\s\S]{0,180}default: false/);
 
 const expectedRoot = new Set([
   "_headers", "assets", "career-studio.js", "ecommerce-studio.js", "index.html",
