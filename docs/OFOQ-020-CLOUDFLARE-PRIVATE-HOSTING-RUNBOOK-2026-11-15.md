@@ -42,7 +42,8 @@ In Cloudflare Dashboard → Workers & Pages → Create application → Pages →
 | Root directory | `/` (repository root) |
 | Build command | `python3 -m pip install --user Pillow && node scripts/build-private-pages.mjs` |
 | Build output directory | `dist` |
-| Node version | 22 (current Pages build image includes Node 22; pin `NODE_VERSION=22` if the dashboard/build image requires it) |
+| Build image | v3 (Node.js 22.23.4 and Python 3.13.3) |
+| Environment variables | `NODE_VERSION=22`, `PYTHON_VERSION=3.13.3` |
 
 Important:
 - Choose the project name carefully. Cloudflare documents that the `*.pages.dev` subdomain cannot currently be changed after project creation; changing it requires deleting and recreating the project.
