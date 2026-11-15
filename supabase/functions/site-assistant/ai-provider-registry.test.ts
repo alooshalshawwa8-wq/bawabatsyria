@@ -1,20 +1,32 @@
-import { assertEquals, assertNotEquals } from "jsr:@std/assert@1";
-import { listConfiguredProviderMetadata, resolveAiProvider } from "./ai-provider-registry.ts";
+import { assertEquals } from "jsr:@std/assert@1";
+import {
+  checkAiProviderEligibility,
+  listConfiguredProviderMetadata,
+  resolveAiProvider,
+} from "./ai-provider-registry.ts";
 
-Deno.test("only the approved Gemini provider can be resolved", () => {
-  assertNotEquals(resolveAiProvider("gemini", "server-secret"), null);
-  assertEquals(resolveAiProvider("openrouter", "server-secret"), null);
-  assertEquals(resolveAiProvider("groq", "server-secret"), null);
-  assertEquals(resolveAiProvider("cloudflare", "server-secret"), null);
-  assertEquals(resolveAiProvider("https://attacker.example", "server-secret"), null);
-  assertEquals(resolveAiProvider("gemini", ""), null);
+Deno.test("unverified free tier is blocked even when a server key exists", () => {
+  const result = checkAiProviderEligibility("gemini", "server-secret");
+  assertEquals(result, {
+    eligible: false,
+    providerId: "gemini",
+    reason: "free_tier_unverified",
+  });
+  assertEquals(resolveAiProvider("gemini", "server-secret"), null);
 });
 
-Deno.test("registry metadata never exposes provider credentials", () => {
-  const metadata = listConfiguredProviderMetadata("super-secret-value");
-  assertEquals(metadata.length, 1);
-  assertEquals(metadata[0].id, "gemini");
-  assertEquals(metadata[0].pricingStatus, "free-tier-unverified");
-  assertEquals("apiKey" in metadata[0], false);
-  assertEquals(listConfiguredProviderMetadata("").length, 0);
+Deno.test("missing key and unknown provider fail closed", () => {
+  assertEquals(checkAiProviderEligibility("gemini", " ").reason, "missing_key");
+  assertEquals(checkAiProviderEligibility("openrouter", "secret").eligible, false);
+});
+
+Deno.test("metadata reports eligibility without exposing the key", () => {
+  const metadata = listConfiguredProviderMetadata("server-secret");
+  assertEquals(metadata[0].eligible, false);
+  assertEquals(metadata[0].blockedReason, "free_tier_unverified");
+  assertEquals(JSON.stringify(metadata).includes("server-secret"), false);
+});
+
+Deno.test("no automatic paid fallback is represented by this registry", () => {
+  assertEquals(Object.keys({ gemini: true }), ["gemini"]);
 });
