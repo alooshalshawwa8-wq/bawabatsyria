@@ -11,6 +11,7 @@ on:
       - "supabase/seed.sql"
       - "tests/nibras-rate-limit-concurrency.sh"
       - "tests/rpc-idempotency-contract.mjs"
+      - "tests/rpc-idempotency-contract.mjs"
       - ".github/workflows/migration-replay.yml"
       - "tests/ai-quota-ledger-*.sql"
       - "tests/ai-quota-ledger-*.sh"
@@ -21,6 +22,7 @@ on:
       - "supabase/config.toml"
       - "supabase/seed.sql"
       - "tests/nibras-rate-limit-concurrency.sh"
+      - "tests/rpc-idempotency-contract.mjs"
   workflow_dispatch:
 
 permissions:
