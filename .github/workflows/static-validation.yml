@@ -61,6 +61,7 @@ jobs:
           deno test supabase/functions/site-assistant/ai-provider-registry.test.ts
           deno test supabase/functions/site-assistant/gemini-adapter.test.ts
           deno test supabase/functions/site-assistant/ai-task-router.test.ts
+          deno test supabase/functions/site-assistant/ai-usage-contract.test.ts
           deno check supabase/functions/membership-api/index.ts
           deno check supabase/functions/football-data/index.ts
       - name: Run Edge Function security contract tests
