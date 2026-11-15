@@ -18,5 +18,8 @@ const robots = readFileSync(resolve(root, "robots.txt"), "utf8");
 assert.ok(robots.includes("Disallow: /"));
 const headers = readFileSync(resolve(root, "_headers"), "utf8");
 assert.match(headers, /Cache-Control:\s*no-store/i);
+assert.match(headers, /Content-Security-Policy:\s*default-src 'none'/i);
+assert.match(headers, /script-src 'unsafe-inline'/i);
+assert.match(headers, /Permissions-Policy:/i);
 assert.deepEqual(readdirSync(root).sort(), ["_headers", "index.html", "robots.txt"]);
 console.log("Legacy retirement page contract passed.");
