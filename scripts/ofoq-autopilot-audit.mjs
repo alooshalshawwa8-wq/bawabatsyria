@@ -41,7 +41,11 @@ for (const path of new Set(scripts)) {
 check("local-script-references", `${new Set(scripts).size} unique local scripts exist`);
 
 // Duplicate IDs are surfaced as warnings because some are SVG fragment IDs and runtime-generated templates.
-const staticIds = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(match => match[1]);
+const staticIdMatches = [...html.matchAll(/\\bid=(["'])([^"']+)\\1/g)];
+const staticIds = staticIdMatches
+  // Ignore IDs assembled dynamically, e.g. id='ofoq-pane-' + sectionId.
+  .filter(match => !/^\\s*\\+/.test(html.slice(match.index + match[0].length)))
+  .map(match => match[2]);
 const idCounts = new Map();
 for (const id of staticIds) idCounts.set(id, (idCounts.get(id) || 0) + 1);
 const duplicateIds = [...idCounts].filter(([, count]) => count > 1).map(([id, count]) => ({ id, count }));
