@@ -253,3 +253,22 @@ The existing provider/day counter should remain as a coarse global safety ceilin
 
 The provider's API price is only one part of the decision. A $0 API call may still expose submitted data to provider retention, abuse review, human review, or model-improvement processing under the applicable free-tier terms. The registry therefore must treat data policy as a hard eligibility gate, not a footnote. For example, Google's published Gemini Free tier states that submitted content may be used to improve Google products. The private app must not send sensitive records to that route by default.
 
+
+
+## 12. Development progress — first safe code slice
+
+The development branch now contains the first implementation slice:
+- Added `supabase/functions/site-assistant/ai-provider-registry.ts`.
+- The current Gemini call now resolves through this server-side allowlist rather than hardcoding the provider endpoint in the request handler.
+- The browser still cannot select a provider, model, or endpoint.
+- The registry currently allows only the already-existing Gemini route; OpenRouter, Groq and Cloudflare are deliberately rejected.
+- Registry metadata omits API credentials.
+- Gemini free-tier eligibility is explicitly marked **unverified** for the exact configured model. The registry does not claim that this model/key is free.
+- Added Deno tests for provider allowlisting, unknown-provider rejection, missing-key rejection, and secret isolation.
+- Added the Deno test command to the existing static-validation workflow.
+
+This is a controlled refactor, not yet a multi-provider gateway. No new provider was connected, no secret was created or changed, and no hosted Edge Function was deployed. The current Gemini model ID and provider account billing/free-tier status still require verification before any claim of free operation.
+
+### Remaining verification gate
+
+The pull request CI must pass on the updated commit, including Deno type-check and the new registry tests. The browser smoke test and the other PR checks must also complete successfully. No merge or deployment follows automatically from green CI.
