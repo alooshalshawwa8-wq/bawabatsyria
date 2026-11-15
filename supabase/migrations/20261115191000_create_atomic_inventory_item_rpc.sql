@@ -5,7 +5,8 @@ create or replace function public.create_inventory_item_with_opening_movement(
   p_unit text,
   p_quantity numeric,
   p_unit_cost numeric,
-  p_currency character(3)
+  p_currency character(3),
+  p_request_id uuid
 )
 returns uuid
 language plpgsql
@@ -14,6 +15,9 @@ set search_path = ''
 as $function$
 declare
   v_user_id uuid := auth.uid();
+  v_payload jsonb;
+  v_existing_payload jsonb;
+  v_existing_result uuid;
   v_item_id uuid;
   v_name text := trim(coalesce(p_name, ''));
   v_sku text := nullif(trim(coalesce(p_sku, '')), '');
@@ -45,6 +49,40 @@ begin
       using errcode = '22023';
   end if;
 
+  if p_request_id is null then
+    raise exception 'A request id is required for safe retries' using errcode = '22023';
+  end if;
+
+  v_payload := jsonb_build_object(
+    'name', v_name,
+    'sku', v_sku,
+    'unit', v_unit,
+    'quantity', p_quantity,
+    'unit_cost', p_unit_cost,
+    'currency', p_currency
+  );
+  insert into ofoq_private.rpc_idempotency_keys
+    (user_id, operation, request_id, payload)
+  values
+    (v_user_id, 'inventory_item_opening', p_request_id, v_payload)
+  on conflict (user_id, operation, request_id) do nothing;
+
+  select k.payload, k.result_id
+    into v_existing_payload, v_existing_result
+    from ofoq_private.rpc_idempotency_keys as k
+   where k.user_id = v_user_id
+     and k.operation = 'inventory_item_opening'
+     and k.request_id = p_request_id
+   for update;
+
+  if v_existing_payload is distinct from v_payload then
+    raise exception 'Request id was already used with different input'
+      using errcode = '23505';
+  end if;
+  if v_existing_result is not null then
+    return v_existing_result;
+  end if;
+
   insert into public.inventory_items
     (user_id, name, sku, unit, quantity, unit_cost, currency)
   values
@@ -58,11 +96,17 @@ begin
       (v_user_id, v_item_id, p_quantity, 'opening', 'Opening balance');
   end if;
 
+  update ofoq_private.rpc_idempotency_keys
+     set result_id = v_item_id
+   where user_id = v_user_id
+     and operation = 'inventory_item_opening'
+     and request_id = p_request_id;
+
   return v_item_id;
 end;
 $function$;
 
-revoke all on function public.create_inventory_item_with_opening_movement(text,text,text,numeric,numeric,character)
+revoke all on function public.create_inventory_item_with_opening_movement(text,text,text,numeric,numeric,character,uuid)
   from public, anon;
 grant execute on function public.create_inventory_item_with_opening_movement(text,text,text,numeric,numeric,character)
   to authenticated;
