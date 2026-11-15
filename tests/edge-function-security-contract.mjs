@@ -40,6 +40,8 @@ assert.match(assistant, /Access-Control-Allow-Headers": "content-type, apikey, a
 assert.match(index, /refreshMembershipSession\(\)/);
 assert.match(index, /Authorization':'Bearer '\+token/);
 assert.match(index, /functions\/v1\/site-assistant/);
+assert.match(index, /fetch\("https:\/\/elzquyehghuxhswogsch\.supabase\.co\/functions\/v1\/site-assistant",\{method:"POST",headers:\{"Content-Type":"application\/json","apikey":window\.BAWABA_SUPABASE_ANON_KEY,"Authorization":"Bearer "\+token/);
+assert.doesNotMatch(index, /functions\/v1\/site-assistant",\{method:"POST",headers:\{"Content-Type":"application\/json"\}/);
 
 
 // Football API: request throttles must fail closed if persistent rate checks fail.
