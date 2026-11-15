@@ -7,6 +7,9 @@ const data = await read("ofoq-data.js");
 const ui = await read("ofoq-workspace-extensions.js");
 
 assert.match(migration, /create or replace function public\.create_journal_draft\(/i);
+assert.match(migration, /p_request_id uuid/i);
+assert.match(migration, /for update/i);
+assert.match(migration, /set result_id = v_entry_id/i);
 assert.match(migration, /security invoker/i, "Draft RPC must respect caller RLS");
 assert.match(migration, /set search_path = ''/i, "Draft RPC must pin an empty search_path");
 assert.match(migration, /auth\.uid\(\)/, "Draft RPC must derive owner from the authenticated session");
@@ -18,8 +21,10 @@ assert.match(migration, /grant execute on function public\.create_journal_draft[
 assert.doesNotMatch(migration, /security definer/i, "Draft RPC must not bypass RLS");
 
 assert.match(data, /async function rpc\(name,args,retried\)/, "Shared data layer must expose authenticated RPC transport");
+assert.match(data, /async function requestKey\(scope,identity\)/);
+assert.match(data, /clearRequestKey/);
 assert.match(data, /\/rest\/v1\/rpc\//, "RPC transport must use the PostgREST RPC endpoint");
-assert.match(data, /Object\.freeze\(\{getUser,request,rpc,track,edge,/, "RPC transport must be exported");
+assert.match(data, /Object\.freeze\(\{getUser,request,rpc,requestKey,clearRequestKey,track,edge,/, "RPC transport must be exported");
 
 assert.match(ui, /D\.rpc\("create_journal_draft"/, "Journal UI must use the atomic draft RPC");
 assert.doesNotMatch(ui, /D\.request\("journal_entries",\{method:"POST"/, "Journal UI must not create a header separately");
