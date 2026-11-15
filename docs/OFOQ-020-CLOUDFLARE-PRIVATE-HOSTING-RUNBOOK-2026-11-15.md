@@ -80,6 +80,19 @@ After the new Pages project name is chosen, before declaring the site operationa
 
 No Cloudflare hostname has been selected, so hardcoding a guessed Pages origin or deploying function changes now would be unsafe.
 
+### Legacy GitHub Pages offline cache
+
+The new `pages.dev` hostname is a different origin from `alooshalshawwa8-wq.github.io`. Therefore, the private artifact's service-worker cleanup can clear only caches on the new origin; it cannot remotely erase an old PWA cache stored under the GitHub Pages origin.
+
+Before unpublishing GitHub Pages, prepare and deploy a temporary retirement page on the old origin that:
+- displays that the public site has moved to a private address;
+- unregisters the old same-origin service worker;
+- deletes only caches whose names start with `ofoq-shell-`;
+- does not register a replacement worker;
+- optionally links to the new Access-protected hostname after it is known.
+
+Open the retirement page online on every owner device/browser profile that previously installed or visited the PWA, and verify the old worker and OFOQ caches are gone. Devices that never reconnect to receive the retirement page may retain a local offline copy; this is a local-device cleanup limitation, not a server-side public bypass.
+
 ## 6. Final cutover sequence
 
 Do not change repository visibility until all preceding tests pass.
