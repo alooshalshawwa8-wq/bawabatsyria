@@ -131,3 +131,5 @@ jobs:
         run: |
           node scripts/build-private-pages.mjs
           node tests/private-pages-build-contract.mjs
+          OFOQ_PRIVATE_SITE_URL=https://ofoq-private.pages.dev node scripts/build-retirement-pages.mjs
+          OFOQ_PRIVATE_SITE_URL=https://ofoq-private.pages.dev node tests/retirement-page-contract.mjs
