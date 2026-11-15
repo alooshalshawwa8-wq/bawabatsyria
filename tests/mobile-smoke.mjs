@@ -18,7 +18,7 @@ try {
     page.on("pageerror", error => pageErrors.push(viewport.width + "px: " + error.message));
     await page.route("**/*", route => {
       const url = new URL(route.request().url());
-      return url.hostname === "alooshalshawwa8-wq.github.io" ? route.continue() : route.abort();
+      return ["alooshalshawwa8-wq.github.io", "127.0.0.1", "localhost"].includes(url.hostname) ? route.continue() : route.abort();
     });
 
     try {

@@ -150,7 +150,7 @@ jobs:
           uend = html.index("function renderUtilityModule", ustart)
           utility_ids = set(re.findall(r"^\s*([a-z0-9_]+):\s*\{", html[ustart:uend], re.M))
           astart = html.index("Object.assign(utilityModules")
-          aend = html.index("function renderSectionWorkspace", astart)
+          aend = html.index("async function openSection", astart)
           utility_ids.update(re.findall(r"^\s*([a-z0-9_]+):\s*\{", html[astart:aend], re.M))
 
           ostart = html.index("async function openSection")

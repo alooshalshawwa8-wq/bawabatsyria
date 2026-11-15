@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 html = (ROOT / "index.html").read_text(encoding="utf-8")
 assistant = (ROOT / "supabase/functions/site-assistant/index.ts").read_text(encoding="utf-8")
 membership = (ROOT / "supabase/functions/membership-api/index.ts").read_text(encoding="utf-8")
+webhook_security = (ROOT / "supabase/functions/membership-api/stripe-webhook-security.mjs").read_text(encoding="utf-8")
 worker = (ROOT / "service-worker.js").read_text(encoding="utf-8")
 core = (ROOT / "ofoq-core.js").read_text(encoding="utf-8")
 ecommerce = (ROOT / "ecommerce-studio.js").read_text(encoding="utf-8")
@@ -55,6 +56,30 @@ priority_ids = re.findall(r'"([^"]+)"', html[priority_start:priority_end])
 require(len(priority_ids) == len(set(priority_ids)), "duplicate priority IDs")
 require(set(section_ids) == set(priority_ids), "section priority list does not match catalogue")
 
+# Utility registry integrity and specialist-tool coverage.
+utility_start = html.find("const utilityModules=")
+utility_end = html.find("async function openSection", utility_start)
+require(utility_start >= 0 and utility_end > utility_start, "utility registry boundary missing")
+utility_source = html[utility_start:utility_end]
+utility_entries = re.findall(r"^\s*([a-z0-9_]+):\s*\{\s*title:'([^']+)'", utility_source, re.M)
+utility_ids = [item[0] for item in utility_entries]
+require(len(utility_ids) == 70 and len(utility_ids) == len(set(utility_ids)), "expected 70 unique utility module definitions")
+require("دليل عملي ومخطط تعلّم" not in utility_source, "legacy generic guide templates must not return")
+specialist_ids = (
+    "science_space", "world_encyclopedia", "ai_lab", "environment_climate",
+    "personal_finance", "world_history", "global_languages", "global_cuisine",
+    "family_life", "books_knowledge", "creative_studio", "photography_media",
+    "gaming_arena", "fitness_wellness", "digital_citizenship", "global_travel",
+    "startup_lab", "sustainable_living",
+)
+for specialist_id in specialist_ids:
+    require(specialist_id in utility_ids, "specialist local tool missing: " + specialist_id)
+browser_suite = (ROOT / "tests/browser-smoke.mjs").read_text(encoding="utf-8")
+require("specialistCases" in browser_suite, "browser suite must exercise specialist tools")
+for specialist_id in specialist_ids:
+    require(specialist_id in browser_suite, "specialist browser case missing: " + specialist_id)
+
+
 # Shared futuristic navigation must remain keyboard- and accessibility-friendly.
 command = re.search(r'<script id="ofoq-command-center-v2">([\s\S]*?)</script>', html)
 require(command, "command center script missing")
@@ -69,8 +94,6 @@ for token in (
     'supabaseFetch("/auth/v1/user", token)',
     'metadata.role === "OWNER" && metadata.owner === true && metadata.owner_access === "lifetime"',
     'request.method === "POST" && path === "/api/stripe/webhook"',
-    'verifyStripeSignature(payload, request.headers.get("Stripe-Signature") ?? "")',
-    'Math.abs(Date.now() / 1000 - timestamp) > 300',
     'readBoundedText(request, 262_144)',
     'readBoundedText(request, 8_192)',
     'Number.isSafeInteger(delta)',
@@ -85,6 +108,15 @@ for token in (
     'if (!await billingGateOpen()) return reply(',
 ):
     require(token in membership, "membership API security/monetization guard missing: " + token)
+for token in (
+    'verifyStripeSignature(payload, request.headers.get("Stripe-Signature") ?? "", STRIPE_WEBHOOK_SECRET)',
+    "Math.abs(nowSeconds - timestamp) > 300",
+    "Number.isSafeInteger(timestamp)",
+    "Number.isSafeInteger(created)",
+    "EVENT_ID_PATTERN",
+    "EVENT_TYPE_PATTERN",
+):
+    require(token in webhook_security or token in membership, "Stripe webhook security guard missing: " + token)
 require("SUPABASE_SERVICE_ROLE_KEY" not in html and "STRIPE_SECRET_KEY" not in html, "membership provider secrets must not enter browser HTML")
 require('Access-Control-Allow-Origin": "https://alooshalshawwa8-wq.github.io"' in membership, "membership API exact-origin CORS contract missing")
 
@@ -137,8 +169,10 @@ require("REVOKE EXECUTE ON FUNCTION public.trim_user_workspace_backup_history() 
 for token in (
     'request.method !== "POST"',
     'origin !== ALLOWED_ORIGIN',
-    'request.headers.get("x-forwarded-for")',
-    'rateAllowed(ip)',
+    'request.headers.get("cf-connecting-ip")',
+    'hashClientIp(clientIp, serviceKey)',
+    'reserve_site_assistant_rate_limit',
+    'rateAllowed !== true',
     'readBoundedBody(request, 24_000)',
     'body.messages.length > 12',
     'item.content.trim().slice(0, 2000)',
