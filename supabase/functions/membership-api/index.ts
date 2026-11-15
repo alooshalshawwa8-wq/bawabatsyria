@@ -365,6 +365,7 @@ Deno.serve(async (request: Request) => {
 
     const user = await authenticatedUser(request);
     if (!user) return reply({ error: "Authentication required" }, 401);
+    if (!user.owner) return reply({ error: "Platform owner access required" }, 403);
 
     if (request.method === "GET" && path === "/api/admin/metrics") {
       if (!user.owner) return reply({ error: "Platform owner access required" }, 403);
