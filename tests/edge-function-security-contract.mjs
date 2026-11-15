@@ -13,8 +13,8 @@ const [assistant, football, membership, index, aiRegistry, geminiAdapter, aiTask
 ]);
 
 // AI provider registry: fixed server-side allowlist, no client-selected URLs/models or paid fallback.
-assert.match(assistant, /import \{ resolveAiProvider \} from "\.\/ai-provider-registry\.ts"/);
-assert.match(assistant, /resolveAiProvider\("gemini", Deno\.env\.get\("GEMINI_API_KEY"\)/);
+assert.match(aiTaskRouter, /import \{ resolveAiProvider, type AiProviderConfig \} from "\.\/ai-provider-registry\.ts"/);
+assert.match(assistant, /resolveAiRoute\(task, geminiApiKey\)/);
 assert.match(assistant, /generateWithGemini\(/);
 assert.match(assistant, /resolveAiRoute\(/);
 assert.ok(assistant.indexOf("if (!geminiApiKey.trim())") < assistant.indexOf("reserve_ai_provider_request"), "missing provider credentials must fail before consuming quota");
