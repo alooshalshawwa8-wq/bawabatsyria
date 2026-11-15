@@ -101,10 +101,27 @@ async function recordProviderUsage(row: {
     });
   } catch (error) { console.error("Football usage log failed", String(error).slice(0,160)); }
 }
+function isValidClientIp(value: string) {
+  if (!value || value.length > 45) return false;
+  if (/^[0-9.]+$/.test(value)) {
+    const octets = value.split(".");
+    return octets.length === 4 && octets.every(part => /^\d{1,3}$/.test(part) && Number(part) <= 255);
+  }
+  return value.includes(":") && /^[0-9a-fA-F:]+$/.test(value);
+}
+
 async function hashClientKey(value: string) {
-  const bytes = new TextEncoder().encode(value || "unknown");
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(digest)).map(x => x.toString(16).padStart(2,"0")).join("");
+  if (!SERVICE_KEY) throw new Error("Rate-limit HMAC secret unavailable");
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(SERVICE_KEY),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(value));
+  return Array.from(new Uint8Array(signature)).map(x => x.toString(16).padStart(2, "0")).join("");
 }
 async function persistentRateAllowed(bucket: string, maxRequests = 60): Promise<boolean | null> {
   try {
@@ -328,9 +345,19 @@ Deno.serve(async (request: Request) => {
   if (origin !== ALLOWED_ORIGIN) return reply({ error: "Origin not allowed" }, 403);
   if (request.method !== "GET") return reply({ error: "Method not allowed" }, 405);
 
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (!rateAllowed(ip)) return reply({ error: "تم تجاوز عدد الطلبات المؤقت. حاول بعد دقيقة." }, 429);
-  const persistentRate = await persistentRateAllowed(await hashClientKey(ip), 60);
+  // Trust only the platform-provided client address. Never use caller-controlled forwarding headers.
+  const clientIp = request.headers.get("cf-connecting-ip")?.trim() ?? "";
+  if (!isValidClientIp(clientIp) || !SERVICE_KEY) {
+    return reply({ error: "تعذر التحقق من هوية الاتصال بأمان؛ أوقفنا الطلب لحماية الخدمة." }, 503);
+  }
+  let clientBucket: string;
+  try {
+    clientBucket = await hashClientKey(clientIp);
+  } catch {
+    return reply({ error: "تعذر التحقق من حد الطلبات حالياً؛ أوقفنا الاتصال بالمزود لحماية الحصة." }, 503);
+  }
+  if (!rateAllowed(clientBucket)) return reply({ error: "تم تجاوز عدد الطلبات المؤقت. حاول بعد دقيقة." }, 429);
+  const persistentRate = await persistentRateAllowed(clientBucket, 60);
   if (persistentRate === null) return reply({ error: "تعذر التحقق من حد الطلبات حالياً؛ أوقفنا الاتصال بالمزود لحماية الحصة." }, 503);
   if (!persistentRate) return reply({ error: "تم تجاوز عدد الطلبات المؤقت. حاول بعد دقيقة." }, 429);
   const tracker: FetchTracker = { upstreamCalls: 0, cacheHits: 0, staleHits: 0, budgetBlocked: 0 };
