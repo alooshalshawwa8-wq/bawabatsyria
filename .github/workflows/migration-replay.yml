@@ -33,7 +33,7 @@ jobs:
         run: supabase init --force
 
       - name: Start disposable local Supabase stack
-        run: supabase start
+        run: supabase start -x studio,inbucket
 
       - name: Replay every migration from an empty local database
         run: supabase db reset --local
