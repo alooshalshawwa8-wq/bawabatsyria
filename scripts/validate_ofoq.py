@@ -118,7 +118,7 @@ for token in (
 ):
     require(token in webhook_security or token in membership, "Stripe webhook security guard missing: " + token)
 require("SUPABASE_SERVICE_ROLE_KEY" not in html and "STRIPE_SECRET_KEY" not in html, "membership provider secrets must not enter browser HTML")
-require('Access-Control-Allow-Origin": "https://alooshalshawwa8-wq.github.io"' in membership, "membership API exact-origin CORS contract missing")
+require('const ALLOWED_ORIGIN = Deno.env.get("OFOQ_ALLOWED_ORIGIN")' in membership and '"Access-Control-Allow-Origin": ALLOWED_ORIGIN' in membership, "membership API configurable exact-origin CORS contract missing")
 
 # Football provider must remain fail-closed when the provider account is blocked.
 football = (ROOT / "supabase/functions/football-data/index.ts").read_text(encoding="utf-8")
