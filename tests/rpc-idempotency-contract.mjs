@@ -18,7 +18,7 @@ assert.match(ledger, /grant select, insert, update on ofoq_private\.rpc_idempote
 for (const [sql, operation, fn] of [[journal, "journal_draft", "create_journal_draft"], [inventory, "inventory_item_opening", "create_inventory_item_with_opening_movement"]]) {
   assert.match(sql, /p_request_id uuid/i, fn + " must require a request UUID");
   assert.match(sql, /insert into ofoq_private\.rpc_idempotency_keys[\s\S]*?on conflict \(user_id, operation, request_id\) do nothing/i);
-  assert.match(sql, new RegExp("operation, request_id, v_payload[\\s\\S]*?'" + operation + "'"));
+  assert.match(sql, new RegExp("values\\s*\\(v_user_id, '" + operation + "', p_request_id, v_payload\\)", "i"));
   assert.match(sql, /for update/i, fn + " must serialize duplicate request attempts");
   assert.match(sql, /v_existing_payload is distinct from v_payload/i, fn + " must reject key reuse with different data");
   assert.match(sql, /if v_existing_result is not null then\s+return v_existing_result/i, fn + " must return the original result");
