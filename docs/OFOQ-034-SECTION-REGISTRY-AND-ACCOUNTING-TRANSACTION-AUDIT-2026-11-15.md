@@ -59,10 +59,22 @@ Important implementation distinction:
 - The current browser journal UI creates a draft header, then inserts its two lines in a separate request. It compensates for line-insert failure by deleting the draft; the entry's cascading foreign key removes any lines already inserted.
 - This UI path does not call `post_journal_entry`; it deliberately leaves the balanced entry as a draft. The database posting RPC is a separate protected capability, not evidence that draft creation itself is a single atomic RPC.
 
-Recommended next engineering change (not applied):
-- Replace the two-step draft-header/lines UI sequence with a dedicated authenticated, owner-scoped database RPC that accepts a bounded description, date, debit account, credit account, and amount; validates same-currency accounts; creates the draft and both lines in one transaction; returns the draft identifier.
-- Keep posting as a separate explicit user action through the existing locked `post_journal_entry` RPC.
-- Add idempotency protection or a client-generated request key before allowing retries, so a network timeout cannot create duplicate drafts.
+### Implemented on the development branch
+
+Added `supabase/migrations/20261115190000_create_atomic_journal_draft_rpc.sql`:
+- Adds `public.create_journal_draft` as a `SECURITY INVOKER` function with an empty search path.
+- Derives the owner exclusively from `auth.uid()`; accepts no caller-supplied user ID.
+- Validates description length, date, distinct active same-owner accounts, same currency, and a positive amount with at most two decimal places.
+- Creates the draft header and both balanced lines in one database transaction.
+- Revokes PUBLIC/anon execution and grants execution to authenticated users only.
+
+Updated `ofoq-data.js` with an authenticated POST-only PostgREST RPC transport, including the existing session refresh pattern. Updated `ofoq-workspace-extensions.js` so the journal UI uses the atomic RPC and continues to leave entries as drafts; posting remains a separate explicit action.
+
+Added `tests/journal-draft-rpc-contract.mjs` and wired it plus syntax checks for the changed shared data/workspace scripts into static CI.
+
+Remaining hardening:
+- Add a client request UUID and database idempotency ledger before implementing automatic retries for this operation. The current RPC itself is atomic, but a user retry after an ambiguous network timeout could create a second valid draft.
+- Run the migration replay and static CI against this branch before considering the change verified. No CI run has yet been observed for this branch.
 
 ## 4. Scope and non-actions
 
