@@ -44,6 +44,21 @@ assert.match(headers, /Cache-Control:\s*no-store/i);
 const pagesWorkflow = readFileSync(resolve(".github/workflows/pages.yml"), "utf8");
 assert.match(pagesWorkflow, /if: github\.event\.repository\.private == false && vars\.OFOQ_PUBLIC_PAGES_ENABLED == 'true'/);
 
+const expectedRoot = new Set([
+  "_headers", "assets", "career-studio.js", "ecommerce-studio.js", "index.html",
+  "manifest.json", "ofoq-commerce-cloud.js", "ofoq-core.js", "ofoq-data.js",
+  "ofoq-icon.svg", "ofoq-metrics.js", "ofoq-profile.js",
+  "ofoq-vault.js", "ofoq-workspace-extensions.js", "ofoq-workspaces.js",
+  "operations-hub.js", "robots.txt",
+]);
+for (const entry of readdirSync(root)) {
+  assert.ok(expectedRoot.has(entry), "Unexpected file in private artifact: " + entry);
+}
+for (const match of html.matchAll(/<script[^>]+src=["']([^"']+)["']/g)) {
+  const relative = match[1].replace(/^\.\//, "");
+  assert.ok(existsSync(resolve(root, relative)), "HTML references a missing private asset: " + relative);
+}
+
 const forbidden = new Set(["docs", "tests", "supabase", "backend", "scripts", ".github", ".git"]);
 for (const entry of readdirSync(root, { withFileTypes: true })) {
   assert.ok(!forbidden.has(entry.name), "Private artifact leaked a source-only path: " + entry.name);
