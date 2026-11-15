@@ -3114,7 +3114,7 @@ if(!email||! /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){status.textContent='أد�
 status.textContent='جارٍ إرسال رسالة تأكيد جديدة…';
 try{
 const redirectTo=window.location.origin+window.location.pathname;
-const response=await fetch(authUrl+'/auth/v1/resend',{method:'POST',headers:{'content-type':'application/json',apikey:authAnonKey},body:JSON.stringify({type:'signup',email,options:{emailRedirectTo:redirectTo}})});
+const response=await fetch(authUrl+'/auth/v1/resend?redirect_to='+encodeURIComponent(redirectTo),{method:'POST',headers:{'content-type':'application/json',apikey:authAnonKey},body:JSON.stringify({type:'signup',email})});
 if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.msg||data.message||data.error_description||'تعذر إعادة إرسال رسالة التأكيد.');}
 status.textContent='إذا كان الحساب بحاجة إلى تأكيد، فستصلك رسالة جديدة. افحص الوارد والرسائل غير المرغوب فيها.';
 }catch(error){status.textContent=error.message||'تعذر إعادة إرسال رسالة التأكيد حالياً.';}
