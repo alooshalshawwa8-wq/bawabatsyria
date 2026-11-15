@@ -109,6 +109,17 @@ Do not change repository visibility until all preceding tests pass.
 
 If any step fails, stop the cutover, keep the current source intact, and restore the prior hosting route only as a temporary fallback. Do not claim privacy while the old public URL remains accessible.
 
+### GitHub Actions free-quota note
+
+GitHub's current pricing documentation lists 2,000 Actions minutes/month for GitHub Free personal accounts; public-repository standard runner usage is free, while private-repository hosted-runner usage consumes the included allowance and may be billed if it exceeds the account's allowance. The exact allowance must be checked in the owner's GitHub billing settings before making the repository private.
+
+To reduce avoidable usage, this branch scopes:
+- database migration replay to migration/config/seed changes;
+- membership/payment checks to relevant backend, portal, test, and Supabase source changes;
+- static validation to application, backend, tests, scripts, Supabase, and workflow changes.
+
+The read-only autopilot schedule remains separate and should be reviewed against the actual monthly quota after the repository becomes private.
+
 ## 7. Remaining external requirements
 
 The following cannot be completed through the currently connected GitHub/Supabase tools:
