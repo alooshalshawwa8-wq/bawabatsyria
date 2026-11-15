@@ -112,8 +112,8 @@ Their CORS headers/Origin checks are not yet configured for a new Pages hostname
 
 After the new Pages project name is chosen, before declaring the site operational:
 
-1. Update the allowed origin in all three Edge Functions to the exact new production `https://<project>.pages.dev` origin. Keep the old origin only during the controlled migration window; do not use wildcard `*.pages.dev` or reflect arbitrary Origin values.
-2. Update membership `SITE_URL` and all Auth Site URL / Redirect URL allowlists to the exact Pages origin and required callback paths.
+1. Set the Edge Function environment variable `OFOQ_ALLOWED_ORIGIN=https://<project>.pages.dev` for all three functions. PR #32 makes the CORS origin configurable in `site-assistant`, `football-data`, and `membership-api`; the old GitHub Pages origin remains only as a fallback until this variable is set. Keep the value exact; do not use wildcard `*.pages.dev` or reflect arbitrary Origin values.
+2. Set membership `SITE_URL=https://<project>.pages.dev` and update all Supabase Auth Site URL / Redirect URL allowlists to the exact Pages origin and required callback paths.
 3. Update canonical/manifest/sitemap metadata as appropriate for the private artifact. The prepared build intentionally strips public canonical and JSON-LD metadata and applies noindex.
 4. Redeploy the three Edge Functions only after source review and a rollback plan. Test CORS preflight and actual requests for allowed and disallowed origins, login, session refresh, logout, password recovery, membership/portal, assistant and football endpoints.
 5. Confirm all requests use the intended Supabase project and that no service-role secret is present in the static artifact.
