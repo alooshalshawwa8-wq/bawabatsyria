@@ -1,8 +1,13 @@
 import { assertEquals } from "jsr:@std/assert@1";
-import { resolveAiProvider } from "./ai-provider-registry.ts";
 import { generateWithGemini } from "./gemini-adapter.ts";
 
-const provider = resolveAiProvider("gemini", "test-secret")!;
+const provider = {
+  id: "gemini" as const,
+  modelId: "gemini-3.5-flash-lite",
+  endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",
+  apiKey: "test-secret",
+  pricingStatus: "free-tier-unverified" as const,
+};
 
 Deno.test("Gemini adapter sends only the resolved server configuration", async () => {
   let seenUrl = "";
