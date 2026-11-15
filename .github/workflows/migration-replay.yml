@@ -15,6 +15,7 @@ on:
       - "supabase/migrations/**"
       - "supabase/config.toml"
       - "supabase/seed.sql"
+      - "tests/nibras-rate-limit-concurrency.sh"
   workflow_dispatch:
 
 permissions:
