@@ -25,7 +25,7 @@ assert.doesNotMatch(assistant, /console\.log\(.*contents/);
 // Nibras rate limits must use the Cloudflare client IP, HMAC it, and
 // reserve a persistent database slot; caller-controlled X-Forwarded-For is forbidden.
 assert.match(assistant, /request\.headers\.get\("cf-connecting-ip"\)/);
-assert.doesNotMatch(assistant, /request\\.headers\\.get\\(["\']x-forwarded-for/i);
+assert.doesNotMatch(assistant, /request\.headers\.get\(["']x-forwarded-for/i);
 assert.match(assistant, /hashClientIp\(clientIp, serviceKey\)/);
 assert.match(assistant, /reserve_site_assistant_rate_limit/);
 assert.match(assistant, /rateAllowed !== true/);
