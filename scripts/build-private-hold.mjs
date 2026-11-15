@@ -35,6 +35,7 @@ writeFileSync(resolve(output, "_headers"), `/*
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer
   X-Frame-Options: DENY
-  Content-Security-Policy: frame-ancestors 'none'
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; img-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
 `, "utf8");
 console.log("Non-sensitive Cloudflare holding artifact built. Use it to configure Access before publishing the app.");
