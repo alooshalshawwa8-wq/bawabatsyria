@@ -55,6 +55,12 @@ const expectedRoot = new Set([
 for (const entry of readdirSync(root)) {
   assert.ok(expectedRoot.has(entry), "Unexpected file in private artifact: " + entry);
 }
+for (const match of html.matchAll(/srcset=["']([^"']+)["']/g)) {
+  for (const candidate of match[1].split(",").map(item => item.trim().split(/\s+/)[0])) {
+    const relative = candidate.replace(/^\.\//, "");
+    assert.ok(existsSync(resolve(root, relative)), "HTML references a missing responsive image: " + relative);
+  }
+}
 for (const match of html.matchAll(/<script[^>]+src=["']([^"']+)["']/g)) {
   const relative = match[1].replace(/^\.\//, "");
   assert.ok(existsSync(resolve(root, relative)), "HTML references a missing private asset: " + relative);
