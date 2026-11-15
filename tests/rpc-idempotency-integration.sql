@@ -22,6 +22,8 @@ values
 on conflict (user_id, code) do nothing;
 
 set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000000035', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
 select set_config(
   'request.jwt.claims',
   '{"sub":"00000000-0000-4000-8000-000000000035","role":"authenticated","app_metadata":{"role":"OWNER","owner":true,"owner_access":"lifetime"}}',
