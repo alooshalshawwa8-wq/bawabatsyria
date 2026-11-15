@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { resolveAiProvider } from "./ai-provider-registry.ts";
+import { generateWithGemini } from "./gemini-adapter.ts";
 
 const ALLOWED_ORIGIN = Deno.env.get("OFOQ_ALLOWED_ORIGIN") ?? "https://alooshalshawwa8-wq.github.io";
 const cors = {
@@ -245,28 +246,20 @@ Deno.serve(async (request: Request) => {
   // Log only the number of valid turns, never the user's conversation text.
   console.info("Nibras context received", { messageCount: body.messages.length, normalizedTurns: contents.length, section: sectionProfiles[section] ? section : "general" });
 
-  try {
-    const response = await fetch(provider.endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": provider.apiKey,
-      },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: sectionInstruction ? `${SYSTEM_PROMPT}\\n\\nتخصص هذا القسم: ${sectionInstruction}` : SYSTEM_PROMPT }] },
-        contents,
-        generationConfig: { temperature: 0.65, maxOutputTokens: 850 },
-      }),
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      console.error("Gemini request failed", response.status, JSON.stringify(data.error ?? { message: "Unknown provider error" }).slice(0, 1200));
-      return reply({ error: "صار في عطل مؤقت بخدمة الذكاء الاصطناعي. جرّب بعد شوي." }, 502);
-    }
-    const answer = data.candidates?.[0]?.content?.parts?.map((part: { text?: string }) => part.text ?? "").join("").trim();
-    if (!answer) return reply({ error: "ما قدرت كوّن جواب هالمرة. جرّب صياغة سؤالك بطريقة تانية." }, 502);
-    return reply({ answer });
-  } catch (_error) {
-    return reply({ error: "تعذر الاتصال بخدمة المساعد حالياً." }, 502);
+  const result = await generateWithGemini(
+    provider,
+    contents,
+    sectionInstruction ? `${SYSTEM_PROMPT}\\n\\nتخصص هذا القسم: ${sectionInstruction}` : SYSTEM_PROMPT,
+  );
+  if (result.ok) return reply({ answer: result.answer });
+  if (result.kind === "quota") {
+    return reply({ error: "حصة مزود الذكاء الاصطناعي ممتلئة حالياً. جرّب لاحقاً." }, 429);
   }
+  if (result.kind === "empty") {
+    return reply({ error: "ما قدرت كوّن جواب هالمرة. جرّب صياغة سؤالك بطريقة تانية." }, 502);
+  }
+  console.error("Gemini adapter failed", { status: result.status, kind: result.kind });
+  return reply({ error: result.kind === "timeout"
+    ? "تأخر رد خدمة المساعد. جرّب مرة أخرى."
+    : "صار في عطل مؤقت بخدمة الذكاء الاصطناعي. جرّب بعد شوي." }, 502);
 });
