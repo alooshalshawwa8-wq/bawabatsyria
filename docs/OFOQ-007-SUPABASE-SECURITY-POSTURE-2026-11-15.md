@@ -13,7 +13,7 @@ Scope: read-only verification; no production configuration or schema changes.
 - Performance Advisor reports 26 unused-index INFO findings. No index was dropped; usage counters alone are insufficient evidence for safe deletion.
 - A previous Health Advisor check was clear; this session's live recheck focused on security and performance.
 
-A second direct privilege inventory across all public base tables found no table with RLS disabled. The only `anon` SELECT grants are on the intentionally public `membership_plans` and `payment_methods` catalogs. `authenticated` has table privileges on user-scoped tables, but those are protected by RLS; the proposed migration adds the signed owner predicate to those policies. No row data was selected during this audit.
+A second direct privilege inventory across all public base tables found no table with RLS disabled. The only `anon` SELECT grants are on the intentionally public `membership_plans` and `payment_methods` catalogs. `authenticated` has table privileges on user-scoped tables, but those are protected by RLS; the proposed migration adds the signed owner predicate to those policies. No row data was selected during this audit. A read-only check of `storage.buckets` returned no buckets, so there is no Supabase Storage bucket currently configured as public or private.
 
 ## Proposed single-owner hardening (not yet applied)
 
