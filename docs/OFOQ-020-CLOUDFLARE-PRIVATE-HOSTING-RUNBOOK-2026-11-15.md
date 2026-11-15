@@ -87,7 +87,7 @@ The new `pages.dev` hostname is a different origin from `alooshalshawwa8-wq.gith
 
 Before unpublishing GitHub Pages, prepare and deploy a temporary retirement page on the old origin that:
 - displays that the public site has moved to a private address;
-- unregisters the old same-origin service worker;
+- unregisters only the service worker scoped to the OFOQ Pages path (so other GitHub Pages projects on the same `github.io` origin are not disturbed);
 - deletes only caches whose names start with `ofoq-shell-`;
 - does not register a replacement worker;
 - optionally links to the new Access-protected hostname after it is known.
