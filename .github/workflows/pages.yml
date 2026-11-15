@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.event.repository.private == false
+    if: github.event.repository.private == false && vars.OFOQ_PUBLIC_PAGES_ENABLED == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
