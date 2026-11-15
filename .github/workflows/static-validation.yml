@@ -126,3 +126,8 @@ jobs:
           assert.ok(sitemap.includes(base), 'Sitemap must contain the canonical site URL');
           console.log('OFOQ static contracts passed.');
           NODE
+
+      - name: Build and verify private Cloudflare Pages artifact
+        run: |
+          node scripts/build-private-pages.mjs
+          node tests/private-pages-build-contract.mjs
