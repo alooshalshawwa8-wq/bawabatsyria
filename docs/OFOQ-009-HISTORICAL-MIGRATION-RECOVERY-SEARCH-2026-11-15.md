@@ -112,3 +112,25 @@ Until one of these paths is completed, do not mark migration reconciliation as r
 - No SQL migration file was created or modified.
 - No migration was applied or reverted.
 - No production database, schema, data, grants, RLS policies, Auth settings, secrets, Edge Functions, or billing configuration was changed.
+
+
+## Supplemental recovery pass — 2026-11-15
+
+A further pass was performed after the initial report update:
+
+- Re-opened GitHub Issue #24, which records the original migration mismatch and the safe-resolution plan. Its discussion confirms that the live migration history was read directly and that the original SQL must be recovered from trusted deployment/backup artifacts or, if impossible, replaced only through a separately reviewed baseline process.
+- Searched the user's available Library for the exact missing migration identifiers and related SQL source material. The search surfaced project reference documents and execution summaries, but no original SQL migration bodies or source archive.
+- Re-checked the accessible second repository `alooshalshaw8-wq/bawabatsuria`; no matching migration source files were returned by exact-name code searches.
+- Reconfirmed that the 14 migration names and applied versions are present in the live migration history, but the history table records identifiers, not the original SQL bodies.
+
+### Final operational conclusion
+
+The **documentation and repository-side recovery investigation are complete to the extent supported by currently accessible sources**. The **actual recovery of the 14 SQL bodies is still blocked** because no trusted copy of those bodies was found.
+
+This is not a completed recovery and must not be represented as one. The remaining dependency is an authoritative source archive: a developer workstation export, original CI/deployment artifact, full Git bundle/backup containing the relevant objects, or another repository backup with provenance.
+
+The alternative baseline route in the release criteria is a distinct engineering task. It requires a complete schema-only export and object inventory, a separately reviewed baseline package, and validation in an isolated PostgreSQL environment. It is not permission to fabricate historical files and has not been started or applied.
+
+Reference: GitHub Issue [#24](https://github.com/alooshalshawwa8-wq/bawabatsyria/issues/24).
+
+No production database changes, migration replay, reset, SQL reconstruction, or billing/Auth/security configuration changes were performed during this supplemental pass.
