@@ -36,3 +36,14 @@ PR #32 adds migration `20261115160000_enforce_single_owner_rls.sql`, which wraps
 - Direct `has_table_privilege` check for SELECT/INSERT on the 12 tables: no client-role access for `anon` or `authenticated`.
 
 This document records observed state only. It does not certify end-to-end production readiness or prove that all application endpoints are secure.
+
+## Additional live exposure checks (2026-11-15)
+
+- Auth metadata aggregate check: exactly 1 of 3 Auth users currently has the required owner claims (role=OWNER, owner=true, owner_access=lifetime). No email addresses or user IDs were retrieved.
+- Policy inventory for anon and public roles found only the two intended catalog SELECT policies: active membership plans and enabled payment methods. No other public/anonymous table policies were found in the public schema.
+- The only client-readable public-schema view found was points_balances. It has security_invoker=true; anon has no SELECT privilege on it, while authenticated access invokes the underlying points_ledger RLS policies.
+- No public-schema SECURITY DEFINER function was found executable by anon or authenticated in the live privilege inventory.
+- The local disposable replay of the proposed owner-only migration passed: all 39 migrations replayed, owner/non-owner JWT claims were distinguished, policy coverage checks passed, and the 40-request concurrency limiter test passed. These are local CI results only; production still has 37 applied migrations and was not changed.
+- The latest PR #32 CI revision passed all four workflows: static validation, full Git history secret scan (0 findings), clean PostgreSQL migration replay, and membership/portal validation.
+
+These checks reduce the known exposure surface but do not replace the final hosted-access cutover, independent browser testing, or review of any external provider dashboard settings.
