@@ -11,7 +11,7 @@ export interface AiProviderConfig {
   readonly modelId: string;
   readonly endpoint: string;
   readonly apiKey: string;
-  readonly pricingStatus: "free-tier-limited";
+  readonly pricingStatus: "free-tier-unverified";
 }
 
 const PROVIDERS: Readonly<Record<AiProviderId, Omit<AiProviderConfig, "apiKey">>> = {
@@ -19,7 +19,7 @@ const PROVIDERS: Readonly<Record<AiProviderId, Omit<AiProviderConfig, "apiKey">>
     id: "gemini",
     modelId: "gemini-3.5-flash-lite",
     endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",
-    pricingStatus: "free-tier-limited",
+    pricingStatus: "free-tier-unverified",
   },
 };
 
