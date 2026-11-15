@@ -2,7 +2,7 @@ name: OFOQ static validation
 
 on:
   push:
-    branches: [main]
+    branches: [main, aloosh/brand-prep-2026-11-15]
     paths:
       - "index.html"
       - "*.js"
