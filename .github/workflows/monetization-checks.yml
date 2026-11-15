@@ -19,6 +19,7 @@ on:
       - "backend/**"
       - "index.html"
       - "tests/**"
+      - "scripts/validate_ofoq.py"
       - "ecommerce-studio.js"
       - "career-studio.js"
       - "operations-hub.js"
