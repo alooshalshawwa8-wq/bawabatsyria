@@ -51,6 +51,19 @@ begin
     raise exception 'reported token total was not persisted';
   end if;
 
+  if not public.mark_ai_model_provider_attempt(v_ids[3]) then
+    raise exception 'quota-error provider attempt transition failed';
+  end if;
+  if not public.settle_ai_model_quota(v_ids[3],'quota_exhausted',120, null, null, null, null, null, null, 429) then
+    raise exception 'provider quota-exhaustion settlement failed';
+  end if;
+  if (select status from public.ai_usage_events where request_id = v_ids[3]) <> 'quota_exhausted' then
+    raise exception 'provider 429 outcome was not persisted';
+  end if;
+  if (select provider_http_status from public.ai_usage_events where request_id = v_ids[3]) <> 429 then
+    raise exception 'provider HTTP 429 status was not persisted';
+  end if;
+
   if not public.release_ai_model_quota(v_ids[2]) then
     raise exception 'pre-provider reservation should be releasable';
   end if;
