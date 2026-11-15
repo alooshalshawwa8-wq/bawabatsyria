@@ -3,8 +3,30 @@ name: OFOQ static validation
 on:
   push:
     branches: [main]
+    paths:
+      - "index.html"
+      - "*.js"
+      - "backend/**"
+      - "supabase/**"
+      - "tests/**"
+      - "scripts/**"
+      - ".github/workflows/**"
+      - "manifest.json"
+      - "robots.txt"
+      - "service-worker.js"
   pull_request:
     branches: [main]
+    paths:
+      - "index.html"
+      - "*.js"
+      - "backend/**"
+      - "supabase/**"
+      - "tests/**"
+      - "scripts/**"
+      - ".github/workflows/**"
+      - "manifest.json"
+      - "robots.txt"
+      - "service-worker.js"
   workflow_dispatch:
 
 permissions:
