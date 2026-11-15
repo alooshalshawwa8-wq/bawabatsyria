@@ -10,6 +10,7 @@ on:
       - "supabase/config.toml"
       - "supabase/seed.sql"
       - "tests/nibras-rate-limit-concurrency.sh"
+      - ".github/workflows/migration-replay.yml"
       - "tests/ai-quota-ledger-*.sql"
       - "tests/ai-quota-ledger-*.sh"
   pull_request:
@@ -83,6 +84,10 @@ jobs:
           "${DB[@]}" --command "select not has_table_privilege('anon','public.ai_usage_events','SELECT') and not has_table_privilege('authenticated','public.ai_usage_events','SELECT') and has_table_privilege('service_role','public.ai_usage_events','SELECT');" | grep -qx t
           "${DB[@]}" --command "select not has_function_privilege('anon','public.reserve_ai_model_quota(text,text,uuid,text)','EXECUTE') and not has_function_privilege('authenticated','public.reserve_ai_model_quota(text,text,uuid,text)','EXECUTE') and has_function_privilege('service_role','public.reserve_ai_model_quota(text,text,uuid,text)','EXECUTE');" | grep -qx t
           "${DB[@]}" --command "select enabled = false and free_tier_verified = false from public.ai_quota_model_policies where provider_id='gemini' and model_id='gemini-3.5-flash-lite';" | grep -qx t
+          "${DB[@]}" --command "select to_regprocedure('public.create_journal_draft(text,date,uuid,uuid,numeric)') is not null and to_regprocedure('public.create_inventory_item_with_opening_movement(text,text,text,numeric,numeric,character)') is not null;" | grep -qx t
+          "${DB[@]}" --command "select not p.prosecdef from pg_proc p where p.oid='public.create_journal_draft(text,date,uuid,uuid,numeric)'::regprocedure;" | grep -qx t
+          "${DB[@]}" --command "select not p.prosecdef from pg_proc p where p.oid='public.create_inventory_item_with_opening_movement(text,text,text,numeric,numeric,character)'::regprocedure;" | grep -qx t
+          "${DB[@]}" --command "select not has_function_privilege('anon','public.create_journal_draft(text,date,uuid,uuid,numeric)','EXECUTE') and has_function_privilege('authenticated','public.create_journal_draft(text,date,uuid,uuid,numeric)','EXECUTE') and not has_function_privilege('anon','public.create_inventory_item_with_opening_movement(text,text,text,numeric,numeric,character)','EXECUTE') and has_function_privilege('authenticated','public.create_inventory_item_with_opening_movement(text,text,text,numeric,numeric,character)','EXECUTE');" | grep -qx t
           echo "PASS: all 42 migrations replayed; all 14 recovered versions present; critical AI quota and football guard objects exist."
 
       - name: Test AI quota ledger lifecycle and idempotency
