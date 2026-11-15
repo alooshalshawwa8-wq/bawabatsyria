@@ -17,7 +17,14 @@ assert.match(aiTaskRouter, /import \{ resolveAiProvider, type AiProviderConfig \
 assert.match(assistant, /resolveAiRoute\(task, geminiApiKey\)/);
 assert.match(assistant, /generateWithGemini\(/);
 assert.match(assistant, /resolveAiRoute\(/);
-assert.ok(assistant.indexOf("if (!geminiApiKey.trim())") < assistant.indexOf("reserve_ai_provider_request"), "missing provider credentials must fail before consuming quota");
+assert.ok(assistant.indexOf("if (!geminiApiKey.trim())") < assistant.indexOf("reserve_ai_model_quota"), "missing provider credentials must fail before consuming quota");
+assert.ok(assistant.indexOf("if (!route)") < assistant.indexOf("reserve_ai_model_quota"), "unverified free-tier providers must fail before reserving quota");
+assert.match(assistant, /p_provider_id: route\\.provider\\.id/);
+assert.match(assistant, /p_model_id: route\\.provider\\.modelId/);
+assert.match(assistant, /mark_ai_model_provider_attempt/);
+assert.match(assistant, /release_ai_model_quota/);
+assert.match(assistant, /settle_ai_model_quota/);
+assert.doesNotMatch(assistant, /reserve_ai_provider_request/);
 assert.match(assistant, /from "\.\/ai-task-router\.ts"/);
 assert.match(assistant, /taskBySection/);
 assert.match(aiTaskRouter, /SUPPORTED_TASKS/);
