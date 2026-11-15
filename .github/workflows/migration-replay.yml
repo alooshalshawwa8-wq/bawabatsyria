@@ -79,16 +79,19 @@ jobs:
           echo "PASS: all 37 migrations replayed; all 14 recovered versions present; critical football guard functions and blocked-provider policy exist."
 
       - name: Verify owner-only RLS helper and policy coverage
+        env:
+          PGPASSWORD: postgres
         run: |
-          "${DB[@]}" --command "DO \\$\\$
+          psql --no-psqlrc --set ON_ERROR_STOP=1 --host 127.0.0.1 --port 54322 --username postgres --dbname postgres <<'SQL'
+          DO $$
           DECLARE
             uncovered integer;
           BEGIN
-            PERFORM set_config('request.jwt.claims', '{\"app_metadata\":{\"role\":\"OWNER\",\"owner\":true,\"owner_access\":\"lifetime\"}}', true);
+            PERFORM set_config('request.jwt.claims', '{"app_metadata":{"role":"OWNER","owner":true,"owner_access":"lifetime"}}', true);
             IF public.is_ofoq_owner() IS DISTINCT FROM true THEN
               RAISE EXCEPTION 'owner metadata must pass is_ofoq_owner()';
             END IF;
-            PERFORM set_config('request.jwt.claims', '{\"app_metadata\":{\"role\":\"USER\",\"owner\":false}}', true);
+            PERFORM set_config('request.jwt.claims', '{"app_metadata":{"role":"USER","owner":false}}', true);
             IF public.is_ofoq_owner() IS DISTINCT FROM false THEN
               RAISE EXCEPTION 'non-owner metadata must fail is_ofoq_owner()';
             END IF;
@@ -107,7 +110,9 @@ jobs:
               RAISE EXCEPTION 'found % authenticated policies without owner guard', uncovered;
             END IF;
           END;
-          \\$\\$;"
+          $$;
+          SQL
+
       - name: Test Nibras atomic minute limiter under concurrency
         run: bash tests/nibras-rate-limit-concurrency.sh
 
