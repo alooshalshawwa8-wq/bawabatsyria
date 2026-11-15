@@ -78,6 +78,28 @@ After the first successful production deployment:
 5. Verify both the production URL and every enabled preview/branch alias from a clean browser session. Unauthenticated requests must be redirected to Access or denied.
 6. If a custom domain is ever added, create a separate Access application for that exact hostname too. Do not assume protection of `pages.dev` automatically protects custom domains.
 
+## 4A. Backend single-owner enforcement (required, separate from Access)
+
+Cloudflare Access protects the static site, but it does not protect direct requests to Supabase Edge Functions or PostgREST. The current production functions are gateway-configured with `verify_jwt=false`; CORS/Origin checks are not authentication.
+
+PR #32 therefore prepares a second, independent server-side boundary:
+- `site-assistant`: validates the Supabase bearer token against `/auth/v1/user`, then requires signed `app_metadata.role=OWNER`, `owner=true`, and `owner_access=lifetime`. It rate-limits by the trusted ingress IP before calling Auth, and its CORS allow-headers include `apikey` and `authorization`.
+- `football-data`: validates the Supabase bearer token and the same owner app-metadata claims before any provider/data work.
+- `membership-api`: all authenticated routes require the existing owner flag; health, public plan catalog, and signature-verified Stripe webhook remain separate public routes.
+- New migration `20261115160000_enforce_single_owner_rls.sql` creates `public.is_ofoq_owner()` and wraps every authenticated public-schema RLS policy with that owner predicate, except intentionally public `membership_plans` and `payment_methods` reads. The 12 backend-only tables remain without client grants/policies.
+- The assistant frontend now sends the current Supabase session token. The football client already sends it.
+
+Live Auth metadata count on 2026-11-15: 3 Auth accounts exist, exactly 1 has the owner metadata required by the membership API. No accounts were deleted or modified; the two non-owner accounts will be denied access by the proposed owner-only gates while their records remain untouched.
+
+**Not deployed:** these changes are in PR #32 only. The production Edge Functions and RLS policies have not been changed. Before deploying the migration, take/verify a backup and pass the disposable migration replay, policy-coverage, owner-claim, and 40-request concurrency tests. After deployment, verify:
+1. no token → 401;
+2. valid non-owner token → 403;
+3. owner token → expected successful response;
+4. non-owner JWT cannot read or write owner tables through PostgREST;
+5. owner JWT retains normal access.
+
+Disable new user signups in Supabase Auth after confirming the owner's login and recovery path. This is an additional abuse-reduction control; the owner-only RLS and Edge Function checks remain the actual authorization boundary.
+
 ## 5. Required application-origin migration (critical)
 
 The current production app and all three Supabase functions use the old origin `https://alooshalshawwa8-wq.github.io`:
