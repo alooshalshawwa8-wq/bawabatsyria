@@ -59,6 +59,7 @@ jobs:
         run: |
           deno check supabase/functions/site-assistant/index.ts
           deno test supabase/functions/site-assistant/ai-provider-registry.test.ts
+          deno test supabase/functions/site-assistant/gemini-adapter.test.ts
           deno check supabase/functions/membership-api/index.ts
           deno check supabase/functions/football-data/index.ts
       - name: Run Edge Function security contract tests
