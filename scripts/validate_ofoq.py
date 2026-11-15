@@ -169,8 +169,10 @@ require("REVOKE EXECUTE ON FUNCTION public.trim_user_workspace_backup_history() 
 for token in (
     'request.method !== "POST"',
     'origin !== ALLOWED_ORIGIN',
-    'request.headers.get("x-forwarded-for")',
-    'rateAllowed(ip)',
+    'request.headers.get("cf-connecting-ip")',
+    'hashClientIp(clientIp, serviceKey)',
+    'reserve_site_assistant_rate_limit',
+    'rateAllowed !== true',
     'readBoundedBody(request, 24_000)',
     'body.messages.length > 12',
     'item.content.trim().slice(0, 2000)',
