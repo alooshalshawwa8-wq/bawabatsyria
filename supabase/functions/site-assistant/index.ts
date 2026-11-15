@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { resolveAiProvider } from "./ai-provider-registry.ts";
 
 const ALLOWED_ORIGIN = Deno.env.get("OFOQ_ALLOWED_ORIGIN") ?? "https://alooshalshawwa8-wq.github.io";
 const cors = {
@@ -114,8 +115,8 @@ Deno.serve(async (request: Request) => {
   if (origin !== ALLOWED_ORIGIN) return reply({ error: "Origin not allowed" }, 403);
   if (request.method !== "POST") return reply({ error: "Method not allowed" }, 405);
 
-  const apiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
-  if (!apiKey) return reply({ error: "المساعد يعمل حالياً بوضع الإرشاد الأساسي؛ خدمة الإجابات الذكية المتقدمة غير متاحة مؤقتاً." }, 503);
+  const provider = resolveAiProvider("gemini", Deno.env.get("GEMINI_API_KEY") ?? "");
+  if (!provider) return reply({ error: "المساعد يعمل حالياً بوضع الإرشاد الأساسي؛ خدمة الإجابات الذكية المتقدمة غير متاحة مؤقتاً." }, 503);
 
   const contentLength = Number(request.headers.get("content-length") ?? "0");
   if (Number.isFinite(contentLength) && contentLength > 24_000) {
@@ -245,11 +246,11 @@ Deno.serve(async (request: Request) => {
   console.info("Nibras context received", { messageCount: body.messages.length, normalizedTurns: contents.length, section: sectionProfiles[section] ? section : "general" });
 
   try {
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent", {
+    const response = await fetch(provider.endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
+        "x-goog-api-key": provider.apiKey,
       },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: sectionInstruction ? `${SYSTEM_PROMPT}\\n\\nتخصص هذا القسم: ${sectionInstruction}` : SYSTEM_PROMPT }] },
