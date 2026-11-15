@@ -9,6 +9,7 @@ assert.match(html, /name="robots" content="noindex,nofollow,noarchive"/);
 assert.doesNotMatch(html, /<link rel="canonical"/i);
 assert.doesNotMatch(html, /application\/ld\+json/i);
 assert.doesNotMatch(html, /serviceWorker\.register\(/);
+assert.ok(!existsSync(resolve(root, "service-worker.js")), "Private artifact must not ship a service worker");
 assert.match(html, /serviceWorker\.getRegistrations\(/);
 assert.match(html, /caches\.keys\(/);
 
