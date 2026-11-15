@@ -55,6 +55,7 @@ jobs:
           test "$migration_count" = "37"
           test "$recovered_count" = "14"
           "${DB[@]}" --command "select to_regclass('public.entitlements') is not null and to_regclass('public.points_ledger') is not null and to_regclass('public.points_balances') is not null;" | grep -qx t
+          "${DB[@]}" --command "select to_regclass('public.ai_provider_daily_usage') is not null and to_regprocedure('public.reserve_ai_provider_request(text,integer)') is not null;" | grep -qx t
           "${DB[@]}" --command "select to_regprocedure('public.football_api_budget_reserve(text,text)') is not null and to_regprocedure('public.football_api_budget_status()') is not null;" | grep -qx t
           "${DB[@]}" --command "select provider_blocked from public.football_api_budget_policy where singleton = true;" | grep -qx t
           echo "PASS: all 37 migrations replayed; all 14 recovered versions present; critical football guard functions and blocked-provider policy exist."
