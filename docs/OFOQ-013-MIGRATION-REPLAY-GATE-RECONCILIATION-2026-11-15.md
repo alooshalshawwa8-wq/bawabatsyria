@@ -71,3 +71,34 @@ These CI workflows validate application and portal code. They are not a PostgreS
 | Production replay | PROHIBITED / NOT NEEDED — migration already recorded as applied |
 
 **The recovery and reconciliation work is closed.** The only remaining optional assurance is a clean-database replay in an isolated environment that is already available at no additional cost. It is not a reason to replay any of these migrations against production or to block the historical source-recovery closure.
+
+
+## 5. Executed clean-replay attempt — final evidence (2026-11-15)
+
+This section supersedes the earlier statement that isolated replay was not run.
+
+- GitHub Actions workflow run: `43687677547`; job: `132731464250`.
+- The free runner installed the Supabase CLI, generated local configuration, pulled the containers, and initialized the disposable local database.
+- Clean replay **failed on the first migration**, `20261109161357_inventory_and_accounting_integrity.sql`, with PostgreSQL error `42P01: relation "public.inventory_movements" does not exist`, at `drop trigger if exists inventory_movement_apply_stock on public.inventory_movements`.
+- Later replay/assertion steps were skipped; cleanup stopped the disposable stack successfully.
+
+### Determination and safety boundary
+
+The checked-in migration sequence is not self-contained from an empty database: its first migration assumes a pre-existing `public.inventory_movements` relation. This does not establish that the 14 recovered SQL files are corrupt; all 14 remain exact matches to the historical statements. This failure also does not identify every missing baseline object or its authoritative definition.
+
+Do not alter the 14 historical files, invent placeholder tables or a synthetic baseline, or replay migrations on production. No production SQL was executed by this workflow. Recover the authoritative baseline migration/schema and verify its provenance and ordering before another clean replay. PR #23 remains draft and unmerged.
+
+### Updated disposition
+
+| Gate | Result |
+|---|---|
+| 14 historical SQL files restored and exact-compared | PASS — 14/14 |
+| 36 SQL migration files present in development branch | PASS |
+| Historical 20261111124846 discrepancy reconciled | PASS |
+| Free isolated Supabase stack bootstrapped | PASS |
+| Clean replay from empty database | BLOCKED — missing pre-existing `public.inventory_movements` |
+| Full replay assertions | NOT REACHED |
+| Production database changed by test | NO |
+| PR merged | NO |
+
+**Closure:** The 14-file historical recovery and source-verification dossier are closed. The broader clean-replay gate is not passed; its concrete blocker is the missing baseline prerequisite above. The next critical task is baseline provenance recovery, not alteration of the recovered 14 files.
