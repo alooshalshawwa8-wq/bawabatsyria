@@ -17,6 +17,8 @@ It is explicitly labelled a **reconstructed clean-install baseline derived from 
 The migration reconstructs the prerequisite relations verified in the live catalog:
 
 - `membership_plans`
+- `entitlements`
+- `points_ledger` and its `points_balances` view
 - `profiles`
 - `subscriptions`
 - `inventory_items`
@@ -45,7 +47,7 @@ The clean replay must complete from an empty disposable local Supabase database.
 
 1. 37 migration history records.
 2. All 14 restored historical migration versions present.
-3. Foundational tables including `inventory_movements`, `inventory_items`, `accounting_accounts`, `journal_entries`, `journal_lines`, and `membership_plans`.
+3. Foundational tables including `inventory_movements`, `inventory_items`, `accounting_accounts`, `journal_entries`, `journal_lines`, and `membership_plans`, `entitlements`, `points_ledger`, and the `points_balances` view.
 4. Current inventory and journal trigger presence.
 5. `football_api_budget_reserve(text,text)` and `football_api_budget_status()` exist.
 6. `football_api_budget_policy.provider_blocked = true`.
