@@ -55,11 +55,11 @@ assert.equal(utilityIds.length, 70, "Expected 70 primary utility module definiti
 assert.equal(new Set(utilityIds).size, utilityIds.length, "Duplicate utility module keys detected");
 
 const augmentedUtilityIds = [];
-for (const match of html.matchAll(/Object\\.assign\\(utilityModules,\\s*\\{/g)) {
+for (const match of html.matchAll(/Object\.assign\(utilityModules,\s*\{/g)) {
   const objectStart = html.indexOf("{", match.index);
   const objectEnd = matchingDelimiter(html, objectStart);
   const body = html.slice(objectStart + 1, objectEnd);
-  const keys = [...body.matchAll(/^\\s*([a-z][a-z0-9_]*):\\s*\\{\\s*title:/gm)].map(item => item[1]);
+  const keys = [...body.matchAll(/^\s*([a-z][a-z0-9_]*):\s*\{\s*title:/gm)].map(item => item[1]);
   assert.equal(new Set(keys).size, keys.length, "Duplicate keys in a utilityModules augmentation");
   augmentedUtilityIds.push(...keys);
 }
