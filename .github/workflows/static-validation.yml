@@ -151,6 +151,8 @@ jobs:
 
       - name: Build and verify private Cloudflare Pages artifact
         run: |
+          node scripts/build-private-hold.mjs
+          node tests/private-hold-contract.mjs
           python3 -m pip install --disable-pip-version-check Pillow
           node scripts/build-private-pages.mjs
           node tests/private-pages-build-contract.mjs
