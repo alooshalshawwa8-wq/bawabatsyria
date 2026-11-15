@@ -116,6 +116,9 @@ Deno.serve(async (request: Request) => {
   if (origin !== ALLOWED_ORIGIN) return reply({ error: "Origin not allowed" }, 403);
   if (request.method !== "POST") return reply({ error: "Method not allowed" }, 405);
 
+  const geminiApiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+  if (!geminiApiKey.trim()) return reply({ error: "المساعد يعمل حالياً بوضع الإرشاد الأساسي؛ خدمة الإجابات الذكية المتقدمة غير متاحة مؤقتاً." }, 503);
+
   const contentLength = Number(request.headers.get("content-length") ?? "0");
   if (Number.isFinite(contentLength) && contentLength > 24_000) {
     return reply({ error: "المحادثة طويلة كتير. اختصر آخر الرسائل وجرب من جديد." }, 413);
@@ -253,7 +256,7 @@ Deno.serve(async (request: Request) => {
     marketing: "classification",
   };
   const task: AiTask = taskBySection[section] ?? "conversation";
-  const route = resolveAiRoute(task, Deno.env.get("GEMINI_API_KEY") ?? "");
+  const route = resolveAiRoute(task, geminiApiKey);
   if (!route) {
     return reply({ error: "المساعد يعمل حالياً بوضع الإرشاد الأساسي؛ خدمة الإجابات الذكية المتقدمة غير متاحة لهذه المهمة." }, 503);
   }
