@@ -15,7 +15,7 @@ on:
       - "robots.txt"
       - "service-worker.js"
   pull_request:
-    branches: [main]
+    branches: [main, ofoq/private-access-readiness-2026-11-15]
     paths:
       - "index.html"
       - "*.js"
