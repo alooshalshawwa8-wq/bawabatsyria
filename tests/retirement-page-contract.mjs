@@ -1,0 +1,19 @@
+import assert from "node:assert/strict";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { resolve } from "node:path";
+
+const root = resolve("dist-retirement");
+assert.ok(existsSync(resolve(root, "index.html")));
+const html = readFileSync(resolve(root, "index.html"), "utf8");
+assert.match(html, /name="robots" content="noindex,nofollow,noarchive"/);
+assert.match(html, /https:\/\/ofoq-private\.pages\.dev\//);
+assert.match(html, /serviceWorker\.getRegistrations\(/);
+assert.match(html, /caches\.keys\(/);
+assert.match(html, /ofoq-shell-/);
+assert.doesNotMatch(html, /serviceWorker\.register\(/);
+const robots = readFileSync(resolve(root, "robots.txt"), "utf8");
+assert.ok(robots.includes("Disallow: /"));
+const headers = readFileSync(resolve(root, "_headers"), "utf8");
+assert.match(headers, /Cache-Control:\s*no-store/i);
+assert.deepEqual(readdirSync(root).sort(), ["_headers", "index.html", "robots.txt"]);
+console.log("Legacy retirement page contract passed.");
