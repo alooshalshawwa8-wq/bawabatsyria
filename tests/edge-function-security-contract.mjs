@@ -17,6 +17,7 @@ assert.match(assistant, /import \{ resolveAiProvider \} from "\.\/ai-provider-re
 assert.match(assistant, /resolveAiProvider\("gemini", Deno\.env\.get\("GEMINI_API_KEY"\)/);
 assert.match(assistant, /generateWithGemini\(/);
 assert.match(assistant, /resolveAiRoute\(/);
+assert.ok(assistant.indexOf("if (!geminiApiKey.trim())") < assistant.indexOf("reserve_ai_provider_request"), "missing provider credentials must fail before consuming quota");
 assert.match(assistant, /from "\.\/ai-task-router\.ts"/);
 assert.match(assistant, /taskBySection/);
 assert.match(aiTaskRouter, /SUPPORTED_TASKS/);
