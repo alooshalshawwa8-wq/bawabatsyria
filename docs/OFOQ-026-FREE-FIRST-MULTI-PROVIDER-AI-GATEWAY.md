@@ -291,3 +291,16 @@ A second implementation slice now separates provider selection from provider tra
 The registry still permits only the existing Gemini integration. No multi-provider routing, provider fallback, provider credentials, provider accounts, or new database quota ledger have been added. The adapter refactor is not a claim that the existing model or account has a verified free allocation. The configured model's current ID and pricing eligibility still require independent verification.
 
 The change remains in the development branch and must pass the complete PR checks before it is considered ready for review. It has not been merged or deployed.
+
+
+## 14. Task-routing contract and model verification
+
+A server-side task router is now added as a separate layer:
+- Supported internal task classes: conversation, summarization, classification, coding, and analysis.
+- Trusted section identifiers map to a task class on the server; the browser cannot choose a provider, model, or endpoint.
+- Every currently supported task resolves to the one configured Gemini provider. This is a policy seam for future specialization, not multi-model routing and not a claim that the same model is equally optimal for every task.
+- Unsupported multimodal or agentic classes (including image generation, audio, vision, and deep research) fail closed rather than being silently sent to a text-only adapter.
+- Added tests for all supported task classes, unsupported task classes, missing keys, and attempts to pass object-shaped provider/model selections.
+- CI runs the task-router tests and the broader Edge Function security contract checks.
+
+The configured model ID `gemini-3.5-flash-lite` is present in Google's current model catalog and is listed as a stable model. This verifies the model identifier, not account access, rate limits, or free-tier eligibility. Pricing remains `free-tier-unverified` until verified for the actual Google AI account. References: https://ai.google.dev/gemini-api/docs/models and https://ai.google.dev/gemini-api/docs/deprecations.
