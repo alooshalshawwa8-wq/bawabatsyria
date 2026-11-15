@@ -47,6 +47,18 @@ create table public.points_ledger (
 );
 create index points_ledger_user_created_idx on public.points_ledger(user_id,created_at desc);
 
+create table public.ai_provider_daily_usage (
+  provider text not null,
+  usage_date date not null default (timezone('utc',now()))::date,
+  requests_used integer not null default 0,
+  updated_at timestamptz not null default now(),
+  primary key (provider,usage_date),
+  constraint ai_provider_daily_usage_requests_used_check check (requests_used >= 0)
+);
+alter table public.ai_provider_daily_usage enable row level security;
+revoke all privileges on table public.ai_provider_daily_usage from anon,authenticated;
+grant all privileges on table public.ai_provider_daily_usage to service_role;
+
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   display_name text,
@@ -385,6 +397,35 @@ begin
    where id = p_entry_id and user_id = auth.uid() and status = 'draft';
 end;
 $function$;
+
+create or replace function public.reserve_ai_provider_request(
+  p_provider text,
+  p_daily_limit integer default 30
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+declare
+  v_used integer;
+begin
+  if p_provider is null or length(trim(p_provider)) = 0
+     or p_daily_limit is null or p_daily_limit < 1 or p_daily_limit > 1000 then
+    return false;
+  end if;
+  insert into public.ai_provider_daily_usage(provider,usage_date,requests_used)
+  values (trim(p_provider),timezone('utc',now())::date,1)
+  on conflict (provider,usage_date) do update
+    set requests_used = public.ai_provider_daily_usage.requests_used + 1,
+        updated_at = now()
+    where public.ai_provider_daily_usage.requests_used < p_daily_limit
+  returning requests_used into v_used;
+  return v_used is not null;
+end;
+$function$;
+revoke all on function public.reserve_ai_provider_request(text,integer) from public,anon,authenticated;
+grant execute on function public.reserve_ai_provider_request(text,integer) to service_role;
 
 create trigger inventory_items_set_updated_at
   before update on public.inventory_items for each row execute function public.set_updated_at();
