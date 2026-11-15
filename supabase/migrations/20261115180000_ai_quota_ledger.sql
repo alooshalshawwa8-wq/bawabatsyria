@@ -1,4 +1,5 @@
 -- Durable, provider/model-scoped AI quota ledger.
+-- Minute retry hints round up to avoid returning zero seconds near a minute boundary.
 -- Additive only. This migration does not modify the live project until separately deployed.
 begin;
 
@@ -187,7 +188,7 @@ begin
     return;
   end if;
   if v_minute_count >= v_policy.minute_request_limit then
-    return query select false, 'minute_quota_exhausted'::text, 60 - extract(second from v_now)::integer, false;
+    return query select false, 'minute_quota_exhausted'::text, ceil(60 - extract(second from v_now))::integer, false;
     return;
   end if;
 
