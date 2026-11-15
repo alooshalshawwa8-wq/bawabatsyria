@@ -7,8 +7,9 @@ const API_KEY = PUBLISHABLE_KEYS.default ?? Deno.env.get("SUPABASE_ANON_KEY") ??
 // Payments intentionally remain disabled until the platform owner explicitly enables monetization.
 const PAYMENTS_ENABLED = Deno.env.get("PAYMENTS_ENABLED") === "true";
 
+const ALLOWED_ORIGIN = Deno.env.get("OFOQ_ALLOWED_ORIGIN") ?? "https://alooshalshawwa8-wq.github.io";
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://alooshalshawwa8-wq.github.io",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
   "Access-Control-Allow-Headers": "authorization, apikey, content-type",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Max-Age": "86400",
