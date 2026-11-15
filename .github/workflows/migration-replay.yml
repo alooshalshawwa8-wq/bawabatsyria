@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - ofoq/ofoq-001-execution
+      - aloosh/brand-prep-2026-11-15
     paths:
       - "supabase/migrations/**"
       - "supabase/config.toml"
@@ -12,7 +13,7 @@ on:
       - "tests/ai-quota-ledger-*.sql"
       - "tests/ai-quota-ledger-*.sh"
   pull_request:
-    branches: [main]
+    branches: [main, ofoq/private-access-readiness-2026-11-15]
     paths:
       - "supabase/migrations/**"
       - "supabase/config.toml"
@@ -64,7 +65,7 @@ jobs:
           migration_count="$("${DB[@]}" --command "select count(*) from supabase_migrations.schema_migrations;")"
           recovered_count="$("${DB[@]}" --command "select count(*) from supabase_migrations.schema_migrations where version in ('20261109161357','20261109161417','20261109161525','20261109161555','20261109161635','20261109173150','20261109173201','20261110063058','20261110161112','20261110161138','20261111120208','20261111124712','20261111124728','20261111124846');")"
           printf 'Applied migration count: %s\nRecovered migration count: %s\n' "$migration_count" "$recovered_count"
-          test "$migration_count" = "40"
+          test "$migration_count" = "42"
           test "$recovered_count" = "14"
           "${DB[@]}" --command "select to_regclass('public.entitlements') is not null and to_regclass('public.points_ledger') is not null and to_regclass('public.points_balances') is not null;" | grep -qx t
           "${DB[@]}" --command "select to_regclass('public.ai_provider_daily_usage') is not null and to_regprocedure('public.reserve_ai_provider_request(text,integer)') is not null;" | grep -qx t
@@ -82,7 +83,7 @@ jobs:
           "${DB[@]}" --command "select not has_table_privilege('anon','public.ai_usage_events','SELECT') and not has_table_privilege('authenticated','public.ai_usage_events','SELECT') and has_table_privilege('service_role','public.ai_usage_events','SELECT');" | grep -qx t
           "${DB[@]}" --command "select not has_function_privilege('anon','public.reserve_ai_model_quota(text,text,uuid,text)','EXECUTE') and not has_function_privilege('authenticated','public.reserve_ai_model_quota(text,text,uuid,text)','EXECUTE') and has_function_privilege('service_role','public.reserve_ai_model_quota(text,text,uuid,text)','EXECUTE');" | grep -qx t
           "${DB[@]}" --command "select enabled = false and free_tier_verified = false from public.ai_quota_model_policies where provider_id='gemini' and model_id='gemini-3.5-flash-lite';" | grep -qx t
-          echo "PASS: all 40 migrations replayed; all 14 recovered versions present; critical AI quota and football guard objects exist."
+          echo "PASS: all 42 migrations replayed; all 14 recovered versions present; critical AI quota and football guard objects exist."
 
       - name: Test AI quota ledger lifecycle and idempotency
         env:
