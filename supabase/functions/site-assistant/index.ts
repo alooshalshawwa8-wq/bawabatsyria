@@ -3,12 +3,38 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 const ALLOWED_ORIGIN = "https://alooshalshawwa8-wq.github.io";
 const cors = {
   "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-  "Access-Control-Allow-Headers": "content-type",
+  "Access-Control-Allow-Headers": "content-type, apikey, authorization",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Max-Age": "86400",
   "Vary": "Origin",
 };
 const JSON_HEADERS = { ...cors, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" };
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const secretKeyMap = (() => {
+  try { return JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}"); }
+  catch { return {}; }
+})();
+const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? secretKeyMap.default ?? "";
+const AUTH_API_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? SERVICE_KEY;
+
+async function authenticatedOfoqOwner(request: Request): Promise<{ ok: boolean; status: number }> {
+  const authorization = request.headers.get("authorization") ?? "";
+  if (!authorization.startsWith("Bearer ")) return { ok: false, status: 401 };
+  if (!SUPABASE_URL || !AUTH_API_KEY) return { ok: false, status: 503 };
+  try {
+    const response = await fetch(SUPABASE_URL + "/auth/v1/user", {
+      headers: { apikey: AUTH_API_KEY, Authorization: authorization, Accept: "application/json" },
+    });
+    if (!response.ok) return { ok: false, status: 401 };
+    const user = await response.json();
+    const metadata = user?.app_metadata ?? {};
+    const owner = metadata.role === "OWNER" && metadata.owner === true && metadata.owner_access === "lifetime";
+    return user?.id && owner ? { ok: true, status: 200 } : { ok: false, status: user?.id ? 403 : 401 };
+  } catch {
+    return { ok: false, status: 503 };
+  }
+}
+
 function reply(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: JSON_HEADERS });
 }
@@ -88,6 +114,9 @@ Deno.serve(async (request: Request) => {
   if (origin !== ALLOWED_ORIGIN) return reply({ error: "Origin not allowed" }, 403);
   if (request.method !== "POST") return reply({ error: "Method not allowed" }, 405);
 
+  const ownerAuth = await authenticatedOfoqOwner(request);
+  if (!ownerAuth.ok) return reply({ error: ownerAuth.status === 403 ? "Owner access required" : "Owner authentication required" }, ownerAuth.status);
+
   const apiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
   if (!apiKey) return reply({ error: "المساعد يعمل حالياً بوضع الإرشاد الأساسي؛ خدمة الإجابات الذكية المتقدمة غير متاحة مؤقتاً." }, 503);
 
@@ -125,12 +154,8 @@ Deno.serve(async (request: Request) => {
   }
   // Reserve a globally enforced daily request slot before contacting Gemini.
   // This prevents parallel Edge isolates from bypassing the provider budget.
-  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-  const secretKeyMap = (() => {
-    try { return JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}"); }
-    catch { return {}; }
-  })();
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? secretKeyMap.default ?? "";
+  const supabaseUrl = SUPABASE_URL;
+  const serviceKey = SERVICE_KEY;
   if (!supabaseUrl || !serviceKey) {
     return reply({ error: "خدمة الذكاء غير متاحة مؤقتاً بسبب إعدادات الحماية." }, 503);
   }
