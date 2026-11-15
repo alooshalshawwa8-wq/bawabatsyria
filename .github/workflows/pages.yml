@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      enable_public_deploy:
+        description: Explicitly authorize a public GitHub Pages deployment
+        type: boolean
+        required: true
+        default: false
 
 permissions:
   contents: read
@@ -16,7 +22,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.event.repository.private == false && vars.OFOQ_PUBLIC_PAGES_ENABLED == 'true'
+    if: github.event_name == 'workflow_dispatch' && inputs.enable_public_deploy == true && github.event.repository.private == false
     runs-on: ubuntu-latest
     environment:
       name: github-pages
