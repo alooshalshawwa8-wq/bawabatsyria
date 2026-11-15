@@ -21,7 +21,7 @@ assert.match(geminiAdapter, /x-goog-api-key/);
 assert.match(geminiAdapter, /AbortSignal\.timeout\(25_000\)/);
 assert.match(geminiAdapter, /response\.status === 429/);
 assert.doesNotMatch(geminiAdapter, /console\.(log|error).*data|JSON\.stringify\(data\.error/);
-assert.match(assistant, /"x-goog-api-key": provider\.apiKey/);
+assert.match(geminiAdapter, /"x-goog-api-key": provider\.apiKey/);
 assert.match(aiRegistry, /export type AiProviderId = "gemini"/);
 assert.match(aiRegistry, /providerId !== "gemini"/);
 assert.match(aiRegistry, /https:\/\/generativelanguage\.googleapis\.com/);
