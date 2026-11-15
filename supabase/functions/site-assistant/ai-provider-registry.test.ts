@@ -16,7 +16,9 @@ Deno.test("unverified free tier is blocked even when a server key exists", () =>
 });
 
 Deno.test("missing key and unknown provider fail closed", () => {
-  assertEquals(checkAiProviderEligibility("gemini", " ").reason, "missing_key");
+  const missingKey = checkAiProviderEligibility("gemini", " ");
+  assertEquals(missingKey.eligible, false);
+  if (!missingKey.eligible) assertEquals(missingKey.reason, "missing_key");
   assertEquals(checkAiProviderEligibility("openrouter", "secret").eligible, false);
 });
 
