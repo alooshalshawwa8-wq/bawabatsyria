@@ -11,7 +11,8 @@ on:
       - "supabase/seed.sql"
       - "tests/nibras-rate-limit-concurrency.sh"
       - "tests/rpc-idempotency-contract.mjs"
-      - "tests/rpc-idempotency-contract.mjs"
+      - "tests/rpc-idempotency-integration.sql"
+      - "tests/rpc-idempotency-integration.sql"
       - ".github/workflows/migration-replay.yml"
       - "tests/ai-quota-ledger-*.sql"
       - "tests/ai-quota-ledger-*.sh"
@@ -95,6 +96,11 @@ jobs:
           "${DB[@]}" --command "select relrowsecurity from pg_class where oid='ofoq_private.rpc_idempotency_keys'::regclass;" | grep -qx t
           "${DB[@]}" --command "select has_table_privilege('authenticated','ofoq_private.rpc_idempotency_keys','SELECT,INSERT,UPDATE') and not has_table_privilege('anon','ofoq_private.rpc_idempotency_keys','SELECT') and not has_table_privilege('authenticated','ofoq_private.rpc_idempotency_keys','DELETE');" | grep -qx t
           echo "PASS: all 43 migrations replayed; all 14 recovered versions present; critical AI quota and football guard objects exist."
+
+      - name: Test atomic journal and inventory RPC idempotency
+        env:
+          PGPASSWORD: postgres
+        run: psql --no-psqlrc --set ON_ERROR_STOP=1 --host 127.0.0.1 --port 54322 --username postgres --dbname postgres --file tests/rpc-idempotency-integration.sql
 
       - name: Test AI quota ledger lifecycle and idempotency
         env:
