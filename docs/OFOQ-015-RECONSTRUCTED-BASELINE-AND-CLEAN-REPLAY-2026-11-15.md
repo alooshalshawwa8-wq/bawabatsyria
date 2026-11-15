@@ -19,6 +19,7 @@ The migration reconstructs the prerequisite relations verified in the live catal
 - `membership_plans`
 - `entitlements`
 - `points_ledger` and its `points_balances` view
+- `ai_provider_daily_usage` and `reserve_ai_provider_request(text, integer)`
 - `profiles`
 - `subscriptions`
 - `inventory_items`
@@ -48,8 +49,9 @@ The clean replay must complete from an empty disposable local Supabase database.
 1. 37 migration history records.
 2. All 14 restored historical migration versions present.
 3. Foundational tables including `inventory_movements`, `inventory_items`, `accounting_accounts`, `journal_entries`, `journal_lines`, and `membership_plans`, `entitlements`, `points_ledger`, and the `points_balances` view.
-4. Current inventory and journal trigger presence.
-5. `football_api_budget_reserve(text,text)` and `football_api_budget_status()` exist.
-6. `football_api_budget_policy.provider_blocked = true`.
+4. AI-provider daily quota table and restricted SECURITY DEFINER reservation function exist.
+5. Current inventory and journal trigger presence.
+6. `football_api_budget_reserve(text,text)` and `football_api_budget_status()` exist.
+7. `football_api_budget_policy.provider_blocked = true`.
 
 Until the workflow returns a successful completed run with these assertions, the replay gate remains pending; the existence of the new migration file alone is not proof of closure.
