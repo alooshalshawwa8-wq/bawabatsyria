@@ -193,29 +193,6 @@ Deno.serve(async (request: Request) => {
   if (!contents.length || contents[contents.length - 1].role !== "user") {
     return reply({ error: "أرسل سؤالك أولاً." }, 400);
   }
-  let budgetResponse: Response;
-  try {
-    budgetResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/reserve_ai_provider_request`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": serviceKey,
-        "Authorization": `Bearer ${serviceKey}`,
-      },
-      body: JSON.stringify({ p_provider: "gemini", p_daily_limit: 30 }),
-    });
-  } catch {
-    return reply({ error: "تعذر التحقق من حصة الذكاء الاصطناعي. حاول لاحقاً." }, 503);
-  }
-  if (!budgetResponse.ok) {
-    console.error("AI budget reservation failed", budgetResponse.status);
-    return reply({ error: "تعذر التحقق من حصة الذكاء الاصطناعي. حاول لاحقاً." }, 503);
-  }
-  const budgetAllowed = await budgetResponse.json().catch(() => false);
-  if (budgetAllowed !== true) {
-    return reply({ error: "وصلنا إلى الحد اليومي الآمن لاستخدام المساعد الذكي. جرّب غداً." }, 429);
-  }
-
   // Optional section routing is backward-compatible: existing clients can keep
   // sending only messages; future section UIs can select a fixed trusted profile.
   const sectionProfiles: Record<string, string> = {
@@ -262,6 +239,77 @@ Deno.serve(async (request: Request) => {
     return reply({ error: "المساعد يعمل حالياً بوضع الإرشاد الأساسي؛ خدمة الإجابات الذكية المتقدمة غير متاحة لهذه المهمة." }, 503);
   }
 
+
+  // Reserve quota by exact provider/model only after the server-side free-tier
+  // eligibility gate has resolved a trusted route.
+  const quotaRequestId = crypto.randomUUID();
+  let quotaReservation: Response;
+  try {
+    quotaReservation = await fetch(supabaseUrl + "/rest/v1/rpc/reserve_ai_model_quota", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": serviceKey,
+        "Authorization": "Bearer " + serviceKey,
+      },
+      body: JSON.stringify({
+        p_provider_id: route.provider.id,
+        p_model_id: route.provider.modelId,
+        p_request_id: quotaRequestId,
+        p_task: route.task,
+      }),
+    });
+  } catch {
+    return reply({ error: "تعذر التحقق من حصة النموذج. حاول لاحقاً." }, 503);
+  }
+  if (!quotaReservation.ok) {
+    console.error("AI model quota reservation failed", quotaReservation.status);
+    return reply({ error: "تعذر التحقق من حصة النموذج. حاول لاحقاً." }, 503);
+  }
+  const reservationRows = await quotaReservation.json().catch(() => []);
+  const reservation = Array.isArray(reservationRows) ? reservationRows[0] : null;
+  if (reservation?.allowed !== true) {
+    const retryAfter = Number(reservation?.retry_after_seconds ?? 0);
+    return reply({
+      error: reservation?.reason === "provider_not_verified_free"
+        ? "هذا النموذج غير مفعّل قبل التحقق من مجانية استخدامه."
+        : "وصلنا إلى حد الاستخدام الآمن لهذا النموذج. حاول لاحقاً.",
+      retryAfterSeconds: Number.isFinite(retryAfter) ? retryAfter : 0,
+    }, reservation?.reason === "provider_not_verified_free" ? 503 : 429);
+  }
+
+  // Mark immediately before invoking the provider adapter. Once this point is
+  // reached the reservation must never be released as unused.
+  let attemptMarked = false;
+  try {
+    const markResponse = await fetch(supabaseUrl + "/rest/v1/rpc/mark_ai_model_provider_attempt", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": serviceKey,
+        "Authorization": "Bearer " + serviceKey,
+      },
+      body: JSON.stringify({ p_request_id: quotaRequestId }),
+    });
+    attemptMarked = markResponse.ok && await markResponse.json().catch(() => false) === true;
+  } catch {
+    attemptMarked = false;
+  }
+  if (!attemptMarked) {
+    try {
+      await fetch(supabaseUrl + "/rest/v1/rpc/release_ai_model_quota", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": serviceKey,
+          "Authorization": "Bearer " + serviceKey,
+        },
+        body: JSON.stringify({ p_request_id: quotaRequestId }),
+      });
+    } catch { /* fail closed; the reservation remains auditable */ }
+    return reply({ error: "تعذر تثبيت حجز الحصة بأمان. حاول لاحقاً." }, 503);
+  }
+
   // Log only the number of valid turns, never the user's conversation text.
   console.info("Nibras context received", { messageCount: body.messages.length, normalizedTurns: contents.length, section: sectionProfiles[section] ? section : "general" });
 
@@ -278,6 +326,35 @@ Deno.serve(async (request: Request) => {
     latencyMs: result.latencyMs,
     usage: result.ok ? result.usage : null,
   });
+  // Persist usage against the exact reserved provider/model. The database
+  // enforces one settlement per request ID; no prompts or answers are stored.
+  try {
+    const settlementResponse = await fetch(supabaseUrl + "/rest/v1/rpc/settle_ai_model_quota", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": serviceKey,
+        "Authorization": "Bearer " + serviceKey,
+      },
+      body: JSON.stringify({
+        p_request_id: quotaRequestId,
+        p_status: usageEvent.status,
+        p_latency_ms: usageEvent.latencyMs,
+        p_input_tokens: usageEvent.inputTokens,
+        p_output_tokens: usageEvent.outputTokens,
+        p_total_tokens: usageEvent.totalTokens,
+        p_cost_amount: null,
+        p_cost_currency: null,
+        p_cost_basis: null,
+        p_provider_http_status: result.ok ? 200 : result.status,
+      }),
+    });
+    if (!settlementResponse.ok || await settlementResponse.json().catch(() => false) !== true) {
+      console.error("AI usage settlement failed", settlementResponse.status);
+    }
+  } catch {
+    console.error("AI usage settlement request failed");
+  }
   // Structured operational telemetry only: no prompt, response, user ID, or key.
   console.info("AI_USAGE_EVENT", usageEvent);
   if (result.ok) return reply({ answer: result.answer });
