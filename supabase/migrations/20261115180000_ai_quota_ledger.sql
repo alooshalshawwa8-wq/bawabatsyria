@@ -167,6 +167,21 @@ begin
   where provider_id = p_provider_id and model_id = p_model_id
     and window_kind = 'minute' and window_start = v_minute_start;
 
+  -- Re-check idempotency after acquiring the serialized quota-window locks.
+  select * into v_existing
+  from public.ai_quota_reservations
+  where request_id = p_request_id;
+  if found then
+    if v_existing.provider_id <> p_provider_id or v_existing.model_id <> p_model_id then
+      return query select false, 'request_id_conflict'::text, 0, false;
+    elsif v_existing.state = 'reserved' then
+      return query select true, 'already_reserved'::text, 0, true;
+    else
+      return query select false, 'already_final'::text, 0, true;
+    end if;
+    return;
+  end if;
+
   if v_day_count >= v_policy.daily_request_limit then
     return query select false, 'daily_quota_exhausted'::text, 0, false;
     return;
@@ -265,7 +280,7 @@ declare
   v_total bigint;
   v_rows integer;
 begin
-  if p_status not in ('success', 'quota_exhausted', 'failed')
+  if p_status is null or p_status not in ('success', 'quota_exhausted', 'failed')
      or p_latency_ms is null or p_latency_ms < 0
      or (p_input_tokens is not null and p_input_tokens < 0)
      or (p_output_tokens is not null and p_output_tokens < 0)
