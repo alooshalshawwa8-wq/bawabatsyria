@@ -13,6 +13,8 @@ Scope: read-only verification; no production configuration or schema changes.
 - Performance Advisor reports 26 unused-index INFO findings. No index was dropped; usage counters alone are insufficient evidence for safe deletion.
 - A previous Health Advisor check was clear; this session's live recheck focused on security and performance.
 
+A second direct privilege inventory across all public base tables found no table with RLS disabled. The only `anon` SELECT grants are on the intentionally public `membership_plans` and `payment_methods` catalogs. `authenticated` has table privileges on user-scoped tables, but those are protected by RLS; the proposed migration adds the signed owner predicate to those policies. No row data was selected during this audit.
+
 ## Proposed single-owner hardening (not yet applied)
 
 PR #32 adds migration `20261115160000_enforce_single_owner_rls.sql`, which wraps all authenticated public-schema policies in the signed owner predicate `public.is_ofoq_owner()`, while preserving intentionally public catalog reads. This migration is not applied to production; the live project remains at 37 applied migrations until a reviewed deployment. It must pass local replay and owner/non-owner claims tests first.
