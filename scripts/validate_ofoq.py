@@ -8,6 +8,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 html = (ROOT / "index.html").read_text(encoding="utf-8")
 assistant = (ROOT / "supabase/functions/site-assistant/index.ts").read_text(encoding="utf-8")
+gemini_adapter = (ROOT / "supabase/functions/site-assistant/gemini-adapter.ts").read_text(encoding="utf-8")
 membership = (ROOT / "supabase/functions/membership-api/index.ts").read_text(encoding="utf-8")
 webhook_security = (ROOT / "supabase/functions/membership-api/stripe-webhook-security.mjs").read_text(encoding="utf-8")
 worker = (ROOT / "service-worker.js").read_text(encoding="utf-8")
@@ -225,10 +226,11 @@ for token in (
     "SUPABASE_SERVICE_ROLE_KEY",
     "SUPABASE_SECRET_KEYS",
     "sectionProfiles",
-    "maxOutputTokens: 850",
+    "sectionProfiles",
 ):
     require(token in assistant, "AI backend protection missing: " + token)
-require("x-goog-api-key" in assistant, "Gemini key must be sent server-side only")
+for token in ("maxOutputTokens: 850", '"x-goog-api-key": provider.apiKey', "AbortSignal.timeout(25_000)"):
+    require(token in gemini_adapter, "Gemini transport protection missing: " + token)
 require("console.info(\"Nibras context received\", { messageCount:" in assistant,
         "AI logs should record counters, not conversation text")
 
