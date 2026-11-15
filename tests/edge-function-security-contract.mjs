@@ -52,10 +52,9 @@ assert.match(assistant, /readBoundedBody\(request, 24_000\)/);
 assert.match(assistant, /body\.messages\.length > 12/);
 assert.match(assistant, /item\.content\.trim\(\)\.slice\(0, 2000\)/);
 assert.match(assistant, /contents\[contents\.length - 1\]\.role !== "user"/);
-assert.match(assistant, /reserve_ai_provider_request/);
-assert.match(assistant, /p_daily_limit: 30/);
-assert.match(assistant, /if \(!budgetResponse\.ok\)[\s\S]{0,220}return reply\([\s\S]{0,180}503\)/);
-assert.match(assistant, /budgetAllowed !== true/);
+assert.match(assistant, /reserve_ai_model_quota/);
+assert.match(assistant, /reservation\?\.allowed !== true/);
+assert.match(assistant, /quotaRequestId = crypto\.randomUUID\(\)/);
 assert.match(assistant, /console\.info\("Nibras context received", \{ messageCount:/);
 assert.doesNotMatch(assistant, /console\.log\(.*contents/);
 
