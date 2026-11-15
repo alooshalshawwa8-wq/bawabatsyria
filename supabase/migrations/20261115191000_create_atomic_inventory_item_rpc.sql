@@ -108,8 +108,8 @@ $function$;
 
 revoke all on function public.create_inventory_item_with_opening_movement(text,text,text,numeric,numeric,character,uuid)
   from public, anon;
-grant execute on function public.create_inventory_item_with_opening_movement(text,text,text,numeric,numeric,character)
+grant execute on function public.create_inventory_item_with_opening_movement(text,text,text,numeric,numeric,character,uuid)
   to authenticated;
 
-comment on function public.create_inventory_item_with_opening_movement(text,text,text,numeric,numeric,character)
+comment on function public.create_inventory_item_with_opening_movement(text,text,text,numeric,numeric,character,uuid)
   is 'Atomically creates an inventory item and its opening movement for the authenticated user.';
