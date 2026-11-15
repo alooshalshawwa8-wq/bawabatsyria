@@ -2,18 +2,25 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const read = path => readFile(new URL("../" + path, import.meta.url), "utf8");
-const [assistant, football, membership, index, aiRegistry] = await Promise.all([
+const [assistant, football, membership, index, aiRegistry, geminiAdapter] = await Promise.all([
   read("supabase/functions/site-assistant/index.ts"),
   read("supabase/functions/football-data/index.ts"),
   read("supabase/functions/membership-api/index.ts"),
   read("index.html"),
   read("supabase/functions/site-assistant/ai-provider-registry.ts"),
+  read("supabase/functions/site-assistant/gemini-adapter.ts"),
 ]);
 
 // AI provider registry: fixed server-side allowlist, no client-selected URLs/models or paid fallback.
 assert.match(assistant, /import \{ resolveAiProvider \} from "\.\/ai-provider-registry\.ts"/);
 assert.match(assistant, /resolveAiProvider\("gemini", Deno\.env\.get\("GEMINI_API_KEY"\)/);
-assert.match(assistant, /fetch\(provider\.endpoint/);
+assert.match(assistant, /generateWithGemini\(/);
+assert.match(assistant, /from "\.\/gemini-adapter\.ts"/);
+assert.doesNotMatch(assistant, /fetch\(provider\.endpoint/);
+assert.match(geminiAdapter, /x-goog-api-key/);
+assert.match(geminiAdapter, /AbortSignal\.timeout\(25_000\)/);
+assert.match(geminiAdapter, /response\.status === 429/);
+assert.doesNotMatch(geminiAdapter, /console\.(log|error).*data|JSON\.stringify\(data\.error/);
 assert.match(assistant, /"x-goog-api-key": provider\.apiKey/);
 assert.match(aiRegistry, /export type AiProviderId = "gemini"/);
 assert.match(aiRegistry, /providerId !== "gemini"/);
