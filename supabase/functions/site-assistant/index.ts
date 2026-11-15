@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { resolveAiProvider } from "./ai-provider-registry.ts";
+import { resolveAiRoute, type AiTask } from "./ai-task-router.ts";
 import { generateWithGemini } from "./gemini-adapter.ts";
 
 const ALLOWED_ORIGIN = Deno.env.get("OFOQ_ALLOWED_ORIGIN") ?? "https://alooshalshawwa8-wq.github.io";
@@ -115,9 +115,6 @@ Deno.serve(async (request: Request) => {
   const origin = request.headers.get("Origin") ?? "";
   if (origin !== ALLOWED_ORIGIN) return reply({ error: "Origin not allowed" }, 403);
   if (request.method !== "POST") return reply({ error: "Method not allowed" }, 405);
-
-  const provider = resolveAiProvider("gemini", Deno.env.get("GEMINI_API_KEY") ?? "");
-  if (!provider) return reply({ error: "المساعد يعمل حالياً بوضع الإرشاد الأساسي؛ خدمة الإجابات الذكية المتقدمة غير متاحة مؤقتاً." }, 503);
 
   const contentLength = Number(request.headers.get("content-length") ?? "0");
   if (Number.isFinite(contentLength) && contentLength > 24_000) {
@@ -242,14 +239,32 @@ Deno.serve(async (request: Request) => {
   };
   const section = typeof body.section === "string" ? body.section : "";
   const sectionInstruction = sectionProfiles[section] ?? "";
+  const taskBySection: Readonly<Record<string, AiTask>> = {
+    education: "summarization",
+    programming: "coding",
+    science: "analysis",
+    finance: "analysis",
+    accounting: "analysis",
+    business: "analysis",
+    legal: "analysis",
+    sports: "analysis",
+    technology: "analysis",
+    entertainment: "classification",
+    marketing: "classification",
+  };
+  const task: AiTask = taskBySection[section] ?? "conversation";
+  const route = resolveAiRoute(task, Deno.env.get("GEMINI_API_KEY") ?? "");
+  if (!route) {
+    return reply({ error: "المساعد يعمل حالياً بوضع الإرشاد الأساسي؛ خدمة الإجابات الذكية المتقدمة غير متاحة لهذه المهمة." }, 503);
+  }
 
   // Log only the number of valid turns, never the user's conversation text.
   console.info("Nibras context received", { messageCount: body.messages.length, normalizedTurns: contents.length, section: sectionProfiles[section] ? section : "general" });
 
   const result = await generateWithGemini(
-    provider,
+    route.provider,
     contents,
-    sectionInstruction ? `${SYSTEM_PROMPT}\\n\\nتخصص هذا القسم: ${sectionInstruction}` : SYSTEM_PROMPT,
+    sectionInstruction ? `${SYSTEM_PROMPT}\n\nتخصص هذا القسم: ${sectionInstruction}` : SYSTEM_PROMPT,
   );
   if (result.ok) return reply({ answer: result.answer });
   if (result.kind === "quota") {
