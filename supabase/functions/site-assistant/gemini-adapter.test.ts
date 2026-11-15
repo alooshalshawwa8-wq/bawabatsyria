@@ -46,3 +46,19 @@ Deno.test("malformed successful responses do not become empty assistant messages
   const result = await generateWithGemini(provider, [{ role: "user", parts: [{ text: "x" }] }], "system", fakeFetch);
   assertEquals(result, { ok: false, status: 200, kind: "empty" });
 });
+
+Deno.test("Gemini adapter distinguishes a request timeout", async () => {
+  const fakeFetch: typeof fetch = async () => {
+    throw new DOMException("deadline exceeded", "TimeoutError");
+  };
+  const result = await generateWithGemini(provider, [{ role: "user", parts: [{ text: "x" }] }], "system", fakeFetch);
+  assertEquals(result, { ok: false, status: 0, kind: "timeout" });
+});
+
+Deno.test("Gemini adapter treats network failures as transient", async () => {
+  const fakeFetch: typeof fetch = async () => {
+    throw new TypeError("network unavailable");
+  };
+  const result = await generateWithGemini(provider, [{ role: "user", parts: [{ text: "x" }] }], "system", fakeFetch);
+  assertEquals(result, { ok: false, status: 0, kind: "transient" });
+});
