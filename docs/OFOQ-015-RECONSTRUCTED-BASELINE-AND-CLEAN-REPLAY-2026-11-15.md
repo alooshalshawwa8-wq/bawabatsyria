@@ -55,3 +55,31 @@ The clean replay must complete from an empty disposable local Supabase database.
 7. `football_api_budget_policy.provider_blocked = true`.
 
 Until the workflow returns a successful completed run with these assertions, the replay gate remains pending; the existence of the new migration file alone is not proof of closure.
+
+
+## Final verification — PASS (2026-11-15)
+
+The final workflow run completed successfully:
+
+- Workflow: `OFOQ clean PostgreSQL migration replay`
+- Run ID: `43689747824`
+- Commit under test: `cff1634c6ac39668771f40076675b1ae19da54d6`
+- Result: **success**; disposable Supabase stack started, clean replay completed, all assertions passed, and stack cleanup completed.
+
+Verified assertions:
+
+1. Exactly 37 migration-history records (36 original tracked/historical migrations plus the reconstructed baseline).
+2. All 14 recovered historical migration versions are present.
+3. Foundational relations exist: `inventory_movements`, `inventory_items`, `accounting_accounts`, `journal_entries`, `journal_lines`, `membership_plans`, `entitlements`, `points_ledger`, `points_balances`, and `ai_provider_daily_usage`.
+4. `public.post_journal_entry(uuid)` and `public.reserve_ai_provider_request(text,integer)` exist.
+5. All 11 reconstructed foundational tables have RLS enabled.
+6. Current inventory movement and journal-entry validation triggers exist.
+7. Football budget functions exist and `football_api_budget_policy.provider_blocked = true`.
+
+### Final disposition
+
+**The clean-install migration replay gate is CLOSED — PASS.** The reconstructed baseline and all 36 subsequent migrations replay successfully from an empty disposable Supabase database, with the security and critical-object assertions above.
+
+This is a reproducible clean-install baseline reconstructed from verified current production catalog evidence, not a recovered original historical file. The distinction remains explicit in the migration header and this dossier.
+
+Production was not changed: a read-only check still reports 36 production migration records and confirms that reconstructed version `20261109161356` has not been applied there. The PR remains draft and unmerged; no production deployment was performed.
