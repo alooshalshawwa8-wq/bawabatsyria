@@ -2,12 +2,26 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const read = path => readFile(new URL("../" + path, import.meta.url), "utf8");
-const [assistant, football, membership, index] = await Promise.all([
+const [assistant, football, membership, index, aiRegistry] = await Promise.all([
   read("supabase/functions/site-assistant/index.ts"),
   read("supabase/functions/football-data/index.ts"),
   read("supabase/functions/membership-api/index.ts"),
   read("index.html"),
+  read("supabase/functions/site-assistant/ai-provider-registry.ts"),
 ]);
+
+// AI provider registry: fixed server-side allowlist, no client-selected URLs/models or paid fallback.
+assert.match(assistant, /import \{ resolveAiProvider \} from "\.\/ai-provider-registry\.ts"/);
+assert.match(assistant, /resolveAiProvider\("gemini", Deno\.env\.get\("GEMINI_API_KEY"\)/);
+assert.match(assistant, /fetch\(provider\.endpoint/);
+assert.match(assistant, /"x-goog-api-key": provider\.apiKey/);
+assert.match(aiRegistry, /export type AiProviderId = "gemini"/);
+assert.match(aiRegistry, /providerId !== "gemini"/);
+assert.match(aiRegistry, /https:\/\/generativelanguage\.googleapis\.com/);
+assert.match(aiRegistry, /pricingStatus: "free-tier-limited"/);
+assert.doesNotMatch(aiRegistry, /process\.env|localStorage|window\./);
+assert.doesNotMatch(assistant, /body\.provider|body\.model|body\.endpoint/);
+assert.doesNotMatch(assistant, /apiKey\s*:\s*body\./);
 
 // Nibras / AI assistant: bounded, normalized input and fail-closed provider budget.
 assert.match(assistant, /request\.method !== "POST"/);
