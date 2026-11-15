@@ -22,11 +22,13 @@ assert.match(assistant, /budgetAllowed !== true/);
 assert.match(assistant, /console\.info\("Nibras context received", \{ messageCount:/);
 assert.doesNotMatch(assistant, /console\.log\(.*contents/);
 
-// Known limitation, intentionally asserted as a review marker rather than
-// misrepresented as a trusted client identity: x-forwarded-for is used for
-// best-effort throttling and must be overwritten/validated by the edge gateway.
-assert.match(assistant, /Best-effort per-runtime throttling/);
-assert.match(assistant, /request\.headers\.get\("x-forwarded-for"\)/);
+// Nibras rate limits must use the Cloudflare client IP, HMAC it, and
+// reserve a persistent database slot; caller-controlled X-Forwarded-For is forbidden.
+assert.match(assistant, /request\.headers\.get\("cf-connecting-ip"\)/);
+assert.doesNotMatch(assistant, /x-forwarded-for/i);
+assert.match(assistant, /hashClientIp\(clientIp, serviceKey\)/);
+assert.match(assistant, /reserve_site_assistant_rate_limit/);
+assert.match(assistant, /rateAllowed !== true/);
 
 // Football API: request throttles must fail closed if persistent rate checks fail.
 assert.match(football, /request\.method !== "GET"/);
