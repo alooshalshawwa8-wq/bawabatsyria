@@ -51,6 +51,8 @@ jobs:
           node --check ofoq-core.js
           node --check ofoq-commerce-cloud.js
           node --check ofoq-vault.js
+      - name: Validate the 78-section registry and module coverage
+        run: node scripts/validate-ofoq-section-registry.mjs
       - name: Set up Deno
         uses: denoland/setup-deno@v2
         with:
