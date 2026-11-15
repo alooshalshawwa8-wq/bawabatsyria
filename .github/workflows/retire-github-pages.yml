@@ -1,0 +1,55 @@
+name: Retire public GitHub Pages site after private cutover
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_retirement:
+        description: "Confirm that Cloudflare Access is live and the private site has passed owner login tests"
+        required: true
+        type: boolean
+        default: false
+      private_site_url:
+        description: "Exact production Cloudflare Pages URL, e.g. https://ofoq-private.pages.dev"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  retire:
+    if: inputs.confirm_retirement == true
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build minimal retirement page
+        env:
+          OFOQ_PRIVATE_SITE_URL: ${{ inputs.private_site_url }}
+        run: node scripts/build-retirement-pages.mjs
+      - name: Validate retirement artifact
+        env:
+          OFOQ_PRIVATE_SITE_URL: ${{ inputs.private_site_url }}
+        run: node tests/retirement-page-contract.mjs
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload retirement artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist-retirement
+      - name: Deploy retirement page
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -3,8 +3,30 @@ name: OFOQ static validation
 on:
   push:
     branches: [main]
+    paths:
+      - "index.html"
+      - "*.js"
+      - "backend/**"
+      - "supabase/**"
+      - "tests/**"
+      - "scripts/**"
+      - ".github/workflows/**"
+      - "manifest.json"
+      - "robots.txt"
+      - "service-worker.js"
   pull_request:
     branches: [main]
+    paths:
+      - "index.html"
+      - "*.js"
+      - "backend/**"
+      - "supabase/**"
+      - "tests/**"
+      - "scripts/**"
+      - ".github/workflows/**"
+      - "manifest.json"
+      - "robots.txt"
+      - "service-worker.js"
   workflow_dispatch:
 
 permissions:
@@ -36,6 +58,11 @@ jobs:
       - name: Type-check Supabase Edge Functions
         run: |
           deno check supabase/functions/site-assistant/index.ts
+          deno test supabase/functions/site-assistant/ai-provider-registry.test.ts
+          deno test supabase/functions/site-assistant/gemini-adapter.test.ts
+          deno test supabase/functions/site-assistant/ai-task-router.test.ts
+          deno test supabase/functions/site-assistant/ai-usage-contract.test.ts
+          deno test supabase/functions/site-assistant/ai-reservation-lifecycle.test.ts
           deno check supabase/functions/membership-api/index.ts
           deno check supabase/functions/football-data/index.ts
       - name: Run Edge Function security contract tests
@@ -126,3 +153,13 @@ jobs:
           assert.ok(sitemap.includes(base), 'Sitemap must contain the canonical site URL');
           console.log('OFOQ static contracts passed.');
           NODE
+
+      - name: Build and verify private Cloudflare Pages artifact
+        run: |
+          node scripts/build-private-hold.mjs
+          node tests/private-hold-contract.mjs
+          python3 -m pip install --disable-pip-version-check Pillow
+          node scripts/build-private-pages.mjs
+          node tests/private-pages-build-contract.mjs
+          OFOQ_PRIVATE_SITE_URL=https://ofoq-private.pages.dev node scripts/build-retirement-pages.mjs
+          OFOQ_PRIVATE_SITE_URL=https://ofoq-private.pages.dev node tests/retirement-page-contract.mjs

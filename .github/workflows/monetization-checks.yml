@@ -4,8 +4,26 @@ on:
   push:
     branches:
       - "**"
+    paths:
+      - "backend/**"
+      - "index.html"
+      - "tests/**"
+      - "scripts/validate_ofoq.py"
+      - "ecommerce-studio.js"
+      - "career-studio.js"
+      - "operations-hub.js"
+      - "supabase/**"
   pull_request:
     branches: [main]
+    paths:
+      - "backend/**"
+      - "index.html"
+      - "tests/**"
+      - "scripts/validate_ofoq.py"
+      - "ecommerce-studio.js"
+      - "career-studio.js"
+      - "operations-hub.js"
+      - "supabase/**"
 
 permissions:
   contents: read

@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-const ALLOWED_ORIGIN = "https://alooshalshawwa8-wq.github.io";
+const ALLOWED_ORIGIN = Deno.env.get("OFOQ_ALLOWED_ORIGIN") ?? "https://alooshalshawwa8-wq.github.io";
 const cors = {
   "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
   "Access-Control-Allow-Headers": "content-type, apikey, authorization",
@@ -344,6 +344,14 @@ Deno.serve(async (request: Request) => {
   }
   if (origin !== ALLOWED_ORIGIN) return reply({ error: "Origin not allowed" }, 403);
   if (request.method !== "GET") return reply({ error: "Method not allowed" }, 405);
+
+  const ownerUser = await authenticatedFootballUser(request);
+  if (!ownerUser) return reply({ error: "Authentication required" }, 401);
+  const ownerMetadata = ownerUser.appMetadata;
+  if (ownerMetadata.role !== "OWNER" || ownerMetadata.owner !== true || ownerMetadata.owner_access !== "lifetime") {
+    return reply({ error: "Owner access required" }, 403);
+  }
+
 
   // Trust only the platform-provided client address. Never use caller-controlled forwarding headers.
   const clientIp = request.headers.get("cf-connecting-ip")?.trim() ?? "";

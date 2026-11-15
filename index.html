@@ -3337,7 +3337,9 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
     const q=input.value.trim();if(!q||send.disabled)return;
     refreshHistory();input.value='';quick.style.display='none';addMessage(q,'user');remember('user',q);send.disabled=true;send.textContent='…';
     try{
-      const response=await fetch('https://elzquyehghuxhswogsch.supabase.co/functions/v1/site-assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history.slice(-12)})});
+      const token=await refreshMembershipSession();
+      if(!token){addMessage('سجّل الدخول بحساب المؤسس أولاً لاستخدام نَبْراس.','assistant');return;}
+      const response=await fetch('https://elzquyehghuxhswogsch.supabase.co/functions/v1/site-assistant',{method:'POST',headers:{'Content-Type':'application/json','apikey':window.BAWABA_SUPABASE_ANON_KEY,'Authorization':'Bearer '+token},body:JSON.stringify({messages:history.slice(-12)})});
       const data=await response.json().catch(()=>({}));
       if(!response.ok)throw new Error(data.error||'assistant unavailable');
       addMessage(data.answer,'assistant');remember('assistant',data.answer);
@@ -3870,7 +3872,7 @@ if(typeof oldHome==='function'&&!oldHome.__ofoqFadeWrapped){
       history.push({role:"user",content:q});if(history.length>10)history.splice(0,history.length-10);
       add("user",q);input.value="";meter.textContent="0 / 1200";send.disabled=true;send.textContent="جارٍ التحليل…";status.textContent="طلب واحد قيد المعالجة عبر الخادم المحمي.";
       try{
-        const response=await fetch("https://elzquyehghuxhswogsch.supabase.co/functions/v1/site-assistant",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:history,section:profiles[sec.id]||"general"})});
+        const token=await refreshMembershipSession();if(!token)throw new Error("سجّل الدخول بحساب المالك أولاً لاستخدام مساعد المهام.");const response=await fetch("https://elzquyehghuxhswogsch.supabase.co/functions/v1/site-assistant",{method:"POST",headers:{"Content-Type":"application/json","apikey":window.BAWABA_SUPABASE_ANON_KEY,"Authorization":"Bearer "+token},body:JSON.stringify({messages:history,section:profiles[sec.id]||"general"})});
         const data=await response.json().catch(()=>({}));
         if(!response.ok)throw new Error(data.error||"تعذر الاتصال بالمساعد");
         const answer=String(data.answer||"لم يصل رد قابل للعرض.");history.push({role:"assistant",content:answer});if(history.length>10)history.splice(0,history.length-10);

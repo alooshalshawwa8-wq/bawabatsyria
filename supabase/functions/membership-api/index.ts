@@ -7,8 +7,9 @@ const API_KEY = PUBLISHABLE_KEYS.default ?? Deno.env.get("SUPABASE_ANON_KEY") ??
 // Payments intentionally remain disabled until the platform owner explicitly enables monetization.
 const PAYMENTS_ENABLED = Deno.env.get("PAYMENTS_ENABLED") === "true";
 
+const ALLOWED_ORIGIN = Deno.env.get("OFOQ_ALLOWED_ORIGIN") ?? "https://alooshalshawwa8-wq.github.io";
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://alooshalshawwa8-wq.github.io",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
   "Access-Control-Allow-Headers": "authorization, apikey, content-type",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Max-Age": "86400",
@@ -334,14 +335,14 @@ async function getJson(path: string, token?: string) {
 Deno.serve(async (request: Request) => {
   if (request.method === "OPTIONS") {
     const origin = request.headers.get("Origin") ?? "";
-    if (origin !== "https://alooshalshawwa8-wq.github.io") return new Response(null, { status: 403 });
+    if (origin !== ALLOWED_ORIGIN) return new Response(null, { status: 403 });
     return new Response(null, { status: 204, headers: corsHeaders });
   }
   if (!SUPABASE_URL || !API_KEY) return reply({ error: "Membership service is not configured" }, 503);
 
   const path = pathOf(new URL(request.url));
   const origin = request.headers.get("Origin") ?? "";
-  if (path !== "/api/stripe/webhook" && origin && origin !== "https://alooshalshawwa8-wq.github.io") {
+  if (path !== "/api/stripe/webhook" && origin && origin !== ALLOWED_ORIGIN) {
     return reply({ error: "Origin not allowed" }, 403);
   }
   try {
@@ -365,6 +366,7 @@ Deno.serve(async (request: Request) => {
 
     const user = await authenticatedUser(request);
     if (!user) return reply({ error: "Authentication required" }, 401);
+    if (!user.owner) return reply({ error: "Platform owner access required" }, 403);
 
     if (request.method === "GET" && path === "/api/admin/metrics") {
       if (!user.owner) return reply({ error: "Platform owner access required" }, 403);

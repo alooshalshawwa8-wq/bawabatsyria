@@ -1,14 +1,43 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { resolveAiRoute, type AiTask } from "./ai-task-router.ts";
+import { generateWithGemini } from "./gemini-adapter.ts";
+import { normalizeAiUsageEvent } from "./ai-usage-contract.ts";
 
-const ALLOWED_ORIGIN = "https://alooshalshawwa8-wq.github.io";
+const ALLOWED_ORIGIN = Deno.env.get("OFOQ_ALLOWED_ORIGIN") ?? "https://alooshalshawwa8-wq.github.io";
 const cors = {
   "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-  "Access-Control-Allow-Headers": "content-type",
+  "Access-Control-Allow-Headers": "content-type, apikey, authorization",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Max-Age": "86400",
   "Vary": "Origin",
 };
 const JSON_HEADERS = { ...cors, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" };
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const secretKeyMap = (() => {
+  try { return JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}"); }
+  catch { return {}; }
+})();
+const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? secretKeyMap.default ?? "";
+const AUTH_API_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? SERVICE_KEY;
+
+async function authenticatedOfoqOwner(request: Request): Promise<{ ok: boolean; status: number }> {
+  const authorization = request.headers.get("authorization") ?? "";
+  if (!authorization.startsWith("Bearer ")) return { ok: false, status: 401 };
+  if (!SUPABASE_URL || !AUTH_API_KEY) return { ok: false, status: 503 };
+  try {
+    const response = await fetch(SUPABASE_URL + "/auth/v1/user", {
+      headers: { apikey: AUTH_API_KEY, Authorization: authorization, Accept: "application/json" },
+    });
+    if (!response.ok) return { ok: false, status: 401 };
+    const user = await response.json();
+    const metadata = user?.app_metadata ?? {};
+    const owner = metadata.role === "OWNER" && metadata.owner === true && metadata.owner_access === "lifetime";
+    return user?.id && owner ? { ok: true, status: 200 } : { ok: false, status: user?.id ? 403 : 401 };
+  } catch {
+    return { ok: false, status: 503 };
+  }
+}
+
 function reply(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: JSON_HEADERS });
 }
@@ -88,49 +117,18 @@ Deno.serve(async (request: Request) => {
   if (origin !== ALLOWED_ORIGIN) return reply({ error: "Origin not allowed" }, 403);
   if (request.method !== "POST") return reply({ error: "Method not allowed" }, 405);
 
-  const apiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
-  if (!apiKey) return reply({ error: "المساعد يعمل حالياً بوضع الإرشاد الأساسي؛ خدمة الإجابات الذكية المتقدمة غير متاحة مؤقتاً." }, 503);
+  const geminiApiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+  if (!geminiApiKey.trim()) return reply({ error: "المساعد يعمل حالياً بوضع الإرشاد الأساسي؛ خدمة الإجابات الذكية المتقدمة غير متاحة مؤقتاً." }, 503);
 
   const contentLength = Number(request.headers.get("content-length") ?? "0");
   if (Number.isFinite(contentLength) && contentLength > 24_000) {
     return reply({ error: "المحادثة طويلة كتير. اختصر آخر الرسائل وجرب من جديد." }, 413);
   }
 
-  let body: Record<string, unknown> | null = null;
-  try {
-    const rawBody = await readBoundedBody(request, 24_000);
-    body = JSON.parse(rawBody);
-  } catch (error) {
-    if (error instanceof Error && error.message === "BODY_TOO_LARGE") {
-      return reply({ error: "المحادثة طويلة كتير. اختصر آخر الرسائل وجرب من جديد." }, 413);
-    }
-    return reply({ error: "صيغة المحادثة غير صالحة." }, 400);
-  }
-  if (!body || !Array.isArray(body.messages) || body.messages.length < 1 || body.messages.length > 12) {
-    return reply({ error: "صيغة المحادثة غير صالحة." }, 400);
-  }
-
-  const contents: Array<{ role: "user" | "model"; parts: Array<{ text: string }> }> = [];
-  for (const item of body.messages) {
-    if (!item || !["user", "assistant"].includes(item.role) || typeof item.content !== "string") continue;
-    const content = item.content.trim().slice(0, 2000);
-    if (!content) continue;
-    const role = item.role === "assistant" ? "model" : "user";
-    const last = contents[contents.length - 1];
-    if (last?.role === role) last.parts[0].text += "\n" + content;
-    else contents.push({ role, parts: [{ text: content }] });
-  }
-  if (!contents.length || contents[contents.length - 1].role !== "user") {
-    return reply({ error: "أرسل سؤالك أولاً." }, 400);
-  }
-  // Reserve a globally enforced daily request slot before contacting Gemini.
-  // This prevents parallel Edge isolates from bypassing the provider budget.
-  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-  const secretKeyMap = (() => {
-    try { return JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}"); }
-    catch { return {}; }
-  })();
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? secretKeyMap.default ?? "";
+  // Reserve a globally enforced per-client slot before body parsing and owner validation.
+  // This also limits invalid-token traffic before it reaches Supabase Auth.
+  const supabaseUrl = SUPABASE_URL;
+  const serviceKey = SERVICE_KEY;
   if (!supabaseUrl || !serviceKey) {
     return reply({ error: "خدمة الذكاء غير متاحة مؤقتاً بسبب إعدادات الحماية." }, 503);
   }
@@ -164,29 +162,37 @@ Deno.serve(async (request: Request) => {
   if (rateAllowed !== true) {
     return reply({ error: "عم توصلني رسائل بسرعة 😊 خذ نفس صغير وجرب كمان شوي." }, 429);
   }
-  let budgetResponse: Response;
+
+  const ownerAuth = await authenticatedOfoqOwner(request);
+  if (!ownerAuth.ok) return reply({ error: ownerAuth.status === 403 ? "Owner access required" : "Owner authentication required" }, ownerAuth.status);
+
+  let body: Record<string, unknown> | null = null;
   try {
-    budgetResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/reserve_ai_provider_request`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": serviceKey,
-        "Authorization": `Bearer ${serviceKey}`,
-      },
-      body: JSON.stringify({ p_provider: "gemini", p_daily_limit: 30 }),
-    });
-  } catch {
-    return reply({ error: "تعذر التحقق من حصة الذكاء الاصطناعي. حاول لاحقاً." }, 503);
+    const rawBody = await readBoundedBody(request, 24_000);
+    body = JSON.parse(rawBody);
+  } catch (error) {
+    if (error instanceof Error && error.message === "BODY_TOO_LARGE") {
+      return reply({ error: "المحادثة طويلة كتير. اختصر آخر الرسائل وجرب من جديد." }, 413);
+    }
+    return reply({ error: "صيغة المحادثة غير صالحة." }, 400);
   }
-  if (!budgetResponse.ok) {
-    console.error("AI budget reservation failed", budgetResponse.status);
-    return reply({ error: "تعذر التحقق من حصة الذكاء الاصطناعي. حاول لاحقاً." }, 503);
-  }
-  const budgetAllowed = await budgetResponse.json().catch(() => false);
-  if (budgetAllowed !== true) {
-    return reply({ error: "وصلنا إلى الحد اليومي الآمن لاستخدام المساعد الذكي. جرّب غداً." }, 429);
+  if (!body || !Array.isArray(body.messages) || body.messages.length < 1 || body.messages.length > 12) {
+    return reply({ error: "صيغة المحادثة غير صالحة." }, 400);
   }
 
+  const contents: Array<{ role: "user" | "model"; parts: Array<{ text: string }> }> = [];
+  for (const item of body.messages) {
+    if (!item || !["user", "assistant"].includes(item.role) || typeof item.content !== "string") continue;
+    const content = item.content.trim().slice(0, 2000);
+    if (!content) continue;
+    const role = item.role === "assistant" ? "model" : "user";
+    const last = contents[contents.length - 1];
+    if (last?.role === role) last.parts[0].text += "\n" + content;
+    else contents.push({ role, parts: [{ text: content }] });
+  }
+  if (!contents.length || contents[contents.length - 1].role !== "user") {
+    return reply({ error: "أرسل سؤالك أولاً." }, 400);
+  }
   // Optional section routing is backward-compatible: existing clients can keep
   // sending only messages; future section UIs can select a fixed trusted profile.
   const sectionProfiles: Record<string, string> = {
@@ -214,32 +220,152 @@ Deno.serve(async (request: Request) => {
   };
   const section = typeof body.section === "string" ? body.section : "";
   const sectionInstruction = sectionProfiles[section] ?? "";
+  const taskBySection: Readonly<Record<string, AiTask>> = {
+    education: "summarization",
+    programming: "coding",
+    science: "analysis",
+    finance: "analysis",
+    accounting: "analysis",
+    business: "analysis",
+    legal: "analysis",
+    sports: "analysis",
+    technology: "analysis",
+    entertainment: "classification",
+    marketing: "classification",
+  };
+  const task: AiTask = taskBySection[section] ?? "conversation";
+  const route = resolveAiRoute(task, geminiApiKey);
+  if (!route) {
+    return reply({ error: "المساعد يعمل حالياً بوضع الإرشاد الأساسي؛ خدمة الإجابات الذكية المتقدمة غير متاحة لهذه المهمة." }, 503);
+  }
+
+
+  // Reserve quota by exact provider/model only after the server-side free-tier
+  // eligibility gate has resolved a trusted route.
+  const quotaRequestId = crypto.randomUUID();
+  let quotaReservation: Response;
+  try {
+    quotaReservation = await fetch(supabaseUrl + "/rest/v1/rpc/reserve_ai_model_quota", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": serviceKey,
+        "Authorization": "Bearer " + serviceKey,
+      },
+      body: JSON.stringify({
+        p_provider_id: route.provider.id,
+        p_model_id: route.provider.modelId,
+        p_request_id: quotaRequestId,
+        p_task: route.task,
+      }),
+    });
+  } catch {
+    return reply({ error: "تعذر التحقق من حصة النموذج. حاول لاحقاً." }, 503);
+  }
+  if (!quotaReservation.ok) {
+    console.error("AI model quota reservation failed", quotaReservation.status);
+    return reply({ error: "تعذر التحقق من حصة النموذج. حاول لاحقاً." }, 503);
+  }
+  const reservationRows = await quotaReservation.json().catch(() => []);
+  const reservation = Array.isArray(reservationRows) ? reservationRows[0] : null;
+  if (reservation?.allowed !== true) {
+    const retryAfter = Number(reservation?.retry_after_seconds ?? 0);
+    return reply({
+      error: reservation?.reason === "provider_not_verified_free"
+        ? "هذا النموذج غير مفعّل قبل التحقق من مجانية استخدامه."
+        : "وصلنا إلى حد الاستخدام الآمن لهذا النموذج. حاول لاحقاً.",
+      retryAfterSeconds: Number.isFinite(retryAfter) ? retryAfter : 0,
+    }, reservation?.reason === "provider_not_verified_free" ? 503 : 429);
+  }
+
+  // Mark immediately before invoking the provider adapter. Once this point is
+  // reached the reservation must never be released as unused.
+  let attemptMarked = false;
+  try {
+    const markResponse = await fetch(supabaseUrl + "/rest/v1/rpc/mark_ai_model_provider_attempt", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": serviceKey,
+        "Authorization": "Bearer " + serviceKey,
+      },
+      body: JSON.stringify({ p_request_id: quotaRequestId }),
+    });
+    attemptMarked = markResponse.ok && await markResponse.json().catch(() => false) === true;
+  } catch {
+    attemptMarked = false;
+  }
+  if (!attemptMarked) {
+    try {
+      await fetch(supabaseUrl + "/rest/v1/rpc/release_ai_model_quota", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": serviceKey,
+          "Authorization": "Bearer " + serviceKey,
+        },
+        body: JSON.stringify({ p_request_id: quotaRequestId }),
+      });
+    } catch { /* fail closed; the reservation remains auditable */ }
+    return reply({ error: "تعذر تثبيت حجز الحصة بأمان. حاول لاحقاً." }, 503);
+  }
 
   // Log only the number of valid turns, never the user's conversation text.
   console.info("Nibras context received", { messageCount: body.messages.length, normalizedTurns: contents.length, section: sectionProfiles[section] ? section : "general" });
 
+  const result = await generateWithGemini(
+    route.provider,
+    contents,
+    sectionInstruction ? `${SYSTEM_PROMPT}\n\nتخصص هذا القسم: ${sectionInstruction}` : SYSTEM_PROMPT,
+  );
+  const usageEvent = normalizeAiUsageEvent({
+    providerId: route.provider.id,
+    modelId: route.provider.modelId,
+    task: route.task,
+    status: result.ok ? "success" : result.kind === "quota" ? "quota_exhausted" : "failed",
+    latencyMs: result.latencyMs,
+    usage: result.ok ? result.usage : null,
+  });
+  // Persist usage against the exact reserved provider/model. The database
+  // enforces one settlement per request ID; no prompts or answers are stored.
   try {
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent", {
+    const settlementResponse = await fetch(supabaseUrl + "/rest/v1/rpc/settle_ai_model_quota", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
+        "apikey": serviceKey,
+        "Authorization": "Bearer " + serviceKey,
       },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: sectionInstruction ? `${SYSTEM_PROMPT}\\n\\nتخصص هذا القسم: ${sectionInstruction}` : SYSTEM_PROMPT }] },
-        contents,
-        generationConfig: { temperature: 0.65, maxOutputTokens: 850 },
+        p_request_id: quotaRequestId,
+        p_status: usageEvent.status,
+        p_latency_ms: usageEvent.latencyMs,
+        p_input_tokens: usageEvent.inputTokens,
+        p_output_tokens: usageEvent.outputTokens,
+        p_total_tokens: usageEvent.totalTokens,
+        p_cost_amount: null,
+        p_cost_currency: null,
+        p_cost_basis: null,
+        p_provider_http_status: result.ok ? 200 : result.status,
       }),
     });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      console.error("Gemini request failed", response.status, JSON.stringify(data.error ?? { message: "Unknown provider error" }).slice(0, 1200));
-      return reply({ error: "صار في عطل مؤقت بخدمة الذكاء الاصطناعي. جرّب بعد شوي." }, 502);
+    if (!settlementResponse.ok || await settlementResponse.json().catch(() => false) !== true) {
+      console.error("AI usage settlement failed", settlementResponse.status);
     }
-    const answer = data.candidates?.[0]?.content?.parts?.map((part: { text?: string }) => part.text ?? "").join("").trim();
-    if (!answer) return reply({ error: "ما قدرت كوّن جواب هالمرة. جرّب صياغة سؤالك بطريقة تانية." }, 502);
-    return reply({ answer });
-  } catch (_error) {
-    return reply({ error: "تعذر الاتصال بخدمة المساعد حالياً." }, 502);
+  } catch {
+    console.error("AI usage settlement request failed");
   }
+  // Structured operational telemetry only: no prompt, response, user ID, or key.
+  console.info("AI_USAGE_EVENT", usageEvent);
+  if (result.ok) return reply({ answer: result.answer });
+  if (result.kind === "quota") {
+    return reply({ error: "حصة مزود الذكاء الاصطناعي ممتلئة حالياً. جرّب لاحقاً." }, 429);
+  }
+  if (result.kind === "empty") {
+    return reply({ error: "ما قدرت كوّن جواب هالمرة. جرّب صياغة سؤالك بطريقة تانية." }, 502);
+  }
+  console.error("Gemini adapter failed", { status: result.status, kind: result.kind });
+  return reply({ error: result.kind === "timeout"
+    ? "تأخر رد خدمة المساعد. جرّب مرة أخرى."
+    : "صار في عطل مؤقت بخدمة الذكاء الاصطناعي. جرّب بعد شوي." }, 502);
 });

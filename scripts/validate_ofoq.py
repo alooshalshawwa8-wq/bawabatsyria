@@ -8,6 +8,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 html = (ROOT / "index.html").read_text(encoding="utf-8")
 assistant = (ROOT / "supabase/functions/site-assistant/index.ts").read_text(encoding="utf-8")
+gemini_adapter = (ROOT / "supabase/functions/site-assistant/gemini-adapter.ts").read_text(encoding="utf-8")
 membership = (ROOT / "supabase/functions/membership-api/index.ts").read_text(encoding="utf-8")
 webhook_security = (ROOT / "supabase/functions/membership-api/stripe-webhook-security.mjs").read_text(encoding="utf-8")
 worker = (ROOT / "service-worker.js").read_text(encoding="utf-8")
@@ -118,7 +119,7 @@ for token in (
 ):
     require(token in webhook_security or token in membership, "Stripe webhook security guard missing: " + token)
 require("SUPABASE_SERVICE_ROLE_KEY" not in html and "STRIPE_SECRET_KEY" not in html, "membership provider secrets must not enter browser HTML")
-require('Access-Control-Allow-Origin": "https://alooshalshawwa8-wq.github.io"' in membership, "membership API exact-origin CORS contract missing")
+require('const ALLOWED_ORIGIN = Deno.env.get("OFOQ_ALLOWED_ORIGIN")' in membership and '"Access-Control-Allow-Origin": ALLOWED_ORIGIN' in membership, "membership API configurable exact-origin CORS contract missing")
 
 # Football provider must remain fail-closed when the provider account is blocked.
 football = (ROOT / "supabase/functions/football-data/index.ts").read_text(encoding="utf-8")
@@ -165,7 +166,7 @@ trigger_acl_migration = ROOT / "supabase/migrations/20261113132427_restrict_work
 require(trigger_acl_migration.is_file(), "trigger-only function privilege migration missing")
 require("REVOKE EXECUTE ON FUNCTION public.trim_user_workspace_backup_history() FROM PUBLIC, anon, authenticated;" in trigger_acl_migration.read_text(encoding="utf-8"), "trigger-only helper must not be exposed as client RPC")
 
-# AI assistant request hardening: exact-origin POST, bounded payloads, and fail-closed global budget.
+# AI assistant request hardening: exact-origin POST, bounded payloads, and fail-closed provider/model quota ledger.
 for token in (
     'request.method !== "POST"',
     'origin !== ALLOWED_ORIGIN',
@@ -176,8 +177,10 @@ for token in (
     'readBoundedBody(request, 24_000)',
     'body.messages.length > 12',
     'item.content.trim().slice(0, 2000)',
-    'reserve_ai_provider_request',
-    'budgetAllowed !== true',
+    'reserve_ai_model_quota',
+    'reservation?.allowed !== true',
+    'mark_ai_model_provider_attempt',
+    'settle_ai_model_quota',
 ):
     require(token in assistant, "AI assistant abuse-control contract missing: " + token)
 
@@ -215,20 +218,23 @@ for secret_marker in ("GEMINI_API_KEY", "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_S
     require(secret_marker not in html, "server secret marker leaked into index.html: " + secret_marker)
 require("functions/v1/football-data" not in gemini.group(1), "Gemini assistant must not trigger football API calls")
 
-# The deployed AI source is kept in Git with its real global daily quota guard.
+# The AI source uses a provider/model-scoped durable quota ledger and a verified-free eligibility gate.
 for token in (
     'Deno.env.get("GEMINI_API_KEY")',
-    "reserve_ai_provider_request",
-    'p_provider: "gemini"',
-    "p_daily_limit: 30",
-    "budgetAllowed !== true",
+    "reserve_ai_model_quota",
+    "p_provider_id: route.provider.id",
+    "p_model_id: route.provider.modelId",
+    "mark_ai_model_provider_attempt",
+    "settle_ai_model_quota",
+    "if (!route)",
     "SUPABASE_SERVICE_ROLE_KEY",
     "SUPABASE_SECRET_KEYS",
     "sectionProfiles",
-    "maxOutputTokens: 850",
+    "sectionProfiles",
 ):
     require(token in assistant, "AI backend protection missing: " + token)
-require("x-goog-api-key" in assistant, "Gemini key must be sent server-side only")
+for token in ("maxOutputTokens: 850", '"x-goog-api-key": provider.apiKey', "AbortSignal.timeout(25_000)"):
+    require(token in gemini_adapter, "Gemini transport protection missing: " + token)
 require("console.info(\"Nibras context received\", { messageCount:" in assistant,
         "AI logs should record counters, not conversation text")
 
