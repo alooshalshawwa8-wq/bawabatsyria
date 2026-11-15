@@ -32,7 +32,12 @@ assert.match(assistant, /rateAllowed !== true/);
 
 // Football API: request throttles must fail closed if persistent rate checks fail.
 assert.match(football, /request\.method !== "GET"/);
-assert.match(football, /persistentRateAllowed\(await hashClientKey\(ip\), 60\)/);
+assert.match(football, /request\.headers\.get\("cf-connecting-ip"\)/);
+assert.doesNotMatch(football, /request\.headers\.get\(["']x-forwarded-for/i);
+assert.match(football, /isValidClientIp\(clientIp\)/);
+assert.match(football, /hashClientKey\(clientIp\)/);
+assert.match(football, /name: "HMAC", hash: "SHA-256"/);
+assert.match(football, /persistentRateAllowed\(clientBucket, 60\)/);
 assert.match(football, /persistentRate === null[\s\S]{0,180}503/);
 assert.match(football, /persistentRate\) return reply[\s\S]{0,100}429/);
 assert.match(football, /const catalog: Record<string, \{ path: string; keys: string\[\]; ttl: number \}>/);
