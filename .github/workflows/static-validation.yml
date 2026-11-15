@@ -151,6 +151,7 @@ jobs:
 
       - name: Build and verify private Cloudflare Pages artifact
         run: |
+          python3 -m pip install --disable-pip-version-check Pillow
           node scripts/build-private-pages.mjs
           node tests/private-pages-build-contract.mjs
           OFOQ_PRIVATE_SITE_URL=https://ofoq-private.pages.dev node scripts/build-retirement-pages.mjs
