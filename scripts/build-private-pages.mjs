@@ -82,7 +82,7 @@ if (/serviceWorker\.register\(/.test(html)) {
 writeFileSync(indexPath, html, "utf8");
 
 // Do not advertise the legacy public GitHub Pages sitemap from the private host.
-writeFileSync(resolve(output, "robots.txt"), "User-agent: *\\nDisallow: /\\n", "utf8");
+writeFileSync(resolve(output, "robots.txt"), "User-agent: *\nDisallow: /\n", "utf8");
 
 const headersTemplate = resolve(root, "scripts/private-pages/_headers");
 if (!existsSync(headersTemplate)) {
