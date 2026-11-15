@@ -1,42 +1,48 @@
-# OFOQ-008 — Site assistant rate-limit trust boundary review
+# OFOQ-008 — مراجعة حدود الثقة وتحديد معدل طلبات نَبْراس
+**التاريخ:** 2026-11-15  
+**النطاق:** مطابقة المصدر في GitHub مع الوظيفة المنشورة في Supabase، وفحص ترحيل قاعدة البيانات واختبارات العقود. لا تغيير إنتاجي في هذه المراجعة.
 
-Date: 2026-11-15
-Branch: `ofoq/ofoq-001-execution`
-Scope: source review and documentation only; no deployment or production configuration changes.
+## الحالة الحالية المثبتة
 
-## Finding
+الاستنتاج القديم في هذه الوثيقة كان يصف نسخة سابقة تعتمد على `x-forwarded-for` ومحدد ذاكرة محلي. هذا الاستنتاج أصبح قديماً ولا يصف الشيفرة الحالية.
 
-The current `site-assistant` Edge Function derives its in-memory throttle key from:
+تمت مطابقة `supabase/functions/site-assistant/index.ts` في فرع `main` مع نسخة الوظيفة المنشورة في Supabase (`site-assistant` v21)، وتبين وجود الآتي في الاثنين:
 
-```ts
-request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
-```
+1. استخراج عنوان العميل من `cf-connecting-ip` فقط.
+2. التحقق من صيغة IPv4/IPv6 ورفض العنوان المفقود أو غير الصالح؛ لا يوجد fallback إلى `x-forwarded-for`.
+3. اشتقاق HMAC-SHA256 لعنوان العميل باستخدام سر الخدمة قبل التخزين؛ لا يُخزّن عنوان IP الخام في جدول محدد المعدل.
+4. استدعاء RPC `reserve_site_assistant_rate_limit` لتحديد 12 طلباً خلال 60 ثانية لكل bucket.
+5. الفشل المغلق: غياب عنوان صالح أو فشل RPC يعيد 503، وتجاوز الحصة يعيد 429.
+6. حصة يومية مستقلة لمزود Gemini عبر `reserve_ai_provider_request`؛ وهي حاجز تكلفة منفصل وليست بديلاً عن محدد العميل.
 
-This value is caller-influenced unless the complete ingress path is proven to remove or overwrite caller-supplied values before the function receives them. If a caller can choose the first X-Forwarded-For element, they can rotate forged values and evade the per-runtime 12-requests-per-minute throttle. If the header is absent, all such requests share the `unknown` bucket.
+## قاعدة البيانات
 
-The limiter is also explicitly per Edge runtime isolate and therefore is not a global per-IP control. The globally reserved daily AI request budget remains a separate, useful cost guard; it does not replace abuse controls.
+الترحيل `20261115082629_nibras_persistent_rate_limit.sql` ينشئ جدول `site_assistant_rate_limits`، ويفعّل RLS، ويسحب صلاحيات الجدول من `PUBLIC` و`anon` و`authenticated`، ويمنح `service_role` فقط. دالة RPC تعمل بـ `SECURITY DEFINER` مع `search_path = ''`، وتتحقق من مدخلات المفتاح والنافذة والحد، ولا تسمح باستدعائها من أدوار العميل.
 
-## Evidence reviewed
+## اختبارات المصدر
 
-- Current source: `supabase/functions/site-assistant/index.ts` on this branch.
-- The Supabase official log-field reference lists `cf-connecting-ip` and `x-forwarded-for` among captured request headers, but does not establish a security contract for either header's sanitization at every ingress path.
-- Supabase's public API-security guide demonstrates extracting the first `x-forwarded-for` value for a Postgres pre-request example. That example alone is not proof that a public Edge Function can safely trust the same value against caller-supplied headers.
-- Community discussions about `cf-connecting-ip` describe useful deployment observations but explicitly leave open whether every direct/default/custom ingress path guarantees overwrite behavior. They are not an authoritative platform guarantee.
+ملف `tests/edge-function-security-contract.mjs` يتحقق من:
+- وجود `cf-connecting-ip` وغياب قراءة `x-forwarded-for` في المساعد وكرة القدم.
+- HMAC-SHA256 وحجز حد دائم في قاعدة البيانات.
+- الفشل المغلق عند فشل فحص الحد الدائم في مسار كرة القدم.
+- حواجز ميزانية الذكاء الاصطناعي وتوقيع Stripe وحدود أحجام الطلبات.
 
-References:
-- https://supabase.com/docs/guides/observability/log-field-reference
-- https://supabase.com/docs/guides/api/securing-your-api
-- https://github.com/orgs/supabase/discussions/52040
-- https://github.com/orgs/supabase/discussions/52496
+هذه اختبارات عقود ثابتة للشيفرة؛ ليست اختباراً حياً يثبت أن كل مسار دخول إلى Supabase يستبدل رأس العميل بطريقة موثوقة.
 
-## Required resolution before release
+## ما لم يُحسم بعد
 
-1. Do not claim the current in-memory IP limiter is spoof-resistant.
-2. Obtain a documented ingress trust contract from Supabase or run an approved, controlled header-spoof verification against the exact production invocation path without exposing diagnostic data.
-3. Prefer a platform-verified client-IP value only after its overwrite guarantee is established for this project's ingress path; do not silently fall back to an unverified header.
-4. Consider a durable, shared rate limiter for abuse control across Edge isolates. Keep the existing global daily provider budget as an independent cost guard.
-5. Add tests for missing, malformed, duplicate, and caller-supplied forwarding headers once the trusted extraction contract is established.
+- يلزم توثيق رسمي أو اختبار مضبوط للمسار الفعلي يثبت أن `cf-connecting-ip` الذي يصل إلى Edge Function لا يمكن للعميل تزويره عند استدعاء الوظيفة مباشرة. لا تعتبر تعليقات المصدر وحدها دليلاً على ضمان ingress.
+- CORS وOrigin ليسا مصادقة؛ يمكن للعميل غير المتصفح تزوير رأس Origin. الحماية الفعلية تعتمد أيضاً على الحصص، وفحص هوية المستخدم حيث يلزم، وعدم كشف أسرار الخدمة.
+- وظيفة `site-assistant` تقبل حالياً Origin ثابتاً هو `https://alooshalshawwa8-wq.github.io`. وكذلك CORS في `membership-api` و`football-data` مربوط بالمصدر الحالي. نقل الواجهة إلى Cloudflare Pages يتطلب تحديث allowlist في الوظائف الثلاث وإعادة نشرها بعد معرفة عنوان `pages.dev`.
+- مسار كرة القدم يجمع محدداً محلياً إضافياً مع RPC دائم، ويجب إبقاء الفشل مغلقاً عند تعذر التحقق من الحد الدائم.
 
-## Safety boundary
+## القرار
 
-No source code, database schema, Auth setting, Edge Function deployment, secret, or production configuration was changed. This is a release-gate finding, not a claim of a confirmed exploitable production vulnerability.
+**التنفيذ البرمجي لمحدد نَبْراس الدائم موجود بالفعل في المصدر والإنتاج؛ لا نكرر بناءه.** يبقى تحقق عقد ingress، واختبار السلوك الحي للرؤوس، وتحديث CORS ضمن بوابات الاستضافة الخاصة. لا تُغيّر الوظائف المنشورة أو الأسرار دون خطة اختبار وتراجع واضحة.
+
+## مراجع المصدر
+
+- `supabase/functions/site-assistant/index.ts`
+- `supabase/functions/football-data/index.ts`
+- `supabase/migrations/20261115082629_nibras_persistent_rate_limit.sql`
+- `tests/edge-function-security-contract.mjs`
