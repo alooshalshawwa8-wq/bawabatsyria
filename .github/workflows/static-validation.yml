@@ -116,7 +116,7 @@ jobs:
           assert.ok(assistant.includes('readBoundedBody(request, 24_000)'), 'Assistant request body must be size-bounded while streaming');
           assert.ok(assistant.includes('BODY_TOO_LARGE'), 'Assistant must reject oversized request bodies');
           assert.ok(assistant.includes('request.headers.get("cf-connecting-ip")'), 'Assistant must use the trusted Cloudflare client-IP header');
-          assert.ok(!/request\\.headers\\.get\\(["']x-forwarded-for/i.test(assistant), 'Assistant must not read caller-controlled X-Forwarded-For');
+          assert.ok(!/request\.headers\.get\(["']x-forwarded-for/i.test(assistant), 'Assistant must not read caller-controlled X-Forwarded-For');
           assert.ok(assistant.includes('reserve_site_assistant_rate_limit'), 'Assistant must reserve a persistent database-backed rate-limit slot');
           assert.ok(assistant.includes('crypto.subtle.sign'), 'Assistant must HMAC client IPs before persistence');
           assert.ok(football.includes('requests.size >= 10_000'), 'Football rate limiter state must be bounded');
