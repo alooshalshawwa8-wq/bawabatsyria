@@ -43,3 +43,11 @@ Before claiming real email readiness, an authorized owner must:
 4. Keep provider credentials private; do not use the default shared email sender for production readiness assumptions.
 
 No real account was created, no email was sent, and no SMTP, Auth, billing, secret, production database, or deployment setting was changed.
+
+## Redirect parameter cross-check
+
+The resend redirect correction was cross-checked against the current Supabase JavaScript Auth implementation: `packages/core/auth-js/src/lib/fetch.ts` maps the `redirectTo` request option to the `redirect_to` URL query parameter before issuing the HTTP request. The resend client method passes `options.emailRedirectTo` through that request option. This confirms that the browser's direct REST request should use the query parameter rather than nesting `options.emailRedirectTo` in the JSON body.
+
+Reference: https://github.com/supabase/supabase-js/blob/master/packages/core/auth-js/src/lib/fetch.ts
+
+The GoTrue OpenAPI schema documents the resend JSON body fields (`email`, `type`, and optional security metadata) but does not enumerate the redirect query parameter on that operation. The SDK implementation is the direct cross-check for the supported client option mapping.
