@@ -283,7 +283,7 @@ A second implementation slice now separates provider selection from provider tra
 - Added a 25-second request timeout.
 - Classifies quota exhaustion (HTTP 429), transient server failures, provider errors, malformed responses, and empty model output.
 - Does not parse or log provider error response bodies; operational logging records only a bounded status and error class.
-- Added mocked transport tests for successful Arabic output, server-side API-key header use, request payload, quota failure, transient failure and malformed output.
+- Added six mocked transport tests for successful Arabic output, server-side API-key header use, request payload, quota failure, transient failure, malformed output, explicit timeout classification and network failure.
 - CI now runs the registry tests and adapter tests, alongside Edge Function type-checking and security contract tests.
 
 ### Explicit limitation
