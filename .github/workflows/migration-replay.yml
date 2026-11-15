@@ -8,6 +8,7 @@ on:
       - "supabase/migrations/**"
       - "supabase/config.toml"
       - "supabase/seed.sql"
+      - "tests/nibras-rate-limit-concurrency.sh"
   pull_request:
     branches: [main]
     paths:
@@ -75,6 +76,9 @@ jobs:
           "${DB[@]}" --command "select to_regprocedure('public.football_api_budget_reserve(text,text)') is not null and to_regprocedure('public.football_api_budget_status()') is not null;" | grep -qx t
           "${DB[@]}" --command "select provider_blocked from public.football_api_budget_policy where singleton = true;" | grep -qx t
           echo "PASS: all 37 migrations replayed; all 14 recovered versions present; critical football guard functions and blocked-provider policy exist."
+
+      - name: Test Nibras atomic minute limiter under concurrency
+        run: bash tests/nibras-rate-limit-concurrency.sh
 
       - name: Stop disposable local Supabase stack
         if: always()
