@@ -1,4 +1,3 @@
-
 alter table public.membership_plans
   add column if not exists price_minor bigint,
   add column if not exists currency text;

@@ -1,4 +1,3 @@
-
 drop policy if exists "Points ledger grant by platform owner" on public.points_ledger;
 create policy "Points ledger grant by platform owner"
 on public.points_ledger

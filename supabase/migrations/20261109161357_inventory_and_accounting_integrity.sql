@@ -1,4 +1,3 @@
-
 create or replace function public.apply_inventory_movement_to_stock()
 returns trigger
 language plpgsql

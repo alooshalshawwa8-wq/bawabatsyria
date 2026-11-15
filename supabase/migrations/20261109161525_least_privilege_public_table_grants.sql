@@ -1,4 +1,3 @@
-
 revoke all privileges on table public.accounting_accounts, public.entitlements,
   public.inventory_items, public.inventory_movements, public.journal_entries,
   public.journal_lines, public.membership_plans, public.points_balances,

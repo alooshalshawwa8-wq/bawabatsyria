@@ -1,4 +1,3 @@
-
 drop policy if exists "Enabled payment methods are public" on public.payment_methods;
 drop policy if exists "Owner manages payment methods" on public.payment_methods;
 create policy "Read enabled methods or owner"
