@@ -4,56 +4,71 @@ Date: 2026-11-15
 Branch: `aloosh/brand-prep-2026-11-15`
 Draft review: [PR #33](https://github.com/alooshalshawwa8-wq/bawabatsyria/pull/33)
 
-## 1. Static CI result
+## 1. Latest static CI result
 
-The complete OFOQ static validation workflow passed on commit `dc145bf3af7b31f6661d9d0e789e4c7b74a6fe97`:
-[GitHub Actions run 43743331133](https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/43743331133)
+The static validation workflow passed on the current reviewed head `bbb39a8a4e2567491a7edc0a98f53381d34e8dfe`:
+[GitHub Actions run 43744655736](https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/43744655736)
 
-Passed steps include:
-- JavaScript syntax checks for the changed shared data/workspace modules and new scripts/tests.
-- 78-section catalogue and module-coverage validator.
-- Deno type-checks and AI/Edge Function tests.
-- Edge Function security contract tests.
-- Atomic journal draft RPC contract.
-- Atomic inventory opening-balance RPC contract.
+Passed:
+- JavaScript syntax checks.
+- 78-section catalogue and module coverage validation.
+- Deno type-checks and Edge Function security contracts.
+- Atomic journal draft and inventory opening-balance RPC contracts.
+- Owner-scoped RPC idempotency contract, including request-key retention until the post-write refresh succeeds.
 - Existing static application contracts.
 - Private Cloudflare Pages artifact build and verification.
 
-The initial inventory contract test failed because it scanned the entire workspace file and found unrelated legacy inventory POST code outside the item-creation handler. The test was narrowed to the actual creation handler, and the subsequent full static workflow passed. The implementation itself did not need to be changed for this test correction.
+The earlier idempotency contract failure was a stale regex assertion, not an implementation or database failure. The assertion was corrected to match the actual SQL insert-values structure. The latest static run passed.
 
-## 2. Clean database migration replay
+## 2. Database migration replay and RPC integration
 
-The migration replay workflow has been extended to:
-- Run on the engineering branch and on the stacked draft review base.
-- Expect 42 migrations, including the two new atomic RPC migrations.
-- Assert both RPC functions exist after replay.
-- Assert both are SECURITY INVOKER rather than SECURITY DEFINER.
-- Assert anon cannot execute them and authenticated can.
+The engineering branch now contains 43 migrations. A clean disposable Supabase replay on commit `49990019126927211e5e9ed4028c7036f7b1e5ad` completed successfully:
+[GitHub Actions run 43743924117](https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/43743924117)
 
-A clean local Supabase replay run was started on the branch. At the time of this document, its job had started the disposable Supabase stack but had not yet reported the replay result. It is therefore pending verification, not passed:
-[Migration replay run 43743369375](https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/43743369375)
+That run passed:
+- All 43 migrations replayed from an empty local database.
+- Migration history and critical object assertions.
+- AI quota ledger lifecycle/idempotency tests.
+- AI model quota concurrency tests.
+- Owner-only RLS helper and policy coverage.
+- Nibras minute-rate limiter concurrency tests.
+- Disposable stack cleanup.
 
-No production migration was applied.
+A dedicated PostgreSQL integration test was then added at `tests/rpc-idempotency-integration.sql`. It runs as an authenticated owner against the disposable local database and checks:
+- Duplicate inventory creation returns the same item id.
+- The opening movement is created exactly once and stock quantity is applied once.
+- Reusing the same request id with a different inventory payload is rejected.
+- Duplicate journal-draft creation returns the same entry id.
+- Exactly one journal entry and two journal lines are created.
 
-## 3. Read-only production Supabase review
+The integration test is wired into the clean migration replay workflow. Its new run is pending/in progress and has not yet produced a result at the time of this update. Do not treat this final RPC integration check as passed until the workflow reports success:
+[Latest migration replay run](https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/43744655658)
+
+## 3. Retry-safety refinement
+
+Both create forms now retain their idempotency key until the post-write refresh succeeds. This covers the case where the database committed successfully but the UI refresh failed: a retry with the same form data reuses the original request id and receives the original record id rather than creating a duplicate.
+
+The journal request fingerprint now includes the exact entry date sent to the RPC, preventing a request key from being reused with a changed date across a date boundary.
+
+## 4. Read-only production Supabase review
 
 Read-only Supabase tools confirmed 37 migrations recorded on the live project at review time. Security advisor findings:
 - 12 INFO findings report RLS-enabled internal tables without user-facing policies. The listed tables are backend policy, budget, cache, telemetry, and assistant-rate-limit structures. This is consistent with deny-by-default direct client access, but each service-role/Edge Function access path must remain tightly scoped.
-- 1 WARN finding: Auth leaked-password protection is disabled. This is an account security setting and was not changed.
+- 1 WARN finding: Auth leaked-password protection is disabled. This account security setting was not changed.
 
-Performance advisor findings included 26 unused-index INFO notices. With low or early usage, these are not sufficient evidence to drop indexes; no index was removed.
+Performance advisor findings included 26 unused-index INFO notices. These are not sufficient evidence to drop indexes; no index was removed.
 
-## 4. Review packaging and safety
+## 5. Review packaging and safety
 
-- Created draft PR #33 stacked on PR #32, with no merge.
+- Draft PR #33 remains open and unmerged, stacked on PR #32.
+- No production migration was applied.
 - No production DB/Auth/RLS setting was changed.
 - No paid service, project branch, or compute resource was created.
 - No deployment, Pages cutover, repository visibility change, or Cloudflare action was performed.
 
-## 5. Remaining release gates
+## 6. Remaining release gates
 
-1. Wait for clean migration replay and resolve any failure before calling the migrations verified.
-2. Add request-key idempotency for the two create operations before adding automatic retry behavior. Atomicity prevents partial records; it does not by itself prevent a duplicate after an ambiguous timeout and a fresh user retry.
-3. Review the Auth leaked-password protection setting with the owner before changing it.
-4. Keep the Cloudflare private-hosting and owner-access gate ahead of any production identity/branding or Pages cutover.
-5. Keep both PRs unmerged until the full review and owner approval.
+1. Obtain a successful result from the new disposable PostgreSQL RPC idempotency integration test.
+2. Review the Auth leaked-password protection setting with the owner before changing it.
+3. Complete Cloudflare private hosting and owner-only access setup and test it end-to-end before any production identity/branding or Pages cutover.
+4. Keep both PRs unmerged and all production changes gated on explicit owner approval.
