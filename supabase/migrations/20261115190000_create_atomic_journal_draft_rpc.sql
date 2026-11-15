@@ -4,7 +4,8 @@ create or replace function public.create_journal_draft(
   p_entry_date date,
   p_debit_account_id uuid,
   p_credit_account_id uuid,
-  p_amount numeric
+  p_amount numeric,
+  p_request_id uuid
 )
 returns uuid
 language plpgsql
@@ -13,6 +14,9 @@ set search_path = ''
 as $function$
 declare
   v_user_id uuid := auth.uid();
+  v_payload jsonb;
+  v_existing_payload jsonb;
+  v_existing_result uuid;
   v_debit_currency character(3);
   v_credit_currency character(3);
   v_entry_id uuid;
@@ -62,6 +66,39 @@ begin
     raise exception 'Active credit account not found' using errcode = '23503';
   end if;
 
+  if p_request_id is null then
+    raise exception 'A request id is required for safe retries' using errcode = '22023';
+  end if;
+
+  v_payload := jsonb_build_object(
+    'description', trim(p_description),
+    'entry_date', p_entry_date,
+    'debit_account_id', p_debit_account_id,
+    'credit_account_id', p_credit_account_id,
+    'amount', p_amount
+  );
+  insert into ofoq_private.rpc_idempotency_keys
+    (user_id, operation, request_id, payload)
+  values
+    (v_user_id, 'journal_draft', p_request_id, v_payload)
+  on conflict (user_id, operation, request_id) do nothing;
+
+  select k.payload, k.result_id
+    into v_existing_payload, v_existing_result
+    from ofoq_private.rpc_idempotency_keys as k
+   where k.user_id = v_user_id
+     and k.operation = 'journal_draft'
+     and k.request_id = p_request_id
+   for update;
+
+  if v_existing_payload is distinct from v_payload then
+    raise exception 'Request id was already used with different input'
+      using errcode = '23505';
+  end if;
+  if v_existing_result is not null then
+    return v_existing_result;
+  end if;
+
   if v_debit_currency is distinct from v_credit_currency then
     raise exception 'Both journal accounts must use the same currency'
       using errcode = '23514';
@@ -77,11 +114,17 @@ begin
     (v_user_id, v_entry_id, p_debit_account_id, trim(p_description), p_amount, 0),
     (v_user_id, v_entry_id, p_credit_account_id, trim(p_description), 0, p_amount);
 
+  update ofoq_private.rpc_idempotency_keys
+     set result_id = v_entry_id
+   where user_id = v_user_id
+     and operation = 'journal_draft'
+     and request_id = p_request_id;
+
   return v_entry_id;
 end;
 $function$;
 
-revoke all on function public.create_journal_draft(text,date,uuid,uuid,numeric)
+revoke all on function public.create_journal_draft(text,date,uuid,uuid,numeric,uuid)
   from public, anon;
 grant execute on function public.create_journal_draft(text,date,uuid,uuid,numeric)
   to authenticated;
