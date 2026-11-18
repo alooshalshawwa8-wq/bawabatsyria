@@ -5,6 +5,7 @@ on:
     branches:
       - ofoq/ofoq-001-execution
       - aloosh/brand-prep-2026-11-15
+      - aloosh/private-release-candidate-2026-11-18
     paths:
       - "supabase/migrations/**"
       - "supabase/config.toml"
