@@ -2,7 +2,7 @@ name: OFOQ static validation
 
 on:
   push:
-    branches: [main, aloosh/brand-prep-2026-11-15]
+    branches: [main, aloosh/brand-prep-2026-11-15, aloosh/private-release-candidate-2026-11-18]
     paths:
       - "index.html"
       - "*.js"
@@ -14,6 +14,7 @@ on:
       - "manifest.json"
       - "robots.txt"
       - "service-worker.js"
+      - "docs/**"
   pull_request:
     branches: [main, ofoq/private-access-readiness-2026-11-15]
     paths:
