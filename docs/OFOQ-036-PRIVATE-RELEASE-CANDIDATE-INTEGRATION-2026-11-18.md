@@ -23,14 +23,15 @@ The original static validation and clean migration replay workflows did not incl
 - Both workflows retain read-only repository permissions. The migration workflow creates a disposable local Supabase stack, replays migrations locally, runs assertions and SQL contracts, and tears down that local stack.
 - `.github/workflows/pages.yml` was inspected and left unchanged. It only deploys from `main` through a manually authorized workflow dispatch; the candidate branch is not a deployment trigger.
 
-These workflow edits are committed only to the candidate branch and should cause the candidate's validation and disposable migration replay checks to run. Their results must be read from GitHub Actions before this phase can be called fully verified.
+These workflow edits are committed only to the candidate branch and successfully triggered isolated CI runs. Candidate static validation passed (run [44370755301](https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/44370755301)). The full Git-history Gitleaks scan passed with **0 findings across 1,061 commits** (run [44370754535](https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/44370754535)). The disposable migration replay run [44370459596](https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/44370459596) has passed the migration replay, all schema/security assertions, RPC idempotency tests, AI quota lifecycle/concurrency tests, owner-only RLS checks, and rate-limit concurrency tests; final stack cleanup was still running at the time of this record.
 
-## 3. Existing test evidence (not a substitute for candidate CI)
+## 3. Candidate CI evidence
 
-The source PR review previously recorded:
-- PR #32: 5 of 5 checks passed on its reviewed head.
-- PR #33: 2 of 2 checks passed on its reviewed head.
-- The prior engineering closure document records successful static validation and a clean disposable replay on earlier commits, plus an RPC idempotency integration run. Those historical results do not prove the newly assembled candidate's current checks pass.
+The candidate itself has the following direct evidence:
+- Static validation passed on the candidate head, including JavaScript syntax, 78-section registry, Deno checks, Edge Function security contracts, journal/inventory/idempotency contracts, static app contracts, and the private Pages artifact build.
+- Gitleaks scanned 1,061 commits / approximately 3.45 MB and reported 0 findings.
+- The disposable Supabase replay successfully applied all 43 migrations from an empty local database. All subsequent migration history, critical object, RLS/privilege, journal/inventory idempotency, AI quota lifecycle and concurrency, owner-only policy, and Nibras rate-limit concurrency steps passed. Only local stack cleanup was still in progress at the time of this report.
+- The earlier source PR check counts remain historical evidence only: PR #32 had 5/5 and PR #33 had 2/2 on their reviewed heads.
 
 ## 4. Migration safety
 
@@ -80,10 +81,9 @@ Completed:
 - Documented migration and security review gates.
 
 Pending:
-- Wait for and inspect the candidate disposable migration replay and full Git-history secret scan runs.
-- Observe and inspect any remaining candidate CI runs.
-- Review owner authentication and CORS code line-by-line.
-- Complete secret-history scan results.
+- Confirm final success status after disposable local Supabase stack cleanup.
+- Verify server-side owner claim provisioning and the actual production owner account configuration without changing it.
+- Configure and test the Cloudflare origin override only after the private hostname is finalized and production approval is granted.
 - Build and verify the private artifact in CI.
 - Prepare, but do not activate, a Cloudflare Access production cutover plan.
 
