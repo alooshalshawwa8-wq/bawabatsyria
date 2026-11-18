@@ -11,6 +11,7 @@ Production branch: `main` (unchanged)
 - PR #33 remains open, draft, and unmerged; head: `de186024a51c3fdacbccfd18fecec78b12af2e44`.
 - PR #33 is stacked on PR #32. The candidate branch was created directly from PR #33's head commit, preserving the stacked changes as a single isolated review candidate.
 - Candidate branch creation did not change `main`, merge either PR, deploy Pages, or apply a database migration.
+- Candidate static validation completed successfully on commit `eefd37571ea4e7f528774f66124a36fa9303d5dc` (GitHub Actions run [44370755301](https://github.com/alooshalshawwa8-wq/bawabatsyria/actions/runs/44370755301)). The prior candidate static runs also passed on the preceding integration commits.
 - The GitHub compare endpoint reports the candidate as 234 commits ahead of `main`, with the candidate diff containing the combined changes listed by GitHub. This unusually large commit distance is a review warning: inspect ancestry and commit scope before any future merge; do not interpret the number as 234 newly authored feature commits.
 
 ## 2. Isolated CI enablement
@@ -52,21 +53,40 @@ They are source files only on this candidate. No production migration was applie
 6. **Supabase:** no production Auth, RLS, schema, function, or secret settings were changed.
 7. **Brand:** keep the final product name undecided; do not reintroduce retired names as the final identity.
 
-## 6. Result
+## 6. Code review findings
+
+### Owner authentication
+- The candidate assistant and membership API call Supabase Auth `/auth/v1/user` using the caller's Bearer token.
+- Owner status is derived from the returned server-managed `app_metadata` claims: `role=OWNER`, `owner=true`, and `owner_access=lifetime`.
+- The code does not use caller-provided `user_metadata`, email text, or request JSON to establish owner status. This is a sound direction, subject to verifying that the owner claims are assigned only by trusted server-side administration and that the corresponding production owner user is provisioned correctly.
+- The candidate owner-only RLS migration uses the same claims through `public.is_ofoq_owner()`. It is source code only and has not been applied to production.
+
+### Origin and legacy assistant context
+- `site-assistant`, `football-data`, and `membership-api` retain a fallback `OFOQ_ALLOWED_ORIGIN` of the old GitHub Pages origin. A server environment override exists, but the Cloudflare production value has not been verified or changed. This is a release blocker for a Cloudflare cutover.
+- The membership API also retains a legacy GitHub Pages `SITE_URL` fallback. Verify all redirect and email-link consumers before changing it.
+- The assistant system prompt still describes the old public OFOQ/Nibras experience. It must be rewritten for the private owner-first digital world before the assistant is exposed on the private deployment.
+- The new central intelligence core is documented as an architecture baseline only. No new memory tables, orchestration engine, UI redesign, or provider integration has been deployed or added to production.
+
+### Repository and branch protection
+- The candidate branch currently reports `protected=false`. No branch protection/ruleset was changed. Treat the candidate as a controlled working branch and require CI evidence plus review before any merge.
+- The repository remains Public. Candidate code and docs are not private merely because the website may later be protected by Cloudflare Access.
+
+## 7. Result
 
 Completed:
 - Created an isolated candidate branch from the stacked PR #33 head.
-- Enabled static validation and disposable migration replay triggers for this candidate branch.
+- Enabled static validation, disposable migration replay, and full Git-history secret scan triggers for this candidate branch.
 - Preserved the production branch and deployment workflow.
 - Documented migration and security review gates.
 
 Pending:
-- Observe and inspect the candidate CI runs.
+- Wait for and inspect the candidate disposable migration replay and full Git-history secret scan runs.
+- Observe and inspect any remaining candidate CI runs.
 - Review owner authentication and CORS code line-by-line.
 - Complete secret-history scan results.
 - Build and verify the private artifact in CI.
 - Prepare, but do not activate, a Cloudflare Access production cutover plan.
 
-## 7. Explicit non-actions
+## 8. Explicit non-actions
 
 No merge to `main`; no deployment; no production database migration; no production Auth/RLS/function/secret change; no repository visibility change; no Cloudflare Access activation; no paid service or paid browser credits.
