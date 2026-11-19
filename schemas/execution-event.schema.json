@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ofoq.local/schemas/execution-event.schema.json",
+  "title": "Execution Event and Audit Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "task_id",
+    "event_type",
+    "occurred_at",
+    "permission_level",
+    "outcome",
+    "redaction_applied"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "event_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "event_type": {
+      "enum": [
+        "task_created",
+        "plan_created",
+        "approval_requested",
+        "approval_granted",
+        "approval_denied",
+        "execution_started",
+        "execution_finished",
+        "execution_failed",
+        "execution_cancelled",
+        "policy_blocked"
+      ]
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "permission_level": {
+      "enum": [
+        "R0",
+        "R1",
+        "R2",
+        "R3",
+        "R4"
+      ]
+    },
+    "outcome": {
+      "enum": [
+        "success",
+        "failure",
+        "blocked",
+        "pending",
+        "cancelled"
+      ]
+    },
+    "redaction_applied": {
+      "type": "boolean"
+    },
+    "details": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "summary": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "tool_name": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "target_label": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "error_code": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "redacted_fields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "maxItems": 100
+        }
+      }
+    },
+    "data_retention_class": {
+      "enum": [
+        "ephemeral",
+        "operational",
+        "audit"
+      ]
+    }
+  }
+}
