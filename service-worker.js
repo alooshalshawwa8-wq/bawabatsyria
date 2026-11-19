@@ -5,7 +5,7 @@
  * Cache only same-origin app-shell assets; never cache API/auth responses.
  */
 const CACHE_PREFIX = "ofoq-shell-";
-const CACHE_NAME = CACHE_PREFIX + "v56";
+const CACHE_NAME = CACHE_PREFIX + "v57";
 const APP_FILES = [
   "./",
   "./index.html",
@@ -21,7 +21,8 @@ const APP_FILES = [
   "./ofoq-metrics.js",
   "./ofoq-profile.js",
   "./ofoq-data.js",
-  "./ofoq-vault.js"
+  "./ofoq-vault.js",
+  "./private-world.js"
 ];
 
 const APP_SCOPE = new URL("./", self.location.href);
