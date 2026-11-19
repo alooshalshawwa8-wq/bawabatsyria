@@ -1,0 +1,12 @@
+{
+  "policy_version": "1.0.0",
+  "default_decision": "deny",
+  "levels": {
+    "R0": {"description":"Read-only inspection and analysis","allowed":["read","list","search","analyze","validate"],"denied":["create","update","delete","publish","deploy","send","purchase","change_permissions"],"approval_required":false},
+    "R1": {"description":"Prepare plans and drafts without external changes","allowed":["read","list","search","analyze","validate","prepare_draft"],"denied":["execute_external_change","publish","deploy","purchase"],"approval_required":false},
+    "R2": {"description":"Limited non-production changes","allowed":["create_non_production","update_non_production","run_tests"],"denied":["production_change","publish","deploy","purchase"],"approval_required":true},
+    "R3": {"description":"Sensitive operational changes","allowed":["approved_operational_change"],"denied":["unapproved_change","unapproved_production_change","purchase"],"approval_required":true,"approval_per_action":true},
+    "R4": {"description":"Critical production and security operations","allowed":["explicitly_approved_critical_operation"],"denied":["unapproved_operation","automatic_permission_escalation","automatic_paid_purchase"],"approval_required":true,"approval_per_action":true,"additional_confirmation_required":true}
+  },
+  "invariants": ["Unknown actions must be denied","Permission cannot be inferred from task status","A higher permission level cannot be self-assigned by an agent","R0 and R1 must never perform external state changes","Production operations require explicit approval","Financial operations require separate explicit approval"]
+}
