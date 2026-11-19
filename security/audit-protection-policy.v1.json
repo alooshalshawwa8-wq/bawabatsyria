@@ -1,0 +1,9 @@
+{
+  "policy_version":"1.0.0","default_decision":"deny",
+  "audit":{"append_only":true,"tamper_evident":true,"hash_chain":true,"trusted_timestamp_required":true,"event_id_required":true,"task_id_required":true,"approval_reference_required_for_approved_actions":true,"operation_fingerprint_required_for_execution":true},
+  "required_event_fields":["event_id","task_id","event_type","occurred_at","permission_level","outcome","actor_id","policy_decision","previous_event_hash","event_hash"],
+  "secret_protection":{"redact_before_persistence":true,"redact_api_keys":true,"redact_passwords":true,"redact_access_tokens":true,"redact_session_cookies":true,"redact_private_keys":true,"redact_authorization_headers":true,"store_raw_secrets":false},
+  "integrity":{"hash_algorithm":"SHA-256","verify_chain_on_read":true,"reject_broken_chain":true,"record_policy_blocks":true,"record_approval_consumption":true},
+  "access_control":{"audit_read_requires_authorization":true,"audit_modification_prohibited":true,"audit_deletion_prohibited":true,"administrative_access_logged":true},
+  "failure_behavior":{"redaction_failure":"block_persistence","integrity_failure":"block_sensitive_execution","audit_storage_failure":"block_sensitive_execution"}
+}
