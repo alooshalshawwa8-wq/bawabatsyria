@@ -1,0 +1,10 @@
+{
+  "policy_version":"1.0.0","default_decision":"deny",
+  "fingerprint":{"algorithm":"SHA-256","encoding":"hex","length":64,"canonicalization":"RFC8785","required_fields":["task_id","action","target","payload_digest","permission_level","scope","constraints"],"reject_if_operation_changes":true},
+  "time_validation":{"trusted_clock_required":true,"expires_at_must_be_after_approved_at":true,"reject_expired_approval":true,"reject_future_approval_time":true,"maximum_clock_skew_seconds":60},
+  "scope_validation":{"scope_required":true,"exact_target_match_required":true,"exact_action_match_required":true,"scope_expansion_allowed":false},
+  "single_use":{"required":true,"atomic_consumption":true,"concurrent_reuse_denied":true,"consumption_must_precede_execution":true,"failed_execution_consumes_approval":true},
+  "approval_states":["pending","approved","consumed","expired","revoked"],
+  "execution_requirements":["Task must exist","Approval must belong to the exact task","Approval must be approved","Fingerprint must match the current operation","Permission level must match the approved level","Scope must match the current target","Approval must not be expired or revoked","Approval must not have been consumed","Policy engine must authorize the action"],
+  "failure_behavior":{"on_missing_approval":"deny","on_fingerprint_mismatch":"deny","on_expired_approval":"deny","on_reuse_attempt":"deny","on_clock_failure":"deny","on_policy_engine_failure":"deny"}
+}
