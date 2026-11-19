@@ -1,0 +1,9 @@
+{
+  "policy_version":"1.0.0","default_decision":"block",
+  "financial_limits":{"maximum_spend_usd":0,"maximum_unapproved_spend_usd":0,"paid_provider_allowed":false,"automatic_paid_fallback":false},
+  "provider_validation":{"verified_free_required":true,"unknown_pricing_allowed":false,"unknown_quota_allowed":false,"unverified_free_tier_allowed":false,"provider_terms_check_required":true},
+  "quota_enforcement":{"track_requests_per_minute":true,"track_requests_per_day":true,"track_tokens_per_minute":true,"track_tokens_per_day":true,"cumulative_usage_required":true,"block_on_quota_exhaustion":true,"block_on_quota_uncertainty":true},
+  "decision_rules":{"verified_free_and_within_quota":"allow","quota_limit_reached":"block","pricing_unknown":"block","provider_status_unknown":"block","paid_service_detected":"block","fallback_requires_new_approval":true},
+  "financial_approval":{"separate_from_execution_approval":true,"explicit_user_confirmation_required":true,"maximum_approval_scope":"one_defined_transaction","automatic_recurring_payment":false},
+  "invariants":["Zero spend is the default","A cost value of zero is not proof of a free service","Unknown pricing must never be treated as free","No automatic switch to a paid provider","No purchase without separate explicit approval","Provider failure must not trigger paid fallback"]
+}
