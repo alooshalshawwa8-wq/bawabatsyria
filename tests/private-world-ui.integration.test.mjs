@@ -32,7 +32,7 @@ test("shared data layer invokes the PostgreSQL owner RPC with the current authen
     bawabatsyria_auth_session: JSON.stringify({ access_token: "test-owner-jwt", refresh_token: "", expires_at: Date.now() + 3600000 })
   });
   const calls = [];
-  const window = { BAWABA_SUPABASE_URL: "https://isolated.test", BAWABA_SUPABASE_ANON_KEY: "test-anon" };
+  const window = { BAWABA_SUPABASE_URL: "https://isolated.test", BAWABA_SUPABASE_ANON_KEY: "test-anon", addEventListener() {} };
   const context = {
     window, localStorage, sessionStorage: makeStorage(),
     URLSearchParams, Date, JSON, Error, Object, String, Number, Math, Promise,
@@ -58,7 +58,7 @@ test("RPC rejects unsafe procedure names before making a request", async () => {
     bawabatsyria_auth_session: JSON.stringify({ access_token: "test-jwt", refresh_token: "", expires_at: Date.now() + 3600000 })
   });
   let requests = 0;
-  const window = { BAWABA_SUPABASE_URL: "https://isolated.test", BAWABA_SUPABASE_ANON_KEY: "test-anon" };
+  const window = { BAWABA_SUPABASE_URL: "https://isolated.test", BAWABA_SUPABASE_ANON_KEY: "test-anon", addEventListener() {} };
   const context = { window, localStorage, sessionStorage: makeStorage(), URLSearchParams, Date, JSON, Error, Object, String, Number, Math, Promise, crypto: { randomUUID: () => "x" }, fetch: async () => { requests++; throw new Error("unexpected"); } };
   vm.runInNewContext(read("ofoq-data.js"), context);
   await assert.rejects(window.OFOQData.rpc("private_world_is_owner;drop_table", {}), /اسم إجراء/);
