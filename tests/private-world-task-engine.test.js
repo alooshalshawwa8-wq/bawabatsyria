@@ -106,3 +106,26 @@ test("fails closed when storage writes fail", () => {
   assert.throws(() => engine.add({ title: "لا تحفظ" }), /quota/);
   assert.equal(engine.list().length, 0);
 });
+
+test("fails closed when browser localStorage access is blocked during startup", () => {
+  const sandbox = {
+    window: {},
+    document: { readyState: "complete" },
+    localStorage: { getItem() { throw new Error("storage access denied"); } },
+    fetch() { throw new Error("Network access must not occur without a session"); },
+    Date,
+    Math,
+    JSON,
+    Object,
+    String,
+    TypeError,
+    Error
+  };
+  assert.doesNotThrow(() => {
+    vm.runInNewContext(
+      fs.readFileSync(path.join(__dirname, "..", "private-world.js"), "utf8"),
+      sandbox,
+      { filename: "private-world.js" }
+    );
+  });
+});
