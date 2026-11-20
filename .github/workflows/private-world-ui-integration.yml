@@ -1,0 +1,35 @@
+name: Private-world UI and Auth integration checks
+
+on:
+  push:
+    branches: ["private-world/owner-gate-integration-2026-11-20"]
+    paths:
+      - "index.html"
+      - "ofoq-data.js"
+      - "ofoq-private-world.js"
+      - "tests/private-world-ui.integration.test.mjs"
+      - ".github/workflows/private-world-ui-integration.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: private-world-ui-integration
+  cancel-in-progress: true
+
+jobs:
+  ui-auth-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout isolated integration branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify UI-to-Auth and PostgreSQL RPC contract
+        run: node --test tests/private-world-ui.integration.test.mjs
