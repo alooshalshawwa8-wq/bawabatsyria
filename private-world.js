@@ -107,9 +107,11 @@
     try {
       const saved = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
       if (saved && typeof saved.access_token === "string" && saved.access_token) return saved;
-    } catch (_) {}
-    const legacy = localStorage.getItem("bawabatsyria_access_token");
-    return legacy ? { access_token: legacy } : null;
+      const legacy = localStorage.getItem("bawabatsyria_access_token");
+      return legacy ? { access_token: legacy } : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   async function verifyOwner() {
